@@ -1,0 +1,383 @@
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
+
+# ──────────────────────────────────────────────────────────────
+# Project Metadata
+# ──────────────────────────────────────────────────────────────
+
+[project]
+name = "agentcrawl"
+version = "1.0.0"
+description = "AI-Ready Web Crawler & Scraper — Use as a Python Package or a Standalone API Server."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "AgentCrawl Team", email = "team@agentcrawl.dev" },
+]
+keywords = [
+    "web-crawler",
+    "web-scraper",
+    "llm",
+    "ai-agent",
+    "markdown",
+    "rag",
+    "playwright",
+    "fastapi",
+    "extraction",
+    "mcp",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Typing :: Typed",
+]
+
+# ──────────────────────────────────────────────────────────────
+# Core Dependencies
+# ──────────────────────────────────────────────────────────────
+
+dependencies = [
+    # Browser automation
+    "playwright>=1.40.0",
+
+    # Data validation & settings
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+
+    # HTTP client (for non-browser fetches, API calls)
+    "httpx>=0.26.0",
+
+    # HTML parsing (10-20x faster than BeautifulSoup)
+    "lxml>=5.1.0",
+    "lxml-html-clean>=0.1.0",
+
+    # HTML → Markdown conversion
+    "markdownify>=0.13.0",
+    "html2text>=2024.2.26",
+
+    # Async utilities
+    "aiofiles>=23.2.0",
+    "anyio>=4.2.0",
+
+    # URL handling
+    "tldextract>=5.1.0",
+    "w3lib>=2.1.0",
+
+    # Text processing
+    "regex>=2024.1.0",
+    "chardet>=5.2.0",
+
+    # CLI
+    "typer>=0.9.0",
+    "rich>=13.7.0",
+
+    # Logging
+    "structlog>=24.1.0",
+
+    # Retry logic
+    "tenacity>=8.2.0",
+
+    # YAML config support
+    "pyyaml>=6.0.0",
+
+    # Sitemap / robots.txt parsing
+    "ultimate-sitemap-parser>=0.5",
+
+    # Content hashing
+    "xxhash>=3.4.0",
+]
+
+# ──────────────────────────────────────────────────────────────
+# Optional Dependency Groups
+# ──────────────────────────────────────────────────────────────
+
+[project.optional-dependencies]
+
+# Server Mode — FastAPI microservice
+server = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "gunicorn>=21.2.0",
+    "python-multipart>=0.0.9",
+    "python-jose[cryptography]>=3.3.0",   # JWT
+    "passlib[bcrypt]>=1.7.0",             # Password hashing
+    "slowapi>=0.1.9",                     # Rate limiting
+    "sse-starlette>=2.0.0",              # Server-Sent Events (MCP)
+    "websockets>=12.0",                   # WebSocket (MCP)
+]
+
+# Redis — Queue & Cache backend
+redis = [
+    "redis[hiredis]>=5.0.0",
+    "aioredis>=2.0.0",
+]
+
+# LLM Extraction — supports any provider via litellm
+llm = [
+    "litellm>=1.30.0",
+    "openai>=1.12.0",
+    "anthropic>=0.18.0",
+    "tiktoken>=0.6.0",                    # Token counting
+]
+
+# Search engines
+search = [
+    "googlesearch-python>=1.2.0",
+    "duckduckgo-search>=5.0.0",
+    "searxng>=0.1.0",
+]
+
+# Disk cache backend
+diskcache = [
+    "diskcache>=5.6.0",
+]
+
+# PDF / DOCX parsing
+media = [
+    "pypdf>=4.0.0",
+    "python-docx>=1.1.0",
+    "pdfplumber>=0.11.0",
+]
+
+# Monitoring & observability
+monitoring = [
+    "prometheus-client>=0.20.0",
+    "opentelemetry-api>=1.23.0",
+    "opentelemetry-sdk>=1.23.0",
+    "opentelemetry-instrumentation-fastapi>=0.44b0",
+]
+
+# MCP (Model Context Protocol) server
+mcp = [
+    "mcp>=1.0.0",
+]
+
+# Everything
+all = [
+    "agentcrawl[server,redis,llm,search,diskcache,media,monitoring,mcp]",
+]
+
+# Development & testing
+dev = [
+    "agentcrawl[all]",
+
+    # Testing
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-timeout>=2.2.0",
+    "pytest-mock>=3.12.0",
+    "httpx>=0.26.0",                      # TestClient for FastAPI
+    "respx>=0.21.0",                      # Mock httpx requests
+    "factory-boy>=3.3.0",
+
+    # Linting & formatting
+    "ruff>=0.3.0",
+
+    # Type checking
+    "mypy>=1.8.0",
+    "types-PyYAML>=6.0.0",
+    "types-redis>=4.6.0",
+
+    # Documentation
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.24.0",
+
+    # Build & release
+    "build>=1.0.0",
+    "twine>=5.0.0",
+    "hatch>=1.9.0",
+
+    # Pre-commit
+    "pre-commit>=3.6.0",
+]
+
+# ──────────────────────────────────────────────────────────────
+# CLI Entry Points
+# ──────────────────────────────────────────────────────────────
+
+[project.scripts]
+agentcrawl = "agentcrawl.cli:app"
+
+# ──────────────────────────────────────────────────────────────
+# URLs
+# ──────────────────────────────────────────────────────────────
+
+[project.urls]
+Homepage = "https://agentcrawl.dev"
+Documentation = "https://docs.agentcrawl.dev"
+Repository = "https://github.com/your-org/agentcrawl"
+Issues = "https://github.com/your-org/agentcrawl/issues"
+Changelog = "https://github.com/your-org/agentcrawl/blob/main/CHANGELOG.md"
+
+# ──────────────────────────────────────────────────────────────
+# Hatch Build Configuration
+# ──────────────────────────────────────────────────────────────
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentcrawl", "server", "agent"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "agentcrawl/",
+    "server/",
+    "agent/",
+    "tests/",
+    "examples/",
+    "docs/",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+# ──────────────────────────────────────────────────────────────
+# Ruff — Linter & Formatter
+# ──────────────────────────────────────────────────────────────
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["agentcrawl", "server", "agent", "tests", "examples"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific rules
+    "ASYNC",# flake8-async
+    "S",    # flake8-bandit (security)
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "S101",   # assert used (fine in tests)
+    "B008",   # function call in default argument (FastAPI Depends pattern)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S106", "S311"]
+"examples/**" = ["S101", "T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agentcrawl", "server", "agent"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+# ──────────────────────────────────────────────────────────────
+# Mypy — Type Checker
+# ──────────────────────────────────────────────────────────────
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+show_column_numbers = true
+
+[[tool.mypy.overrides]]
+module = [
+    "playwright.*",
+    "lxml.*",
+    "markdownify.*",
+    "html2text.*",
+    "tldextract.*",
+    "chardet.*",
+    "ultimate_sitemap_parser.*",
+    "xxhash.*",
+    "litellm.*",
+    "tiktoken.*",
+    "googlesearch.*",
+    "duckduckgo_search.*",
+    "pdfplumber.*",
+    "docx.*",
+]
+ignore_missing_imports = true
+
+# ──────────────────────────────────────────────────────────────
+# Pytest
+# ──────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+timeout = 60
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "-x",                        # stop on first failure
+]
+markers = [
+    "unit: Unit tests (no network, no browser)",
+    "integration: Integration tests (requires network/browser)",
+    "server: Server mode tests (requires running server)",
+    "slow: Tests that take > 5 seconds",
+    "llm: Tests that require LLM API keys",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# ──────────────────────────────────────────────────────────────
+# Coverage
+# ──────────────────────────────────────────────────────────────
+
+[tool.coverage.run]
+source = ["agentcrawl", "server", "agent"]
+omit = [
+    "tests/*",
+    "examples/*",
+    "docs/*",
+    "scripts/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = true
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.",
+    "raise NotImplementedError",
+    "pass",
+    "\\.\\.\\.",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

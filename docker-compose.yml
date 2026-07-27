@@ -1,0 +1,230 @@
+# ══════════════════════════════════════════════════════════════
+# AgentCrawl — Docker Compose
+# AI-Ready Web Crawler & Scraper
+# ══════════════════════════════════════════════════════════════
+#
+# Usage:
+#   Development:    docker compose up -d
+#   Production:     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   With monitoring: docker compose --profile monitoring up -d
+#
+# Environment:
+#   Copy .env.example → .env and fill in your values
+#
+# ══════════════════════════════════════════════════════════════
+
+version: "3.9"
+
+x-common-env: &common-env
+  TZ: ${TZ:-UTC}
+
+services:
+  # ────────────────────────────────────────────────────────────
+  # AgentCrawl API Server
+  # ────────────────────────────────────────────────────────────
+  agentcrawl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: agentcrawl:${VERSION:-latest}
+    container_name: agentcrawl
+    restart: unless-stopped
+    ports:
+      - "${AGENTCRAWL_PORT:-8000}:8000"
+    environment:
+      <<: *common-env
+      # Server
+      AGENTCRAWL_HOST: "0.0.0.0"
+      AGENTCRAWL_PORT: "8000"
+      # Browser
+      AGENTCRAWL_HEADLESS: "true"
+      AGENTCRAWL_STEALTH: "true"
+      AGENTCRAWL_BROWSER: "${AGENTCRAWL_BROWSER:-chromium}"
+      AGENTCRAWL_MAX_CONCURRENT: "${AGENTCRAWL_MAX_CONCURRENT:-5}"
+      AGENTCRAWL_TIMEOUT: "${AGENTCRAWL_TIMEOUT:-30}"
+      # Authentication
+      AGENTCRAWL_AUTH_ENABLED: "${AGENTCRAWL_AUTH_ENABLED:-true}"
+      AGENTCRAWL_API_KEY: "${AGENTCRAWL_API_KEY:-changeme}"
+      AGENTCRAWL_JWT_SECRET: "${AGENTCRAWL_JWT_SECRET:-}"
+      # Rate Limiting
+      AGENTCRAWL_RATE_LIMIT_ENABLED: "${AGENTCRAWL_RATE_LIMIT_ENABLED:-true}"
+      AGENTCRAWL_RATE_LIMIT: "${AGENTCRAWL_RATE_LIMIT:-100/minute}"
+      # Queue
+      AGENTCRAWL_QUEUE_BACKEND: "${AGENTCRAWL_QUEUE_BACKEND:-redis}"
+      AGENTCRAWL_REDIS_URL: "redis://redis:6379/0"
+      # Cache
+      AGENTCRAWL_CACHE_BACKEND: "${AGENTCRAWL_CACHE_BACKEND:-redis}"
+      AGENTCRAWL_CACHE_TTL: "${AGENTCRAWL_CACHE_TTL:-3600}"
+      # Proxy (optional)
+      AGENTCRAWL_PROXY_URL: "${AGENTCRAWL_PROXY_URL:-}"
+      # LLM Providers (optional, for LLM extraction)
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      # MCP
+      AGENTCRAWL_MCP_ENABLED: "${AGENTCRAWL_MCP_ENABLED:-true}"
+      # Logging
+      AGENTCRAWL_LOG_LEVEL: "${AGENTCRAWL_LOG_LEVEL:-info}"
+      AGENTCRAWL_LOG_FORMAT: "${AGENTCRAWL_LOG_FORMAT:-json}"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - agentcrawl_cache:/app/.cache
+      - agentcrawl_logs:/app/logs
+      - agentcrawl_data:/app/data
+    networks:
+      - agentcrawl_net
+    shm_size: "1g"
+    deploy:
+      resources:
+        limits:
+          cpus: "${AGENTCRAWL_CPU_LIMIT:-2.0}"
+          memory: "${AGENTCRAWL_MEMORY_LIMIT:-2G}"
+        reservations:
+          cpus: "0.5"
+          memory: "512M"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ────────────────────────────────────────────────────────────
+  # Redis — Queue & Cache Backend
+  # ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: agentcrawl_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory ${REDIS_MAXMEMORY:-256mb}
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --save 300 100
+    volumes:
+      - redis_data:/data
+    networks:
+      - agentcrawl_net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "${REDIS_MEMORY_LIMIT:-512M}"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ────────────────────────────────────────────────────────────
+  # Prometheus — Metrics Collection (optional)
+  # ────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: agentcrawl_prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+      - "--storage.tsdb.retention.size=2GB"
+      - "--web.enable-lifecycle"
+    networks:
+      - agentcrawl_net
+    depends_on:
+      - agentcrawl
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ────────────────────────────────────────────────────────────
+  # Grafana — Metrics Dashboard (optional)
+  # ────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: agentcrawl_grafana
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "http://localhost:${GRAFANA_PORT:-3000}"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - agentcrawl_net
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ──────────────────────────────────────────────────────────────
+# Volumes
+# ──────────────────────────────────────────────────────────────
+volumes:
+  agentcrawl_cache:
+    driver: local
+  agentcrawl_logs:
+    driver: local
+  agentcrawl_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ──────────────────────────────────────────────────────────────
+# Networks
+# ──────────────────────────────────────────────────────────────
+networks:
+  agentcrawl_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
