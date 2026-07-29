@@ -424,6 +424,8 @@ class CrawlEngine:
             CrawlResult with scraped content.
         """
         self._ensure_started()
+        if not url or not url.strip():
+            raise ValueError("URL cannot be empty")
         config = config or CrawlerConfig()
         return await self._scrape_page(url, config)
 
