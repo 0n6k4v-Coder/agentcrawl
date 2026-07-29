@@ -398,9 +398,8 @@ def create_mcp_server() -> Any:
     """
     try:
         import mcp.types as types
-        from mcp.server.models import InitializationOptions
-
         from mcp.server import Server
+        from mcp.server.models import InitializationOptions
     except ImportError:
         print(
             "MCP library not installed. Install with: pip install mcp",

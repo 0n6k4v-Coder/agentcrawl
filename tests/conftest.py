@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
+
+# Add project root to sys.path for server/ imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # ══════════════════════════════════════════════════════════════
 # Pytest Configuration

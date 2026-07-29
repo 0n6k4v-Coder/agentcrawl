@@ -225,9 +225,4 @@ VOLUME ["/app/.cache", "/app/logs", "/app/data"]
 #     --bind 0.0.0.0:8000 --workers 4 --timeout 120
 ENTRYPOINT []
 
-CMD ["python", "-m", "uvicorn", "server.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--log-level", "info", \
-     "--access-log", \
-     "--timeout-keep-alive", "65"]
+CMD ["python", "-m", "server", "--host", "0.0.0.0", "--port", "8000"]

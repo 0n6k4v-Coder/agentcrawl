@@ -106,6 +106,7 @@ dependencies = [
 [project.optional-dependencies]
 
 # Server Mode — FastAPI microservice
+# Server dependencies only. Server code runs from source (git clone) or Docker.
 server = [
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.27.0",
@@ -136,7 +137,7 @@ llm = [
 search = [
     "googlesearch-python>=1.2.0",
     "duckduckgo-search>=5.0.0",
-    "searxng>=0.1.0",
+    # "searxng>=0.1.0",  # Not available on PyPI
 ]
 
 # Disk cache backend
@@ -211,7 +212,7 @@ dev = [
 # ──────────────────────────────────────────────────────────────
 
 [project.scripts]
-agentcrawl = "agentcrawl.cli:app"
+agentcrawl = "agentcrawl.cli.main:cli"
 
 # ──────────────────────────────────────────────────────────────
 # URLs
@@ -227,14 +228,12 @@ Changelog = "https://github.com/your-org/agentcrawl/blob/main/CHANGELOG.md"
 # ──────────────────────────────────────────────────────────────
 # Hatch Build Configuration
 # ──────────────────────────────────────────────────────────────
-
 [tool.hatch.build.targets.wheel]
-packages = ["agentcrawl", "server", "agent"]
+packages = ["agentcrawl", "agent"]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "agentcrawl/",
-    "server/",
     "agent/",
     "tests/",
     "examples/",
@@ -251,7 +250,7 @@ include = [
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-src = ["agentcrawl", "server", "agent", "tests", "examples"]
+src = ["agentcrawl", "agent", "tests", "examples"]
 
 [tool.ruff.lint]
 select = [
@@ -281,7 +280,7 @@ ignore = [
 "examples/**" = ["S101", "T201"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["agentcrawl", "server", "agent"]
+known-first-party = ["agentcrawl", "agent"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -355,7 +354,7 @@ filterwarnings = [
 # ──────────────────────────────────────────────────────────────
 
 [tool.coverage.run]
-source = ["agentcrawl", "server", "agent"]
+source = ["agentcrawl", "agent"]
 omit = [
     "tests/*",
     "examples/*",

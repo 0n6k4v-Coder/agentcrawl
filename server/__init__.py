@@ -1,4 +1,4 @@
-"""
+""""
 AgentCrawl — Server Package
 ===============================
 
@@ -15,11 +15,11 @@ Subpackages:
 
 Quick Start:
     # Start REST API server
-    from agentcrawl.server import create_app
+    from server.app import create_app
     app = create_app()
 
     # Or via CLI
-    agentcrawl serve --port 8000
+    python -m server
 
     # MCP server
     from server.mcp import create_mcp_server

@@ -230,19 +230,30 @@ asyncio.run(main())
 
 ### Run the Server
 
+Server Mode is an **application**, not a library — deploy from source or Docker:
+
+**Option 1: Docker (recommended)**
 ```bash
-# Simple mode (in-memory queue, no Redis needed)
-agentcrawl serve --port 8000
-
-# Production mode (Redis queue, JWT auth, rate limiting)
-agentcrawl serve \
-  --port 8000 \
-  --redis-url redis://localhost:6379 \
-  --api-key your-secret-key \
-  --rate-limit 100/minute
-
-# Docker
+git clone https://github.com/0n6k4v-Coder/agentcrawl.git
+cd agentcrawl
 docker compose up -d
+```
+
+**Option 2: Run from source**
+```bash
+git clone https://github.com/0n6k4v-Coder/agentcrawl.git
+cd agentcrawl
+pip install -e ".[server]"
+python -m server --port 8000
+```
+
+**Production mode (Redis queue, JWT auth, rate limiting)**
+```bash
+python -m server \\
+  --port 8000 \\
+  --redis-url redis://localhost:6379 \\
+  --api-key your-secret-key \\
+  --rate-limit 100/minute
 ```
 
 ### API Endpoints
@@ -363,7 +374,7 @@ response = client.chat.completions.create(
 
 ```bash
 # Start server with MCP enabled
-agentcrawl serve --port 8000 --mcp
+python -m server --port 8000 --mcp
 
 # Connect from Claude Code
 claude mcp add --transport sse agentcrawl http://localhost:8000/mcp/sse

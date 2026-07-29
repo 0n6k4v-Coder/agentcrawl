@@ -140,7 +140,7 @@ def run_server(
 
     # Configure uvicorn
     uvicorn_kwargs: dict[str, Any] = {
-        "app": "agentcrawl.server.app:app",
+        "app": "server.app:app",
         "host": host,
         "port": port,
         "log_level": log_level,
