@@ -18,7 +18,7 @@ import time
 from typing import Any
 
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger("agentcrawl.server.scrape")
 
@@ -35,6 +35,15 @@ class ScrapeRequest(BaseModel):
         default="markdown",
         description="Output format: markdown, json, html, text",
     )
+
+    @field_validator("output_format")
+    @classmethod
+    def validate_output_format(cls, v: str) -> str:
+        valid_formats = ["markdown", "json", "html", "text"]
+        if v not in valid_formats:
+            raise ValueError(f"Invalid output_format: {v}. Must be one of {valid_formats}")
+        return v
+
     include_links: bool = Field(
         default=True,
         description="Include extracted links",
@@ -71,13 +80,31 @@ class ScrapeRequest(BaseModel):
         default="none",
         description="Content filter: none, pruning, bm25",
     )
-    content_filter_query: str = Field(
-        default="",
-        description="Query for BM25 content filter",
-    )
+
+    @field_validator("content_filter")
+    @classmethod
+    def validate_content_filter(cls, v: str) -> str:
+        valid_filters = ["none", "pruning", "bm25"]
+        if v not in valid_filters:
+            raise ValueError(f"Invalid content_filter: {v}. Must be one of {valid_filters}")
+        return v
+
     chunker: str = Field(
         default="none",
         description="Chunker: none, fixed, sentence, topic, regex",
+    )
+
+    @field_validator("chunker")
+    @classmethod
+    def validate_chunker(cls, v: str) -> str:
+        valid_chunkers = ["none", "fixed", "sentence", "topic", "regex"]
+        if v not in valid_chunkers:
+            raise ValueError(f"Invalid chunker: {v}. Must be one of {valid_chunkers}")
+        return v
+
+    content_filter_query: str = Field(
+        default="",
+        description="Query for BM25 content filter",
     )
     chunk_max_size: int = Field(
         default=1000,

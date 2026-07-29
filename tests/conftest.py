@@ -32,13 +32,15 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
-from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Generator
 
 # Add project root to sys.path for server/ imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -510,8 +512,47 @@ def has_openai_key() -> bool:
     return bool(os.environ.get("OPENAI_API_KEY"))
 
 
-@pytest.fixture
+@ pytest.fixture
 def skip_without_openai(has_openai_key: bool) -> None:
     """Skip test if OpenAI API key is not available."""
     if not has_openai_key:
         pytest.skip("OPENAI_API_KEY not set")
+
+
+# ══════════════════════════════════════════════════════════════
+# Playwright Availability
+# ══════════════════════════════════════════════════════════════
+
+_PLAYWRIGHT_AVAILABLE: bool | None = None
+
+
+def _playwright_available() -> bool:
+    """Check if Playwright Chromium browser is installed."""
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            # Try to launch — will fail if browser not installed
+            browser = p.chromium.launch(headless=True)
+            browser.close()
+        return True
+    except Exception:
+        return False
+
+
+def playwright_available() -> bool:
+    """Cached check for Playwright Chromium availability."""
+    global _PLAYWRIGHT_AVAILABLE
+    if _PLAYWRIGHT_AVAILABLE is None:
+        _PLAYWRIGHT_AVAILABLE = _playwright_available()
+    return _PLAYWRIGHT_AVAILABLE
+
+
+@ pytest.fixture
+def require_playwright() -> None:
+    """Skip test if Playwright Chromium is not installed."""
+    if not playwright_available():
+        pytest.skip(
+            "Playwright Chromium not installed. "
+            "Run: playwright install chromium && playwright install-deps chromium"
+        )

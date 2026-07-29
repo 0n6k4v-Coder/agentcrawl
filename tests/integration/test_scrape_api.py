@@ -21,19 +21,17 @@ Run:
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
 from typing import Any
 
 import pytest
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
 
 # ══════════════════════════════════════════════════════════════
 # Fixtures
 # ══════════════════════════════════════════════════════════════
 
-@pytest_asyncio.fixture
-async def app() -> AsyncGenerator[Any, None]:
+@ pytest.fixture
+def app(require_playwright) -> Any:
     """Create a test FastAPI app."""
     from agentcrawl.config.settings import Settings
     from server.app import create_app
@@ -48,19 +46,16 @@ async def app() -> AsyncGenerator[Any, None]:
 
     application = create_app(settings)
 
-    yield application
+    # Use TestClient which properly handles lifespan
+    with TestClient(application) as test_client:
+        yield application
 
-@pytest_asyncio.fixture
-async def client(app: Any) -> AsyncGenerator[AsyncClient, None]:
-    """Create an async test client."""
-    transport = ASGITransport(app=app)
 
-    async with AsyncClient(
-        transport=transport,
-        base_url="http://testserver",
-        timeout=60.0,
-    ) as c:
-        yield c
+@ pytest.fixture
+def client(app: Any) -> Any:
+    """Create a test client using TestClient."""
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 # ══════════════════════════════════════════════════════════════
@@ -70,11 +65,10 @@ async def client(app: Any) -> AsyncGenerator[AsyncClient, None]:
 class TestScrapeBasic:
     """Tests for basic scrape operations."""
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_example_com(self, client: AsyncClient) -> None:
+    def test_scrape_example_com(self, client: TestClient, require_playwright) -> None:
         """Scrape example.com successfully."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
         })
 
@@ -88,11 +82,10 @@ class TestScrapeBasic:
         assert data["word_count"] > 0
         assert data["response_time_ms"] > 0
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_returns_markdown(self, client: AsyncClient) -> None:
+    def test_scrape_returns_markdown(self, client: TestClient, require_playwright) -> None:
         """Scrape returns Markdown content."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "output_format": "markdown",
         })
@@ -102,11 +95,10 @@ class TestScrapeBasic:
         assert "markdown" in data
         assert "Example Domain" in data["markdown"]
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_returns_metadata(self, client: AsyncClient) -> None:
+    def test_scrape_returns_metadata(self, client: TestClient, require_playwright) -> None:
         """Scrape includes page metadata."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "include_metadata": True,
         })
@@ -116,11 +108,10 @@ class TestScrapeBasic:
         assert "metadata" in data
         assert "title" in data["metadata"]
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_returns_links(self, client: AsyncClient) -> None:
+    def test_scrape_returns_links(self, client: TestClient, require_playwright) -> None:
         """Scrape includes extracted links."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "include_links": True,
         })
@@ -129,11 +120,10 @@ class TestScrapeBasic:
         assert data["success"] is True
         assert "links" in data
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_has_request_id(self, client: AsyncClient) -> None:
+    def test_scrape_has_request_id(self, client: TestClient, require_playwright) -> None:
         """Scrape response includes request ID."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
         })
 
@@ -150,9 +140,9 @@ class TestScrapeOptions:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_only_main_content(self, client: AsyncClient) -> None:
+    async def test_scrape_only_main_content(self, client: TestClient, require_playwright) -> None:
         """only_main_content filters navigation/footer."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "only_main_content": True,
         })
@@ -162,9 +152,9 @@ class TestScrapeOptions:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_with_content_filter(self, client: AsyncClient) -> None:
+    async def test_scrape_with_content_filter(self, client: TestClient, require_playwright) -> None:
         """Content filter removes noise."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "content_filter": "pruning",
         })
@@ -174,9 +164,9 @@ class TestScrapeOptions:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_with_chunking(self, client: AsyncClient) -> None:
+    async def test_scrape_with_chunking(self, client: TestClient, require_playwright) -> None:
         """Chunking splits content into chunks."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "chunker": "topic",
             "chunk_max_size": 200,
@@ -188,9 +178,9 @@ class TestScrapeOptions:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_with_selectors(self, client: AsyncClient) -> None:
+    async def test_scrape_with_selectors(self, client: TestClient, require_playwright) -> None:
         """CSS selectors target specific content."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "selectors": ["h1", "p"],
         })
@@ -200,9 +190,9 @@ class TestScrapeOptions:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_with_exclude_selectors(self, client: AsyncClient) -> None:
+    async def test_scrape_with_exclude_selectors(self, client: TestClient, require_playwright) -> None:
         """Exclude selectors remove elements."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "exclude_selectors": ["nav", "footer"],
         })
@@ -212,9 +202,9 @@ class TestScrapeOptions:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_no_cache(self, client: AsyncClient) -> None:
+    async def test_scrape_no_cache(self, client: TestClient, require_playwright) -> None:
         """Scrape with cache disabled."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "cache": False,
         })
@@ -231,11 +221,10 @@ class TestScrapeOptions:
 class TestScrapeActions:
     """Tests for scrape with page actions."""
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_with_wait_action(self, client: AsyncClient) -> None:
+    def test_scrape_with_wait_action(self, client: TestClient, require_playwright) -> None:
         """Scrape with wait action."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "actions": [
                 {"type": "wait", "milliseconds": 500},
@@ -245,11 +234,10 @@ class TestScrapeActions:
         data = response.json()
         assert data["success"] is True
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_with_scroll_action(self, client: AsyncClient) -> None:
+    def test_scrape_with_scroll_action(self, client: TestClient, require_playwright) -> None:
         """Scrape with scroll action."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "actions": [
                 {"type": "scroll", "direction": "down", "amount": 1},
@@ -259,11 +247,10 @@ class TestScrapeActions:
         data = response.json()
         assert data["success"] is True
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_with_multiple_actions(self, client: AsyncClient) -> None:
+    def test_scrape_with_multiple_actions(self, client: TestClient, require_playwright) -> None:
         """Scrape with multiple sequential actions."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "actions": [
                 {"type": "wait", "milliseconds": 200},
@@ -283,54 +270,48 @@ class TestScrapeActions:
 class TestScrapeValidation:
     """Tests for scrape request validation."""
 
-    @pytest.mark.asyncio
-    async def test_missing_url(self, client: AsyncClient) -> None:
+    def test_missing_url(self, client: TestClient) -> None:
         """Missing URL returns 422."""
-        response = await client.post("/scrape", json={})
+        response = client.post("/scrape", json={})
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_empty_url(self, client: AsyncClient) -> None:
+    def test_empty_url(self, client: TestClient) -> None:
         """Empty URL returns 422."""
-        response = await client.post("/scrape", json={"url": ""})
+        response = client.post("/scrape", json={"url": ""})
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_invalid_output_format(self, client: AsyncClient) -> None:
+    def test_invalid_output_format(self, client: TestClient) -> None:
         """Invalid output_format returns 422."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "output_format": "invalid",
         })
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_invalid_content_filter(self, client: AsyncClient) -> None:
+    def test_invalid_content_filter(self, client: TestClient) -> None:
         """Invalid content_filter returns 422."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "content_filter": "invalid",
         })
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_invalid_chunker(self, client: AsyncClient) -> None:
+    def test_invalid_chunker(self, client: TestClient) -> None:
         """Invalid chunker returns 422."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
             "chunker": "invalid",
         })
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_invalid_json_body(self, client: AsyncClient) -> None:
+    def test_invalid_json_body(self, client: TestClient) -> None:
         """Invalid JSON returns 422."""
-        response = await client.post(
+        response = client.post(
             "/scrape",
             content=b"not json",
             headers={"Content-Type": "application/json"},
@@ -338,10 +319,10 @@ class TestScrapeValidation:
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_url_auto_scheme(self, client: AsyncClient) -> None:
+    @pytest.mark.integration
+    def test_url_auto_scheme(self, client: TestClient, require_playwright) -> None:
         """URL without scheme gets https:// prepended."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "example.com",
         })
 
@@ -356,11 +337,10 @@ class TestScrapeValidation:
 class TestScrapeErrors:
     """Tests for scrape error handling."""
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_nonexistent_domain(self, client: AsyncClient) -> None:
+    def test_scrape_nonexistent_domain(self, client: TestClient, require_playwright) -> None:
         """Scrape non-existent domain returns error."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://this-domain-does-not-exist-12345.com",
             "timeout": 10,
         })
@@ -370,11 +350,10 @@ class TestScrapeErrors:
         assert data["success"] is False
         assert data["error"] is not None
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_scrape_404_page(self, client: AsyncClient) -> None:
+    def test_scrape_404_page(self, client: TestClient, require_playwright) -> None:
         """Scrape 404 page returns appropriate status."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://httpbin.org/status/404",
             "timeout": 15,
         })
@@ -392,14 +371,13 @@ class TestScrapeErrors:
 class TestScrapeCache:
     """Tests for scrape caching."""
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_cache_hit(self, client: AsyncClient) -> None:
+    def test_cache_hit(self, client: TestClient, require_playwright) -> None:
         """Second scrape of same URL is cached."""
         url = "https://example.com"
 
         # First scrape
-        resp1 = await client.post("/scrape", json={
+        resp1 = client.post("/scrape", json={
             "url": url,
             "cache": True,
         })
@@ -408,7 +386,7 @@ class TestScrapeCache:
         assert data1["cached"] is False
 
         # Second scrape (should be cached)
-        resp2 = await client.post("/scrape", json={
+        resp2 = client.post("/scrape", json={
             "url": url,
             "cache": True,
         })
@@ -424,11 +402,10 @@ class TestScrapeCache:
 class TestBatchScrape:
     """Tests for batch scrape endpoint."""
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_batch_scrape_basic(self, client: AsyncClient) -> None:
+    def test_batch_scrape_basic(self, client: TestClient, require_playwright) -> None:
         """Batch scrape multiple URLs."""
-        response = await client.post("/batch/scrape", json={
+        response = client.post("/batch/scrape", json={
             "urls": [
                 "https://example.com",
                 "https://www.iana.org/domains/example",
@@ -443,11 +420,10 @@ class TestBatchScrape:
         assert "results" in data
         assert len(data["results"]) == 2
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_batch_scrape_result_structure(self, client: AsyncClient) -> None:
+    def test_batch_scrape_result_structure(self, client: TestClient, require_playwright) -> None:
         """Batch results have correct structure."""
-        response = await client.post("/batch/scrape", json={
+        response = client.post("/batch/scrape", json={
             "urls": ["https://example.com"],
         })
 
@@ -458,11 +434,10 @@ class TestBatchScrape:
         assert "success" in result
         assert "word_count" in result
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_batch_scrape_with_options(self, client: AsyncClient) -> None:
+    def test_batch_scrape_with_options(self, client: TestClient, require_playwright) -> None:
         """Batch scrape with configuration options."""
-        response = await client.post("/batch/scrape", json={
+        response = client.post("/batch/scrape", json={
             "urls": ["https://example.com"],
             "output_format": "markdown",
             "only_main_content": True,
@@ -471,34 +446,30 @@ class TestBatchScrape:
 
         assert response.status_code == 200
 
-    @pytest.mark.asyncio
-    async def test_batch_scrape_empty_urls(self, client: AsyncClient) -> None:
+    def test_batch_scrape_empty_urls(self, client: TestClient) -> None:
         """Empty URLs list returns 422."""
-        response = await client.post("/batch/scrape", json={
+        response = client.post("/batch/scrape", json={
             "urls": [],
         })
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_batch_scrape_too_many_urls(self, client: AsyncClient) -> None:
+    def test_batch_scrape_too_many_urls(self, client: TestClient) -> None:
         """Too many URLs returns 422."""
-        response = await client.post("/batch/scrape", json={
+        response = client.post("/batch/scrape", json={
             "urls": [f"https://example.com/{i}" for i in range(200)],
         })
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_batch_scrape_mixed_success(self, client: AsyncClient) -> None:
+    def test_batch_scrape_mixed_success(self, client: TestClient, require_playwright) -> None:
         """Batch with valid and invalid URLs."""
-        response = await client.post("/batch/scrape", json={
+        response = client.post("/batch/scrape", json={
             "urls": [
                 "https://example.com",
                 "https://this-domain-does-not-exist-12345.com",
             ],
-            "timeout": 10,
         })
 
         assert response.status_code == 200
@@ -521,20 +492,18 @@ class TestBatchScrape:
 class TestResponseHeaders:
     """Tests for response headers."""
 
-    @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_response_time_header(self, client: AsyncClient) -> None:
+    def test_response_time_header(self, client: TestClient) -> None:
         """Response includes X-Response-Time header."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
         })
 
         assert "x-response-time" in response.headers
 
-    @pytest.mark.asyncio
-    async def test_content_type_json(self, client: AsyncClient) -> None:
+    def test_content_type_json(self, client: TestClient) -> None:
         """Response Content-Type is application/json."""
-        response = await client.post("/scrape", json={
+        response = client.post("/scrape", json={
             "url": "https://example.com",
         })
 

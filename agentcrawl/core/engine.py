@@ -52,12 +52,14 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from agentcrawl.browser.config import BrowserConfig
 from agentcrawl.browser.manager import BrowserManager
 from agentcrawl.config.crawler_config import CrawlerConfig
 from agentcrawl.config.settings import Settings
+
+if TYPE_CHECKING:
+    from agentcrawl.browser.config import BrowserConfig
 
 logger = logging.getLogger("agentcrawl.core.engine")
 
@@ -436,9 +438,18 @@ class CrawlEngine:
             cache_key = self._build_cache_key(url, config)
             cached = await self._cache_manager.get(cache_key)
             if cached:
-                cached.cached = True
-                self._stats.record_scrape(cached)
-                return cached
+                # Handle both dict and CrawlResult objects
+                if hasattr(cached, 'cached'):
+                    cached.cached = True
+                    self._stats.record_scrape(cached)
+                    return cached
+                elif isinstance(cached, dict):
+                    cached["cached"] = True
+                    # Convert dict back to CrawlResult
+                    cached_obj = CrawlResult(**cached)
+                    cached_obj.cached = True
+                    self._stats.record_scrape(cached_obj)
+                    return cached_obj
 
         # Scrape
         start_time = time.perf_counter()
@@ -449,7 +460,8 @@ class CrawlEngine:
         # Cache result
         if config.cache and self._cache_manager and result.success:
             cache_key = self._build_cache_key(url, config)
-            await self._cache_manager.set(cache_key, result, ttl=config.cache_ttl)
+            # Convert to dict for proper JSON serialization
+            await self._cache_manager.set(cache_key, result.to_dict(), ttl=config.cache_ttl)
 
         self._stats.record_scrape(result)
         return result
@@ -478,32 +490,44 @@ class CrawlEngine:
             1. Fetch HTML via browser
             2. Parse HTML
             3. Convert to Markdown/JSON
-            3. Content filtering (if enabled)
-            4. Chunking (if enabled)
-            5. Citations extraction
+            4. Content filtering (if enabled)
+            5. Chunking (if enabled)
+            6. Citations extraction
         """
-        # This would be implemented in full version
-        # For now, return a basic result
+        from agentcrawl.core.pipeline import Pipeline, PipelineContext
+
         result = CrawlResult(url=url)
 
         if not self._browser_manager:
             result.error = "Browser not initialized"
             return result
 
-        page = await self._browser_manager.get_page()
-        try:
-            await page.goto(url, wait_until="networkidle", timeout=config.timeout * 1000)
-            html = await page.content()
-            result.raw_html = html
-            result.html = html
-            result.status_code = 200
-            result.success = True
-            # Simplified - full version would process through pipeline
-        except Exception as e:
-            result.error = str(e)
-            result.success = False
-        finally:
-            await self._browser_manager.release_page(page)
+        # Create pipeline with browser manager and cache manager
+        pipeline = Pipeline.scrape_pipeline(
+            browser_manager=self._browser_manager,
+            cache_manager=self._cache_manager if config.cache else None,
+        )
+
+        # Execute pipeline
+        ctx = PipelineContext(url=url, config=config)
+        await pipeline.execute(ctx)
+
+        # Copy pipeline results to CrawlResult
+        result.markdown = ctx.markdown
+        result.html = ctx.html
+        result.text = ctx.text
+        result.raw_html = ctx.raw_html
+        result.status_code = ctx.status_code
+        result.metadata = ctx.metadata
+        result.links = ctx.links
+        result.chunks = ctx.chunks
+        result.citations = ctx.citations
+        result.extracted_data = ctx.extracted_data
+        result.screenshot = ctx.screenshot
+        result.success = ctx.status_code == 200 and ctx.error is None
+        result.error = ctx.error
+        result.word_count = ctx.word_count
+        result.token_count = ctx.token_count
 
         return result
 

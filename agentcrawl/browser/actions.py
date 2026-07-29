@@ -64,10 +64,12 @@ from __future__ import annotations
 import asyncio
 import base64
 import logging
-from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 logger = logging.getLogger("agentcrawl.browser.actions")
 
@@ -223,12 +225,12 @@ class Action:
                 raise ValueError(
                     f"Unknown action type: '{self.type}'. "
                     f"Available: {', '.join(a.value for a in ActionType)}"
-                )
+                ) from None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Action:
         """Create an Action from a dictionary."""
-        known_fields = {f.name for f in cls.__dataclass__.fields.values()}  # type: ignore[attr-defined]
+        known_fields = {f.name for f in cls.__dataclass_fields__.values()}
         filtered = {k: v for k, v in data.items() if k in known_fields}
         return cls(**filtered)
 
@@ -407,8 +409,8 @@ class PageActions:
                     try:
                         screenshot_bytes = await page.screenshot(full_page=False)
                         result.screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Failed to capture screenshot on error: %s", e)
 
                 if not action.optional and self._stop_on_error:
                     logger.error(
@@ -776,7 +778,7 @@ class PageActionsBuilder:
     def screenshot(
         self,
         full_page: bool = True,
-        format: str = "png",
+        image_format: str = "png",
         quality: int = 80,
         selector: str | None = None,
     ) -> PageActionsBuilder:
@@ -787,7 +789,7 @@ class PageActionsBuilder:
         self._actions.append(Action(
             type=ActionType.SCREENSHOT,
             full_page=full_page,
-            format=format,
+            format=image_format,
             quality=quality,
             selector=selector,
             description=desc,

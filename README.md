@@ -562,18 +562,25 @@ docker compose up -d
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-pytest tests/ -v
-
-# Unit tests only
+# Unit tests (no browser needed)
 pytest tests/unit/ -v
 
-# Integration tests (requires running server)
-pytest tests/integration/ -v
+# Integration tests (requires Playwright + network)
+playwright install chromium
+playwright install-deps chromium  # Linux only, needs sudo
+pytest tests/integration/ -v --run-integration
 
-# With coverage
-pytest tests/ --cov=agentcrawl --cov-report=html
+# All tests
+pytest tests/ -v --run-integration
+
+# Or use Makefile
+make test          # unit only
+make test-all      # unit + integration
 ```
+
+### CI Configuration
+
+GitHub Actions runs tests on Python 3.11, 3.12, 3.13 with Playwright Chromium pre-installed. See `.github/workflows/ci.yml`.
 
 ---
 
