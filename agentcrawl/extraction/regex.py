@@ -76,8 +76,6 @@ from typing import Any
 
 from agentcrawl.extraction.base import (
     ExtractionConfig,
-    ExtractionResult,
-    ExtractionStatus,
     ExtractionStrategy,
 )
 

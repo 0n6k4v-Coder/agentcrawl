@@ -6,7 +6,7 @@ FastAPI dependency injection functions for authentication,
 rate limiting, engine access, and request validation.
 
 Usage:
-    from agentcrawl.server.api.deps import (
+    from server.api.deps import (
         get_engine,
         get_settings,
         verify_api_key,
@@ -27,10 +27,9 @@ from __future__ import annotations
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, Header, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("agentcrawl.server.deps")
 
@@ -46,7 +45,7 @@ def get_state() -> Any:
     Returns:
         AppState instance.
     """
-    from agentcrawl.server.app import get_state as _get_state
+    from server.app import get_state as _get_state
 
     return _get_state()
 

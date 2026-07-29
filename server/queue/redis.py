@@ -18,7 +18,7 @@ Prerequisites:
     pip install redis
 
 Usage:
-    from agentcrawl.server.queue.redis import RedisQueueBackend
+    from server.queue.redis import RedisQueueBackend
 
     backend = RedisQueueBackend(redis_url="redis://localhost:6379")
     await backend.start()
@@ -34,7 +34,7 @@ import logging
 import time
 from typing import Any
 
-from agentcrawl.server.queue.base import (
+from server.queue.base import (
     JobStatus,
     QueueBackend,
     QueueItem,

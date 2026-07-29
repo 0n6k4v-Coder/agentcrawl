@@ -58,8 +58,6 @@ from typing import Any
 
 from agentcrawl.extraction.base import (
     ExtractionConfig,
-    ExtractionResult,
-    ExtractionStatus,
     ExtractionStrategy,
 )
 
@@ -249,9 +247,10 @@ class FitMarkdownExtractor(ExtractionStrategy):
             Cleaned HTML string.
         """
         try:
+            from copy import deepcopy
+
             from lxml import html as lxml_html
             from lxml.html import tostring
-            from copy import deepcopy
         except ImportError:
             # Fallback: return raw HTML
             return html

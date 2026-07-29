@@ -12,7 +12,7 @@ Modules:
     rate_limiter — Rate limiting algorithms and middleware
 
 Quick Start:
-    from agentcrawl.server.auth import (
+    from server.auth import (
         APIKeyManager,
         JWTManager,
         AuthMiddleware,
@@ -36,28 +36,32 @@ Quick Start:
 from __future__ import annotations
 
 # API Key
-from agentcrawl.server.auth.api_key import (
+from server.auth.api_key import (
     APIKeyInfo,
     APIKeyManager,
     CreatedKey,
     KeyScope,
-    ValidationResult as ApiKeyValidationResult,
     get_api_key_manager,
     require_api_key,
 )
+from server.auth.api_key import (
+    ValidationResult as ApiKeyValidationResult,
+)
 
 # JWT
-from agentcrawl.server.auth.jwt import (
+from server.auth.jwt import (
     JWTManager,
     TokenClaims,
     TokenPair,
-    ValidationResult as JWTValidationResult,
     get_jwt_manager,
     require_jwt,
 )
+from server.auth.jwt import (
+    ValidationResult as JWTValidationResult,
+)
 
 # Middleware
-from agentcrawl.server.auth.middleware import (
+from server.auth.middleware import (
     AuthContext,
     AuthMiddleware,
     RequestLoggingMiddleware,
@@ -65,15 +69,14 @@ from agentcrawl.server.auth.middleware import (
 )
 
 # Rate Limiter
-from agentcrawl.server.auth.rate_limiter import (
+from server.auth.rate_limiter import (
     RateLimitAlgorithm,
     RateLimitConfig,
+    RateLimiter,
     RateLimitMiddleware,
     RateLimitResult,
-    RateLimiter,
     get_rate_limiter,
 )
-
 
 __all__ = [
     # API Key

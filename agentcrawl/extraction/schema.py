@@ -53,7 +53,6 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -1043,8 +1042,8 @@ def infer_schema_from_html(
 __all__ = [
     "FieldDef",
     "SchemaBuilder",
-    "SchemaTemplate",
     "SchemaConverter",
+    "SchemaTemplate",
     "SchemaValidator",
     "infer_schema_from_html",
 ]

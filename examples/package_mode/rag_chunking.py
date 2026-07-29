@@ -16,9 +16,7 @@ Run:
 from __future__ import annotations
 
 import asyncio
-import json
 import time
-
 
 # Sample content for demonstrations
 SAMPLE_MARKDOWN = """\
@@ -194,7 +192,7 @@ async def example_regex_chunking() -> None:
     result = chunker.chunk(SAMPLE_MARKDOWN)
 
     print(f"  Total chunks: {result.total_chunks}")
-    print(f"  Pattern: code blocks")
+    print("  Pattern: code blocks")
 
     for chunk in result.chunks[:4]:
         has_code = "```" in chunk.text
@@ -361,7 +359,7 @@ async def example_chunk_metadata() -> None:
     print(f"  Prepared {len(documents_for_vector_store)} documents for vector store")
 
     for doc in documents_for_vector_store[:3]:
-        print(f"\n  Document:")
+        print("\n  Document:")
         print(f"    chunk_id: {doc['metadata']['chunk_id']}")
         print(f"    heading: {doc['metadata']['heading']}")
         print(f"    tokens: {doc['metadata']['token_count']}")
@@ -375,10 +373,10 @@ async def example_chunk_metadata() -> None:
 async def example_compare_strategies() -> None:
     """Compare different chunking strategies."""
     from agentcrawl.content import (
-        TopicChunker,
-        SentenceChunker,
         FixedChunker,
         RegexChunker,
+        SentenceChunker,
+        TopicChunker,
     )
 
     print("\n[9] Strategy Comparison")
@@ -457,15 +455,15 @@ async def example_full_rag_pipeline() -> None:
     print(f"  Total tokens: {sum(c['metadata']['token_count'] for c in all_chunks)}")
     print(f"  Pipeline time: {elapsed:.0f}ms")
 
-    print(f"\n  Ready for vector store ingestion:")
+    print("\n  Ready for vector store ingestion:")
     for chunk in all_chunks[:3]:
         print(f"    [{chunk['metadata']['heading']}] {chunk['metadata']['token_count']} tokens")
         print(f"      {chunk['text'][:80]}...")
 
     # Conceptual: feed to vector store
-    print(f"\n  # Next step: embed and store")
-    print(f"  # embeddings = embedding_model.embed([c['text'] for c in all_chunks])")
-    print(f"  # vector_store.add(embeddings, all_chunks)")
+    print("\n  # Next step: embed and store")
+    print("  # embeddings = embedding_model.embed([c['text'] for c in all_chunks])")
+    print("  # vector_store.add(embeddings, all_chunks)")
 
 
 # ══════════════════════════════════════════════════════════════

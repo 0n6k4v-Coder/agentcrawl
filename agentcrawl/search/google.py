@@ -39,7 +39,7 @@ import logging
 import re
 import time
 from typing import Any
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import urlparse
 
 from agentcrawl.search.engine import SearchProvider, SearchResult
 

@@ -60,7 +60,6 @@ from typing import Any
 
 from agentcrawl.crawling.base import (
     CrawlConfig,
-    CrawlProgress,
     CrawlStrategy,
     DiscoveredURL,
     URLFilter,
@@ -131,6 +130,7 @@ class BFSCrawler(CrawlStrategy):
         super().__init__(
             max_depth=max_depth,
             max_pages=max_pages,
+            max_concurrent=max_concurrent,
             url_filter=url_filter,
             url_scorer=url_scorer,
             config=config,

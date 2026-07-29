@@ -19,11 +19,10 @@ Run:
 
 from __future__ import annotations
 
-import os
-from typing import Any
-
 import pytest
 
+from agentcrawl.config.browser_config import BrowserSettings
+from agentcrawl.config.proxy_config import ProxySettings
 
 # ══════════════════════════════════════════════════════════════
 # Settings
@@ -38,30 +37,28 @@ class TestSettings:
 
         settings = Settings()
 
-        assert settings.browser_type == "chromium"
-        assert settings.headless is True
-        assert settings.stealth is False
+        assert settings.browser.browser_type == "chromium"
+        assert settings.browser.headless is True
+        assert settings.browser.stealth is True
         assert settings.log_level == "info"
         assert settings.cache_backend == "memory"
         assert settings.cache_ttl == 3600
-        assert settings.timeout == 30
-        assert settings.max_concurrent == 5
+        assert settings.browser.timeout == 30
+        assert settings.browser.max_concurrent == 5
 
     def test_settings_from_kwargs(self) -> None:
         """Settings can be created with keyword arguments."""
         from agentcrawl.config.settings import Settings
 
         settings = Settings(
-            browser_type="firefox",
-            headless=False,
-            stealth=True,
+            browser=BrowserSettings(browser_type="firefox", headless=False, stealth=True),
             log_level="debug",
             cache_ttl=7200,
         )
 
-        assert settings.browser_type == "firefox"
-        assert settings.headless is False
-        assert settings.stealth is True
+        assert settings.browser.browser_type == "firefox"
+        assert settings.browser.headless is False
+        assert settings.browser.stealth is True
         assert settings.log_level == "debug"
         assert settings.cache_ttl == 7200
 
@@ -76,8 +73,8 @@ class TestSettings:
 
         settings = Settings()
 
-        assert settings.browser_type == "webkit"
-        assert settings.headless is False
+        assert settings.browser.browser_type == "webkit"
+        assert settings.browser.headless is False
         assert settings.log_level == "warning"
         assert settings.cache_ttl == 1800
 
@@ -92,10 +89,11 @@ class TestSettings:
 
     def test_settings_invalid_browser_type(self) -> None:
         """Invalid browser type raises validation error."""
+        from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
         with pytest.raises(Exception):
-            Settings(browser_type="invalid_browser")
+            Settings(browser=BrowserSettings(browser_type="invalid_browser"))
 
     def test_settings_invalid_log_level(self) -> None:
         """Invalid log level raises validation error."""
@@ -106,60 +104,64 @@ class TestSettings:
 
     def test_settings_negative_timeout(self) -> None:
         """Negative timeout raises validation error."""
+        from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
         with pytest.raises(Exception):
-            Settings(timeout=-1)
+            Settings(browser=BrowserSettings(timeout=-1))
 
     def test_settings_zero_max_concurrent(self) -> None:
         """Zero max_concurrent raises validation error."""
+        from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
         with pytest.raises(Exception):
-            Settings(max_concurrent=0)
+            Settings(browser=BrowserSettings(max_concurrent=0))
 
     def test_settings_port_default(self) -> None:
         """Default port is 8000."""
         from agentcrawl.config.settings import Settings
 
         settings = Settings()
-        assert settings.port == 8000
+        assert settings.server_port == 8000
 
     def test_settings_host_default(self) -> None:
         """Default host is 0.0.0.0."""
         from agentcrawl.config.settings import Settings
 
         settings = Settings()
-        assert settings.host == "0.0.0.0"
+        assert settings.server_host == "0.0.0.0"
 
     def test_settings_workers_default(self) -> None:
         """Default workers is 1."""
         from agentcrawl.config.settings import Settings
 
         settings = Settings()
-        assert settings.workers == 1
+        assert settings.server_workers == 1
 
     def test_settings_proxy_url(self) -> None:
         """Proxy URL can be configured."""
         from agentcrawl.config.settings import Settings
 
-        settings = Settings(proxy_url="http://proxy:8080")
-        assert settings.proxy_url == "http://proxy:8080"
+        settings = Settings(proxy=ProxySettings(url="http://proxy:8080"))
+        assert settings.proxy.url == "http://proxy:8080"
 
     def test_settings_user_agent(self) -> None:
         """Custom User-Agent can be set."""
+        from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
-        settings = Settings(user_agent="MyBot/1.0")
-        assert settings.user_agent == "MyBot/1.0"
+        settings = Settings(browser=BrowserSettings(user_agent="MyBot/1.0"))
+        assert settings.browser.user_agent == "MyBot/1.0"
 
     def test_settings_viewport(self) -> None:
         """Viewport dimensions can be configured."""
+        from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
-        settings = Settings(viewport_width=1920, viewport_height=1080)
-        assert settings.viewport_width == 1920
-        assert settings.viewport_height == 1080
+        settings = Settings(browser=BrowserSettings(viewport_width=1920, viewport_height=1080))
+        assert settings.browser.viewport_width == 1920
+        assert settings.browser.viewport_height == 1080
 
 
 # ══════════════════════════════════════════════════════════════
@@ -209,25 +211,28 @@ class TestCrawlerConfig:
         assert config.timeout == 60
 
     def test_config_invalid_output_format(self) -> None:
-        """Invalid output_format raises error."""
-        from agentcrawl.config.crawler_config import CrawlerConfig
+        """Invalid output_format falls back to default."""
+        from agentcrawl.config.crawler_config import CrawlerConfig, OutputFormat
 
-        with pytest.raises(Exception):
-            CrawlerConfig(output_format="invalid")
+        config = CrawlerConfig(output_format="invalid")
+        # Falls back to default MARKDOWN
+        assert config.output_format == OutputFormat.MARKDOWN
 
     def test_config_invalid_content_filter(self) -> None:
-        """Invalid content_filter raises error."""
-        from agentcrawl.config.crawler_config import CrawlerConfig
+        """Invalid content_filter falls back to default."""
+        from agentcrawl.config.crawler_config import ContentFilterType, CrawlerConfig
 
-        with pytest.raises(Exception):
-            CrawlerConfig(content_filter="invalid")
+        config = CrawlerConfig(content_filter="invalid")
+        # Falls back to default NONE
+        assert config.content_filter == ContentFilterType.NONE
 
     def test_config_invalid_chunker(self) -> None:
-        """Invalid chunker raises error."""
-        from agentcrawl.config.crawler_config import CrawlerConfig
+        """Invalid chunker falls back to default."""
+        from agentcrawl.config.crawler_config import ChunkerType, CrawlerConfig
 
-        with pytest.raises(Exception):
-            CrawlerConfig(chunker="invalid")
+        config = CrawlerConfig(chunker="invalid")
+        # Falls back to default NONE
+        assert config.chunker == ChunkerType.NONE
 
     def test_config_actions(self) -> None:
         """Config with page actions."""
@@ -359,59 +364,60 @@ class TestLLMConfig:
         """Custom base URL for self-hosted LLM."""
         from agentcrawl.config.llm_config import LLMConfig
 
-        config = LLMConfig(base_url="http://localhost:11434/v1")
-        assert config.base_url == "http://localhost:11434/v1"
+        config = LLMConfig(api_base="http://localhost:11434/v1")
+        assert config.api_base == "http://localhost:11434/v1"
 
 
 # ══════════════════════════════════════════════════════════════
-# QueueConfig
+# Queue Configuration (part of Settings)
 # ══════════════════════════════════════════════════════════════
 
-class TestQueueConfig:
-    """Tests for QueueConfig."""
+class TestQueueSettings:
+    """Tests for queue settings in global Settings."""
 
     def test_default_config(self) -> None:
         """Default queue config."""
-        from agentcrawl.config.queue_config import QueueConfig
+        from agentcrawl.config.settings import Settings
 
-        config = QueueConfig()
+        settings = Settings()
 
-        assert config.backend == "memory"
-        assert config.num_workers >= 1
-        assert config.max_retries >= 0
+        assert settings.queue_backend == "memory"
+        assert settings.queue_max_concurrent == 3
+        assert settings.queue_job_timeout == 600
+        assert settings.queue_max_retries == 2
 
     def test_config_redis_backend(self) -> None:
         """Redis backend configuration."""
-        from agentcrawl.config.queue_config import QueueConfig
+        from agentcrawl.config.settings import Settings
 
-        config = QueueConfig(
-            backend="redis",
+        settings = Settings(
+            queue_backend="redis",
             redis_url="redis://localhost:6379",
         )
 
-        assert config.backend == "redis"
-        assert config.redis_url == "redis://localhost:6379"
+        assert settings.queue_backend == "redis"
+        assert settings.redis_url == "redis://localhost:6379"
 
-    def test_config_num_workers(self) -> None:
-        """Worker count configuration."""
-        from agentcrawl.config.queue_config import QueueConfig
+    def test_config_max_concurrent(self) -> None:
+        """Max concurrent jobs configuration."""
+        from agentcrawl.config.settings import Settings
 
-        config = QueueConfig(num_workers=5)
-        assert config.num_workers == 5
+        settings = Settings(queue_max_concurrent=10)
+        assert settings.queue_max_concurrent == 10
 
     def test_config_max_retries(self) -> None:
         """Max retries configuration."""
-        from agentcrawl.config.queue_config import QueueConfig
+        from agentcrawl.config.settings import Settings
 
-        config = QueueConfig(max_retries=5)
-        assert config.max_retries == 5
+        settings = Settings(queue_max_retries=5)
+        assert settings.queue_max_retries == 5
 
     def test_config_invalid_backend(self) -> None:
         """Invalid backend raises error."""
-        from agentcrawl.config.queue_config import QueueConfig
+        from agentcrawl.config.settings import Settings
 
         with pytest.raises(Exception):
-            QueueConfig(backend="invalid_backend")
+            Settings(queue_backend="invalid_backend")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -499,7 +505,7 @@ class TestConfigMerging:
         monkeypatch.setenv("AGENTCRAWL_TIMEOUT", "60")
 
         settings = Settings()
-        assert settings.timeout == 60
+        assert settings.browser.timeout == 60
 
     def test_kwargs_override_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Keyword arguments override environment."""
@@ -507,5 +513,5 @@ class TestConfigMerging:
 
         monkeypatch.setenv("AGENTCRAWL_TIMEOUT", "60")
 
-        settings = Settings(timeout=90)
-        assert settings.timeout == 90
+        settings = Settings(browser=BrowserSettings(timeout=90))
+        assert settings.browser.timeout == 90

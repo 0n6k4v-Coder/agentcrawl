@@ -11,7 +11,7 @@ Each tool is defined with:
     - handler: Async function that executes the tool
 
 Usage:
-    from agentcrawl.server.mcp.tools import ToolRegistry
+    from server.mcp.tools import ToolRegistry
 
     registry = ToolRegistry()
 
@@ -26,8 +26,9 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger("agentcrawl.mcp.tools")
 
@@ -383,7 +384,7 @@ async def handle_crawl_website(args: dict[str, Any]) -> str:
     Returns:
         JSON string with crawled pages.
     """
-    from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+    from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
     url = args.get("url", "")
     if not url:
@@ -473,8 +474,9 @@ async def handle_extract_data(args: dict[str, Any]) -> str:
     Returns:
         JSON string with extracted data.
     """
-    from agentcrawl import CrawlEngine
     from pydantic import create_model
+
+    from agentcrawl import CrawlEngine
 
     url = args.get("url", "")
     fields_str = args.get("fields", "")
@@ -491,7 +493,7 @@ async def handle_extract_data(args: dict[str, Any]) -> str:
         return _error("No valid fields specified")
 
     try:
-        field_definitions = {name: (str, "") for name in field_names}
+        field_definitions = dict.fromkeys(field_names, (str, ""))
         DynamicModel = create_model("ExtractedData", **field_definitions)
 
         async with CrawlEngine.default() as engine:

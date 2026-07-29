@@ -11,7 +11,7 @@ Each schema includes:
     - Example values
 
 Usage:
-    from agentcrawl.server.schemas.requests import (
+    from server.schemas.requests import (
         ScrapeRequest,
         CrawlRequest,
         SearchRequest,
@@ -27,7 +27,6 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
-
 
 # ══════════════════════════════════════════════════════════════
 # Scrape

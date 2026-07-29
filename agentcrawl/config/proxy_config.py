@@ -38,7 +38,6 @@ Usage:
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -384,7 +383,7 @@ class ProxySettings(BaseSettings):
             return []
 
         urls: list[str] = []
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#"):
@@ -495,6 +494,7 @@ class ProxySettings(BaseSettings):
             Dictionary mapping proxy URL to health status.
         """
         import asyncio
+
         import httpx
 
         urls = await self.load_proxies()

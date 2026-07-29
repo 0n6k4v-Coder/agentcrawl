@@ -25,21 +25,19 @@ Usage:
 
 from __future__ import annotations
 
+from collections.abc import Callable, Coroutine
 from typing import (
     Any,
-    Callable,
-    Coroutine,
     Protocol,
     TypeAlias,
-    TypeGuard,
     TypedDict,
+    TypeGuard,
     runtime_checkable,
 )
 
 # ──────────────────────────────────────────────────────────────
 # Re-exports from executor
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.hooks.executor import (
     HookContext,
     HookEvent,
@@ -51,13 +49,11 @@ from agentcrawl.hooks.executor import (
 # ──────────────────────────────────────────────────────────────
 # Re-exports from registry
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.hooks.registry import (
     HookMetadata,
     HookRegistry,
     hook,
 )
-
 
 # ══════════════════════════════════════════════════════════════
 # Type Aliases

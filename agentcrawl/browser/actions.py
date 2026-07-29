@@ -64,9 +64,10 @@ from __future__ import annotations
 import asyncio
 import base64
 import logging
-from dataclasses import dataclass, field
+from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Literal, Sequence
+from typing import Any
 
 logger = logging.getLogger("agentcrawl.browser.actions")
 

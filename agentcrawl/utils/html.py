@@ -42,7 +42,6 @@ from __future__ import annotations
 import html as html_module
 import logging
 import re
-from typing import Any
 
 logger = logging.getLogger("agentcrawl.utils.html")
 

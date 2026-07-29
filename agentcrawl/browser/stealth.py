@@ -42,11 +42,9 @@ Usage:
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import random
-import string
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -342,474 +340,485 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     """
     fp_json = json.dumps(fp.to_dict())
 
-    return f"""
-(() => {{
-  'use strict';
+    # Build the script by concatenation to avoid format string issues with
+    # JavaScript braces, backslashes, and template literals.
+    parts = []
+    parts.append("(() => {")
+    parts.append("  'use strict';")
+    parts.append("")
+    parts.append(f"  const FP = {fp_json};")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 1. Remove navigator.webdriver")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  Object.defineProperty(navigator, 'webdriver', {")
+    parts.append("    get: () => undefined,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  // Also patch the prototype")
+    parts.append("  const originalDesc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'webdriver');")
+    parts.append("  if (originalDesc) {")
+    parts.append("    Object.defineProperty(Navigator.prototype, 'webdriver', {")
+    parts.append("      get: () => undefined,")
+    parts.append("      configurable: true,")
+    parts.append("    });")
+    parts.append("  }")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 2. Inject Chrome runtime object")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  if (!window.chrome) {")
+    parts.append("    window.chrome = {")
+    parts.append("      app: {")
+    parts.append("        isInstalled: false,")
+    parts.append("        InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' },")
+    parts.append("        RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' },")
+    parts.append("        getDetails: () => null,")
+    parts.append("        getIsInstalled: () => false,")
+    parts.append("      },")
+    parts.append("      runtime: {")
+    parts.append("        OnInstalledReason: {")
+    parts.append("          CHROME_UPDATE: 'chrome_update',")
+    parts.append("          INSTALL: 'install',")
+    parts.append("          SHARED_MODULE_UPDATE: 'shared_module_update',")
+    parts.append("          UPDATE: 'update',")
+    parts.append("        },")
+    parts.append("        OnRestartRequiredReason: {")
+    parts.append("          APP_UPDATE: 'app_update',")
+    parts.append("          OS_UPDATE: 'os_update',")
+    parts.append("          PERIODIC: 'periodic',")
+    parts.append("        },")
+    parts.append("        PlatformArch: { ARM: 'arm', ARM64: 'arm64', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },")
+    parts.append("        PlatformNaclArch: { ARM: 'arm', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },")
+    parts.append("        PlatformOs: { ANDROID: 'android', CROS: 'cros', LINUX: 'linux', MAC: 'mac', OPENBSD: 'openbsd', WIN: 'win' },")
+    parts.append("        RequestUpdateCheckStatus: { NO_UPDATE: 'no_update', THROTTLED: 'throttled', UPDATE_AVAILABLE: 'update_available' },")
+    parts.append("        connect: function() { return { onDisconnect: { addListener: function() {} }, onMessage: { addListener: function() {} }, postMessage: function() {} }; },")
+    parts.append("        sendMessage: function() { if (arguments.length > 0 && typeof arguments[arguments.length - 1] === 'function') { arguments[arguments.length - 1](); } },")
+    parts.append("      },")
+    parts.append("      csi: function() { return { startE: Date.now(), onloadT: Date.now() + 100, pageT: Date.now() + 100, tran: 15 }; },")
+    parts.append("      loadTimes: function() {")
+    parts.append("        return {")
+    parts.append("          commitLoadTime: Date.now() / 1000,")
+    parts.append("          connectionInfo: 'h2',")
+    parts.append("          finishDocumentLoadTime: Date.now() / 1000,")
+    parts.append("          finishLoadTime: Date.now() / 1000,")
+    parts.append("          firstPaintAfterLoadTime: 0,")
+    parts.append("          firstPaintTime: Date.now() / 1000,")
+    parts.append("          navigationType: 'Other',")
+    parts.append("          npnNegotiatedProtocol: 'h2',")
+    parts.append("          requestTime: Date.now() / 1000 - 0.16,")
+    parts.append("          startLoadTime: Date.now() / 1000 - 0.16,")
+    parts.append("          wasAlternateProtocolAvailable: false,")
+    parts.append("          wasFetchedViaSpdy: true,")
+    parts.append("          wasNpnNegotiated: true,")
+    parts.append("        };")
+    parts.append("      },")
+    parts.append("    };")
+    parts.append("  }")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 3. Spoof navigator properties")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  Object.defineProperty(navigator, 'platform', {")
+    parts.append("    get: () => FP.platform,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  Object.defineProperty(navigator, 'hardwareConcurrency', {")
+    parts.append("    get: () => FP.hardware_concurrency,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  Object.defineProperty(navigator, 'deviceMemory', {")
+    parts.append("    get: () => FP.device_memory,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  Object.defineProperty(navigator, 'maxTouchPoints', {")
+    parts.append("    get: () => FP.max_touch_points,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  Object.defineProperty(navigator, 'language', {")
+    parts.append("    get: () => FP.language,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  Object.defineProperty(navigator, 'languages', {")
+    parts.append("    get: () => Object.freeze([...FP.languages]),")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 4. Spoof plugins and MIME types")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const makePlugin = (name, description, filename, mimeTypes) => {")
+    parts.append("    const plugin = Object.create(Plugin.prototype);")
+    parts.append("    Object.defineProperties(plugin, {")
+    parts.append("      name: { get: () => name, enumerable: true },")
+    parts.append("      description: { get: () => description, enumerable: true },")
+    parts.append("      filename: { get: () => filename, enumerable: true },")
+    parts.append("      length: { get: () => mimeTypes.length, enumerable: true },")
+    parts.append("    });")
+    parts.append("    mimeTypes.forEach((mt, i) => {")
+    parts.append("      Object.defineProperty(plugin, i, { get: () => mt, enumerable: true });")
+    parts.append("    });")
+    parts.append("    return plugin;")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  const pdfMime = Object.create(MimeType.prototype);")
+    parts.append("  Object.defineProperties(pdfMime, {")
+    parts.append("    type: { get: () => 'application/pdf', enumerable: true },")
+    parts.append("    suffixes: { get: () => 'pdf', enumerable: true },")
+    parts.append("    description: { get: () => 'Portable Document Format', enumerable: true },")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  const pdfxMime = Object.create(MimeType.prototype);")
+    parts.append("  Object.defineProperties(pdfxMime, {")
+    parts.append("    type: { get: () => 'application/x-google-chrome-pdf', enumerable: true },")
+    parts.append("    suffixes: { get: () => 'pdf', enumerable: true },")
+    parts.append("    description: { get: () => 'Portable Document Format', enumerable: true },")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  const chromePlugins = [")
+    parts.append("    makePlugin('PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
+    parts.append("    makePlugin('Chrome PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
+    parts.append("    makePlugin('Chromium PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
+    parts.append("    makePlugin('Microsoft Edge PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
+    parts.append("    makePlugin('WebKit built-in PDF', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
+    parts.append("  ];")
+    parts.append("")
+    parts.append("  Object.defineProperty(navigator, 'plugins', {")
+    parts.append("    get: () => {")
+    parts.append("      const list = Object.create(PluginArray.prototype);")
+    parts.append("      chromePlugins.forEach((p, i) => {")
+    parts.append("        Object.defineProperty(list, i, { get: () => p, enumerable: true });")
+    parts.append("      });")
+    parts.append("      Object.defineProperty(list, 'length', { get: () => chromePlugins.length, enumerable: true });")
+    parts.append("      list.item = (i) => chromePlugins[i] || null;")
+    parts.append("      list.namedItem = (n) => chromePlugins.find(p => p.name === n) || null;")
+    parts.append("      return list;")
+    parts.append("    },")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  Object.defineProperty(navigator, 'mimeTypes', {")
+    parts.append("    get: () => {")
+    parts.append("      const list = Object.create(MimeTypeArray.prototype);")
+    parts.append("      const mimes = [pdfMime, pdfxMime];")
+    parts.append("      mimes.forEach((m, i) => {")
+    parts.append("        Object.defineProperty(list, i, { get: () => m, enumerable: true });")
+    parts.append("      });")
+    parts.append("      Object.defineProperty(list, 'length', { get: () => mimes.length, enumerable: true });")
+    parts.append("      list.item = (i) => mimes[i] || null;")
+    parts.append("      list.namedItem = (n) => mimes.find(m => m.type === n) || null;")
+    parts.append("      return list;")
+    parts.append("    },")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 5. Spoof screen properties")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  Object.defineProperty(screen, 'width', {")
+    parts.append("    get: () => FP.screen_width,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("  Object.defineProperty(screen, 'height', {")
+    parts.append("    get: () => FP.screen_height,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("  Object.defineProperty(screen, 'availWidth', {")
+    parts.append("    get: () => FP.screen_avail_width,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("  Object.defineProperty(screen, 'availHeight', {")
+    parts.append("    get: () => FP.screen_avail_height,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("  Object.defineProperty(screen, 'colorDepth', {")
+    parts.append("    get: () => FP.color_depth,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("  Object.defineProperty(screen, 'pixelDepth', {")
+    parts.append("    get: () => FP.pixel_depth,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  Object.defineProperty(window, 'devicePixelRatio', {")
+    parts.append("    get: () => FP.device_pixel_ratio,")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 6. WebGL fingerprint spoofing")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const originalGetParameter = WebGLRenderingContext.prototype.getParameter;")
+    parts.append("  WebGLRenderingContext.prototype.getParameter = function(parameter) {")
+    parts.append("    // UNMASKED_VENDOR_WEBGL = 0x9245")
+    parts.append("    // UNMASKED_RENDERER_WEBGL = 0x9246")
+    parts.append("    if (parameter === 0x9245) {")
+    parts.append("      return FP.webgl_vendor;")
+    parts.append("    }")
+    parts.append("    if (parameter === 0x9246) {")
+    parts.append("      return FP.webgl_renderer;")
+    parts.append("    }")
+    parts.append("    return originalGetParameter.call(this, parameter);")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  const originalGetParameter2 = WebGL2RenderingContext.prototype.getParameter;")
+    parts.append("  WebGL2RenderingContext.prototype.getParameter = function(parameter) {")
+    parts.append("    if (parameter === 0x9245) {")
+    parts.append("      return FP.webgl_vendor;")
+    parts.append("    }")
+    parts.append("    if (parameter === 0x9246) {")
+    parts.append("      return FP.webgl_renderer;")
+    parts.append("    }")
+    parts.append("    return originalGetParameter2.call(this, parameter);")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 7. Canvas fingerprint noise injection")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const canvasNoiseSeed = FP.canvas_noise_seed;")
+    parts.append("  let canvasNoiseCounter = 0;")
+    parts.append("")
+    parts.append("  const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;")
+    parts.append("  HTMLCanvasElement.prototype.toDataURL = function(type, quality) {")
+    parts.append("    if (this.width > 0 && this.height > 0) {")
+    parts.append("      const ctx = this.getContext('2d');")
+    parts.append("      if (ctx) {")
+    parts.append("        // Generate deterministic noise based on seed")
+    parts.append("        const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;")
+    parts.append("        canvasNoiseCounter++;")
+    parts.append("        const opacity = (noise / 233280) * 0.01; // 0-1% opacity noise")
+    parts.append("        ctx.save();")
+    parts.append("        ctx.globalAlpha = opacity;")
+    parts.append("        ctx.fillStyle = '#ffffff';")
+    parts.append("        ctx.fillRect(0, 0, 1, 1);")
+    parts.append("        ctx.restore();")
+    parts.append("      }")
+    parts.append("    }")
+    parts.append("    return originalToDataURL.call(this, type, quality);")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  const originalToBlob = HTMLCanvasElement.prototype.toBlob;")
+    parts.append("  HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) {")
+    parts.append("    if (this.width > 0 && this.height > 0) {")
+    parts.append("      const ctx = this.getContext('2d');")
+    parts.append("      if (ctx) {")
+    parts.append("        const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;")
+    parts.append("        canvasNoiseCounter++;")
+    parts.append("        const opacity = (noise / 233280) * 0.01;")
+    parts.append("        ctx.save();")
+    parts.append("        ctx.globalAlpha = opacity;")
+    parts.append("        ctx.fillStyle = '#ffffff';")
+    parts.append("        ctx.fillRect(0, 0, 1, 1);")
+    parts.append("        ctx.restore();")
+    parts.append("      }")
+    parts.append("    }")
+    parts.append("    return originalToBlob.call(this, callback, type, quality);")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;")
+    parts.append("  CanvasRenderingContext2D.prototype.getImageData = function(sx, sy, sw, sh) {")
+    parts.append("    const imageData = originalGetImageData.call(this, sx, sy, sw, sh);")
+    parts.append("    if (imageData && imageData.data.length > 0) {")
+    parts.append("      const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;")
+    parts.append("      canvasNoiseCounter++;")
+    parts.append("      const noiseValue = Math.floor((noise / 233280) * 2); // 0 or 1")
+    parts.append("      // Apply subtle noise to a few random pixels")
+    parts.append("      for (let i = 0; i < Math.min(4, imageData.data.length / 4); i++) {")
+    parts.append("        const idx = Math.floor(Math.random() * (imageData.data.length / 4)) * 4;")
+    parts.append("        imageData.data[idx] = Math.min(255, imageData.data[idx] + noiseValue);")
+    parts.append("        imageData.data[idx + 1] = Math.min(255, imageData.data[idx + 1] + noiseValue);")
+    parts.append("        imageData.data[idx + 2] = Math.min(255, imageData.data[idx + 2] + noiseValue);")
+    parts.append("      }")
+    parts.append("    }")
+    parts.append("    return imageData;")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 8. AudioContext fingerprint noise")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const audioNoiseSeed = FP.audio_noise_seed;")
+    parts.append("  const originalCreateOscillator = AudioContext.prototype.createOscillator;")
+    parts.append("  AudioContext.prototype.createOscillator = function() {")
+    parts.append("    const osc = originalCreateOscillator.call(this);")
+    parts.append("    const originalStart = osc.start;")
+    parts.append("    osc.start = function(when) {")
+    parts.append("      // Add subtle frequency drift based on seed")
+    parts.append("      const drift = ((audioNoiseSeed * 9301 + 49297) % 233280) / 233280 * 0.001;")
+    parts.append("      osc.frequency.value = osc.frequency.value * (1 + drift);")
+    parts.append("      return originalStart.call(this, when);")
+    parts.append("    };")
+    parts.append("    return osc;")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 9. Permissions API patching")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const originalQuery = navigator.permissions?.query;")
+    parts.append("  if (originalQuery) {")
+    parts.append("    navigator.permissions.query = function(permissionDesc) {")
+    parts.append("      // Override notifications permission to 'prompt' instead of 'default'")
+    parts.append("      if (permissionDesc && permissionDesc.name === 'notifications') {")
+    parts.append("        return Promise.resolve({ state: 'prompt', onchange: null });")
+    parts.append("      }")
+    parts.append("      return originalQuery.call(this, permissionDesc);")
+    parts.append("    };")
+    parts.append("  }")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 10. iframe contentWindow fix")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const originalFrameElement = HTMLIFrameElement.prototype.contentWindow;")
+    parts.append("  Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {")
+    parts.append("    get: function() {")
+    parts.append("      try {")
+    parts.append("        return originalFrameElement.get.call(this);")
+    parts.append("      } catch (e) {")
+    parts.append("        // Return a safe proxy for cross-origin iframes")
+    parts.append("        return {")
+    parts.append("          location: { href: 'about:blank' },")
+    parts.append("          document: { referrer: '' },")
+    parts.append("          navigator: { userAgent: FP.user_agent },")
+    parts.append("        };")
+    parts.append("      }")
+    parts.append("    },")
+    parts.append("    configurable: true,")
+    parts.append("  });")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 11. Function.toString() protection")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const originalToString = Function.prototype.toString;")
+    parts.append("  const nativeCodeRegex = /^function\\\\s+\\\\w+\\\\(\\\\)\\\\s*\\\\{\\\\s*\\\\[native code\\\\]\\\\s*\\\\}$/;")
+    parts.append("")
+    parts.append("  const patchedFunctions = new Map();")
+    parts.append("")
+    parts.append("  const registerNative = (obj, prop, originalName) => {")
+    parts.append("    const fn = obj[prop];")
+    parts.append("    if (typeof fn === 'function') {")
+    parts.append("      patchedFunctions.set(fn, `function ${originalName || prop}() { [native code] }`);")
+    parts.append("    }")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  Function.prototype.toString = function() {")
+    parts.append("    if (patchedFunctions.has(this)) {")
+    parts.append("      return patchedFunctions.get(this);")
+    parts.append("    }")
+    parts.append("    return originalToString.call(this);")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  patchedFunctions.set(Function.prototype.toString, 'function toString() { [native code] }');")
+    parts.append("")
+    parts.append("  // Register key patched functions as \"native\"")
+    parts.append("  registerNative(navigator, 'webdriver', 'get webdriver');")
+    parts.append("  registerNative(navigator, 'plugins', 'get plugins');")
+    parts.append("  registerNative(navigator, 'mimeTypes', 'get mimeTypes');")
+    parts.append("  registerNative(navigator, 'languages', 'get languages');")
+    parts.append("  registerNative(navigator, 'hardwareConcurrency', 'get hardwareConcurrency');")
+    parts.append("  registerNative(navigator, 'deviceMemory', 'get deviceMemory');")
+    parts.append("  registerNative(screen, 'width', 'get width');")
+    parts.append("  registerNative(screen, 'height', 'get height');")
+    parts.append("  registerNative(window, 'devicePixelRatio', 'get devicePixelRatio');")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 12. NetworkInformation spoofing")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  if (navigator.connection) {")
+    parts.append("    Object.defineProperty(navigator.connection, 'rtt', {")
+    parts.append("      get: () => 50,")
+    parts.append("      configurable: true,")
+    parts.append("    });")
+    parts.append("    Object.defineProperty(navigator.connection, 'downlink', {")
+    parts.append("      get: () => 10,")
+    parts.append("      configurable: true,")
+    parts.append("    });")
+    parts.append("    Object.defineProperty(navigator.connection, 'effectiveType', {")
+    parts.append("      get: () => '4g',")
+    parts.append("      configurable: true,")
+    parts.append("    });")
+    parts.append("  }")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 13. Battery API spoofing")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  if (navigator.getBattery) {")
+    parts.append("    const originalGetBattery = navigator.getBattery;")
+    parts.append("    navigator.getBattery = function() {")
+    parts.append("      return originalGetBattery.call(this).then(battery => {")
+    parts.append("        Object.defineProperty(battery, 'charging', { get: () => true, configurable: true });")
+    parts.append("        Object.defineProperty(battery, 'chargingTime', { get: () => 0, configurable: true });")
+    parts.append("        Object.defineProperty(battery, 'dischargingTime', { get: () => Infinity, configurable: true });")
+    parts.append("        Object.defineProperty(battery, 'level', { get: () => 1.0, configurable: true });")
+    parts.append("        return battery;")
+    parts.append("      });")
+    parts.append("    };")
+    parts.append("  }")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 14. Intl.DateTimeFormat timezone consistency")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const originalResolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;")
+    parts.append("  Intl.DateTimeFormat.prototype.resolvedOptions = function() {")
+    parts.append("    const opts = originalResolvedOptions.call(this);")
+    parts.append("    opts.timeZone = FP.timezone;")
+    parts.append("    return opts;")
+    parts.append("  };")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 15. Automation-related property cleanup")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // Remove Playwright/Puppeteer markers")
+    parts.append("  delete window.__playwright;")
+    parts.append("  delete window.__pw_manual;")
+    parts.append("  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;")
+    parts.append("  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;")
+    parts.append("  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;")
+    parts.append("")
+    parts.append("  // Remove Selenium markers")
+    parts.append("  delete window._selenium;")
+    parts.append("  delete window.callSelenium;")
+    parts.append("  delete window._Selenium_IDE_Recorder;")
+    parts.append("")
+    parts.append("  // Remove generic automation markers")
+    parts.append("  const automationProps = [")
+    parts.append("    'domAutomation', 'domAutomationController',")
+    parts.append("    'selenium', 'webdriver', 'driver',")
+    parts.append("    '_phantom', '__nightmare', 'callPhantom',")
+    parts.append("    '__webdriver_evaluate', '__selenium_evaluate',")
+    parts.append("    '__webdriver_script_function', '__webdriver_script_func',")
+    parts.append("    '__webdriver_script_fn', '__fxdriver_evaluate',")
+    parts.append("    '__driver_unwrapped', '__webdriver_unwrapped',")
+    parts.append("    '__driver_evaluate', '__lastWatirAlert',")
+    parts.append("    '__lastWatirConfirm', '__lastWatirPrompt',")
+    parts.append("    '_Selenium_IDE_Recorder', 'calledSelenium',")
+    parts.append("    '_selenium', 'callSelenium',")
+    parts.append("  ];")
+    parts.append("")
+    parts.append("  for (const prop of automationProps) {")
+    parts.append("    try {")
+    parts.append("      delete window[prop];")
+    parts.append("    } catch(e) {}")
+    parts.append("  }")
+    parts.append("")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  // 16. Error stack trace cleanup")
+    parts.append("  // ──────────────────────────────────────────────────────────")
+    parts.append("  const originalPrepareStackTrace = Error.prepareStackTrace;")
+    parts.append("  Error.prepareStackTrace = function(error, structuredStackTrace) {")
+    parts.append("    const stack = originalPrepareStackTrace")
+    parts.append("      ? originalPrepareStackTrace(error, structuredStackTrace)")
+    parts.append("      : structuredStackTrace;")
+    parts.append("    return stack;")
+    parts.append("  };")
+    parts.append("")
+    parts.append("})();")
 
-  const FP = {fp_json};
-
-  // ──────────────────────────────────────────────────────────
-  // 1. Remove navigator.webdriver
-  // ──────────────────────────────────────────────────────────
-  Object.defineProperty(navigator, 'webdriver', {{
-    get: () => undefined,
-    configurable: true,
-  }});
-
-  // Also patch the prototype
-  const originalDesc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'webdriver');
-  if (originalDesc) {{
-    Object.defineProperty(Navigator.prototype, 'webdriver', {{
-      get: () => undefined,
-      configurable: true,
-    }});
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 2. Inject Chrome runtime object
-  // ──────────────────────────────────────────────────────────
-  if (!window.chrome) {{
-    window.chrome = {{
-      app: {{
-        isInstalled: false,
-        InstallState: {{ DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' }},
-        RunningState: {{ CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' }},
-        getDetails: () => null,
-        getIsInstalled: () => false,
-      }},
-      runtime: {{
-        OnInstalledReason: {{
-          CHROME_UPDATE: 'chrome_update',
-          INSTALL: 'install',
-          SHARED_MODULE_UPDATE: 'shared_module_update',
-          UPDATE: 'update',
-        }},
-        OnRestartRequiredReason: {{
-          APP_UPDATE: 'app_update',
-          OS_UPDATE: 'os_update',
-          PERIODIC: 'periodic',
-        }},
-        PlatformArch: {{ ARM: 'arm', ARM64: 'arm64', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' }},
-        PlatformNaclArch: {{ ARM: 'arm', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' }},
-        PlatformOs: {{ ANDROID: 'android', CROS: 'cros', LINUX: 'linux', MAC: 'mac', OPENBSD: 'openbsd', WIN: 'win' }},
-        RequestUpdateCheckStatus: {{ NO_UPDATE: 'no_update', THROTTLED: 'throttled', UPDATE_AVAILABLE: 'update_available' }},
-        connect: function() {{ return {{ onDisconnect: {{ addListener: function() {{}} }}, onMessage: {{ addListener: function() {{}} }}, postMessage: function() {{}} }}; }},
-        sendMessage: function() {{ if (arguments.length > 0 && typeof arguments[arguments.length - 1] === 'function') {{ arguments[arguments.length - 1](); }} }},
-      }},
-      csi: function() {{ return {{ startE: Date.now(), onloadT: Date.now() + 100, pageT: Date.now() + 100, tran: 15 }}; }},
-      loadTimes: function() {{
-        return {{
-          commitLoadTime: Date.now() / 1000,
-          connectionInfo: 'h2',
-          finishDocumentLoadTime: Date.now() / 1000,
-          finishLoadTime: Date.now() / 1000,
-          firstPaintAfterLoadTime: 0,
-          firstPaintTime: Date.now() / 1000,
-          navigationType: 'Other',
-          npnNegotiatedProtocol: 'h2',
-          requestTime: Date.now() / 1000 - 0.16,
-          startLoadTime: Date.now() / 1000 - 0.16,
-          wasAlternateProtocolAvailable: false,
-          wasFetchedViaSpdy: true,
-          wasNpnNegotiated: true,
-        }};
-      }},
-    }};
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 3. Spoof navigator properties
-  // ──────────────────────────────────────────────────────────
-  Object.defineProperty(navigator, 'platform', {{
-    get: () => FP.platform,
-    configurable: true,
-  }});
-
-  Object.defineProperty(navigator, 'hardwareConcurrency', {{
-    get: () => FP.hardware_concurrency,
-    configurable: true,
-  }});
-
-  Object.defineProperty(navigator, 'deviceMemory', {{
-    get: () => FP.device_memory,
-    configurable: true,
-  }});
-
-  Object.defineProperty(navigator, 'maxTouchPoints', {{
-    get: () => FP.max_touch_points,
-    configurable: true,
-  }});
-
-  Object.defineProperty(navigator, 'language', {{
-    get: () => FP.language,
-    configurable: true,
-  }});
-
-  Object.defineProperty(navigator, 'languages', {{
-    get: () => Object.freeze([...FP.languages]),
-    configurable: true,
-  }});
-
-  // ──────────────────────────────────────────────────────────
-  // 4. Spoof plugins and MIME types
-  // ──────────────────────────────────────────────────────────
-  const makePlugin = (name, description, filename, mimeTypes) => {{
-    const plugin = Object.create(Plugin.prototype);
-    Object.defineProperties(plugin, {{
-      name: {{ get: () => name, enumerable: true }},
-      description: {{ get: () => description, enumerable: true }},
-      filename: {{ get: () => filename, enumerable: true }},
-      length: {{ get: () => mimeTypes.length, enumerable: true }},
-    }});
-    mimeTypes.forEach((mt, i) => {{
-      Object.defineProperty(plugin, i, {{ get: () => mt, enumerable: true }});
-    }});
-    return plugin;
-  }};
-
-  const pdfMime = Object.create(MimeType.prototype);
-  Object.defineProperties(pdfMime, {{
-    type: {{ get: () => 'application/pdf', enumerable: true }},
-    suffixes: {{ get: () => 'pdf', enumerable: true }},
-    description: {{ get: () => 'Portable Document Format', enumerable: true }},
-  }});
-
-  const pdfxMime = Object.create(MimeType.prototype);
-  Object.defineProperties(pdfxMime, {{
-    type: {{ get: () => 'application/x-google-chrome-pdf', enumerable: true }},
-    suffixes: {{ get: () => 'pdf', enumerable: true }},
-    description: {{ get: () => 'Portable Document Format', enumerable: true }},
-  }});
-
-  const chromePlugins = [
-    makePlugin('PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),
-    makePlugin('Chrome PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),
-    makePlugin('Chromium PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),
-    makePlugin('Microsoft Edge PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),
-    makePlugin('WebKit built-in PDF', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),
-  ];
-
-  Object.defineProperty(navigator, 'plugins', {{
-    get: () => {{
-      const list = Object.create(PluginArray.prototype);
-      chromePlugins.forEach((p, i) => {{
-        Object.defineProperty(list, i, {{ get: () => p, enumerable: true }});
-      }});
-      Object.defineProperty(list, 'length', {{ get: () => chromePlugins.length, enumerable: true }});
-      list.item = (i) => chromePlugins[i] || null;
-      list.namedItem = (n) => chromePlugins.find(p => p.name === n) || null;
-      list.refresh = () => {{}};
-      list[Symbol.iterator] = function* () {{ yield* chromePlugins; }};
-      return list;
-    }},
-    configurable: true,
-  }});
-
-  Object.defineProperty(navigator, 'mimeTypes', {{
-    get: () => {{
-      const list = Object.create(MimeTypeArray.prototype);
-      const mimes = [pdfMime, pdfxMime];
-      mimes.forEach((m, i) => {{
-        Object.defineProperty(list, i, {{ get: () => m, enumerable: true }});
-      }});
-      Object.defineProperty(list, 'length', {{ get: () => mimes.length, enumerable: true }});
-      list.item = (i) => mimes[i] || null;
-      list.namedItem = (n) => mimes.find(m => m.type === n) || null;
-      list[Symbol.iterator] = function* () {{ yield* mimes; }};
-      return list;
-    }},
-    configurable: true,
-  }});
-
-  // ──────────────────────────────────────────────────────────
-  // 5. WebGL fingerprint spoofing
-  // ──────────────────────────────────────────────────────────
-  const getParameterProxy = (originalFn, vendor, renderer) => {{
-    return function(param) {{
-      const UNMASKED_VENDOR = 37445;
-      const UNMASKED_RENDERER = 37446;
-      if (param === UNMASKED_VENDOR) return vendor;
-      if (param === UNMASKED_RENDERER) return renderer;
-      return originalFn.call(this, param);
-    }};
-  }};
-
-  const patchWebGL = (proto) => {{
-    if (!proto) return;
-    const originalGetParam = proto.getParameter;
-    proto.getParameter = getParameterProxy(
-      originalGetParam,
-      FP.webgl_vendor,
-      FP.webgl_renderer
-    );
-  }};
-
-  patchWebGL(WebGLRenderingContext.prototype);
-  if (typeof WebGL2RenderingContext !== 'undefined') {{
-    patchWebGL(WebGL2RenderingContext.prototype);
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 6. Canvas fingerprint noise
-  // ──────────────────────────────────────────────────────────
-  const CANVAS_SEED = FP.canvas_noise_seed;
-
-  const seededRandom = (seed) => {{
-    let s = seed;
-    return () => {{
-      s = (s * 16807 + 0) % 2147483647;
-      return (s - 1) / 2147483646;
-    }};
-  }};
-
-  const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-  HTMLCanvasElement.prototype.toDataURL = function(type, quality) {{
-    const ctx = this.getContext('2d');
-    if (ctx && this.width > 16 && this.height > 16) {{
-      try {{
-        const imageData = ctx.getImageData(0, 0, Math.min(this.width, 4), Math.min(this.height, 4));
-        const rng = seededRandom(CANVAS_SEED);
-        for (let i = 0; i < imageData.data.length; i += 4) {{
-          imageData.data[i] = imageData.data[i] ^ (Math.floor(rng() * 2));
-        }}
-        ctx.putImageData(imageData, 0, 0);
-      }} catch(e) {{}}
-    }}
-    return originalToDataURL.call(this, type, quality);
-  }};
-
-  const originalToBlob = HTMLCanvasElement.prototype.toBlob;
-  HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) {{
-    const ctx = this.getContext('2d');
-    if (ctx && this.width > 16 && this.height > 16) {{
-      try {{
-        const imageData = ctx.getImageData(0, 0, Math.min(this.width, 4), Math.min(this.height, 4));
-        const rng = seededRandom(CANVAS_SEED + 1);
-        for (let i = 0; i < imageData.data.length; i += 4) {{
-          imageData.data[i] = imageData.data[i] ^ (Math.floor(rng() * 2));
-        }}
-        ctx.putImageData(imageData, 0, 0);
-      }} catch(e) {{}}
-    }}
-    return originalToBlob.call(this, callback, type, quality);
-  }};
-
-  const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
-  CanvasRenderingContext2D.prototype.getImageData = function(...args) {{
-    const imageData = originalGetImageData.apply(this, args);
-    const rng = seededRandom(CANVAS_SEED + 2);
-    for (let i = 0; i < imageData.data.length; i += 4) {{
-      imageData.data[i] = imageData.data[i] ^ (Math.floor(rng() * 2));
-    }}
-    return imageData;
-  }};
-
-  // ──────────────────────────────────────────────────────────
-  // 7. AudioContext fingerprint noise
-  // ──────────────────────────────────────────────────────────
-  const AUDIO_SEED = FP.audio_noise_seed;
-
-  if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {{
-    const AudioCtx = typeof AudioContext !== 'undefined' ? AudioContext : webkitAudioContext;
-
-    const originalCreateOscillator = AudioCtx.prototype.createOscillator;
-    const originalCreateDynamicsCompressor = AudioCtx.prototype.createDynamicsCompressor;
-
-    const originalGetChannelData = AudioBuffer.prototype.getChannelData;
-    AudioBuffer.prototype.getChannelData = function(channel) {{
-      const data = originalGetChannelData.call(this, channel);
-      const rng = seededRandom(AUDIO_SEED + channel);
-      for (let i = 0; i < data.length; i += 100) {{
-        data[i] = data[i] + (rng() - 0.5) * 0.0001;
-      }}
-      return data;
-    }};
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 8. Screen properties
-  // ──────────────────────────────────────────────────────────
-  Object.defineProperty(screen, 'width', {{ get: () => FP.screen_width, configurable: true }});
-  Object.defineProperty(screen, 'height', {{ get: () => FP.screen_height, configurable: true }});
-  Object.defineProperty(screen, 'availWidth', {{ get: () => FP.screen_avail_width, configurable: true }});
-  Object.defineProperty(screen, 'availHeight', {{ get: () => FP.screen_avail_height, configurable: true }});
-  Object.defineProperty(screen, 'colorDepth', {{ get: () => FP.color_depth, configurable: true }});
-  Object.defineProperty(screen, 'pixelDepth', {{ get: () => FP.pixel_depth, configurable: true }});
-
-  Object.defineProperty(window, 'devicePixelRatio', {{
-    get: () => FP.device_pixel_ratio,
-    configurable: true,
-  }});
-
-  // ──────────────────────────────────────────────────────────
-  // 9. Permissions API patch
-  // ──────────────────────────────────────────────────────────
-  if (navigator.permissions) {{
-    const originalQuery = navigator.permissions.query;
-    navigator.permissions.query = function(descriptor) {{
-      if (descriptor.name === 'notifications') {{
-        return Promise.resolve({{ state: Notification.permission }});
-      }}
-      return originalQuery.call(this, descriptor);
-    }};
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 10. iframe contentWindow fix
-  // ──────────────────────────────────────────────────────────
-  const originalAttachShadow = Element.prototype.attachShadow;
-  Element.prototype.attachShadow = function(init) {{
-    return originalAttachShadow.call(this, {{ ...init, mode: 'open' }});
-  }};
-
-  // Patch HTMLIFrameElement contentWindow
-  const iframeProto = HTMLIFrameElement.prototype;
-  const originalContentWindow = Object.getOwnPropertyDescriptor(iframeProto, 'contentWindow');
-  if (originalContentWindow && originalContentWindow.get) {{
-    Object.defineProperty(iframeProto, 'contentWindow', {{
-      get: function() {{
-        const win = originalContentWindow.get.call(this);
-        if (win) {{
-          try {{
-            if (!win.chrome) {{
-              win.chrome = window.chrome;
-            }}
-          }} catch(e) {{}}
-        }}
-        return win;
-      }},
-      configurable: true,
-    }});
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 11. Function.toString() protection
-  // ──────────────────────────────────────────────────────────
-  const originalToString = Function.prototype.toString;
-  const nativeCodeRegex = /^function\\s+\\w+\\(\\)\\s*\\{\\s*\\[native code\\]\\s*\\}$/;
-
-  const patchedFunctions = new Map();
-
-  const registerNative = (obj, prop, originalName) => {{
-    const fn = obj[prop];
-    if (typeof fn === 'function') {{
-      patchedFunctions.set(fn, `function ${{originalName || prop}}() {{ [native code] }}`);
-    }}
-  }};
-
-  Function.prototype.toString = function() {{
-    if (patchedFunctions.has(this)) {{
-      return patchedFunctions.get(this);
-    }}
-    return originalToString.call(this);
-  }};
-
-  patchedFunctions.set(Function.prototype.toString, 'function toString() { [native code] }');
-
-  // Register key patched functions as "native"
-  registerNative(navigator, 'webdriver', 'get webdriver');
-  registerNative(navigator, 'plugins', 'get plugins');
-  registerNative(navigator, 'mimeTypes', 'get mimeTypes');
-  registerNative(navigator, 'languages', 'get languages');
-  registerNative(navigator, 'hardwareConcurrency', 'get hardwareConcurrency');
-  registerNative(navigator, 'deviceMemory', 'get deviceMemory');
-  registerNative(screen, 'width', 'get width');
-  registerNative(screen, 'height', 'get height');
-  registerNative(window, 'devicePixelRatio', 'get devicePixelRatio');
-
-  // ──────────────────────────────────────────────────────────
-  // 12. NetworkInformation spoofing
-  // ──────────────────────────────────────────────────────────
-  if (navigator.connection) {{
-    Object.defineProperty(navigator.connection, 'rtt', {{
-      get: () => 50,
-      configurable: true,
-    }});
-    Object.defineProperty(navigator.connection, 'downlink', {{
-      get: () => 10,
-      configurable: true,
-    }});
-    Object.defineProperty(navigator.connection, 'effectiveType', {{
-      get: () => '4g',
-      configurable: true,
-    }});
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 13. Battery API spoofing
-  // ──────────────────────────────────────────────────────────
-  if (navigator.getBattery) {{
-    const originalGetBattery = navigator.getBattery;
-    navigator.getBattery = function() {{
-      return originalGetBattery.call(this).then(battery => {{
-        Object.defineProperty(battery, 'charging', {{ get: () => true, configurable: true }});
-        Object.defineProperty(battery, 'chargingTime', {{ get: () => 0, configurable: true }});
-        Object.defineProperty(battery, 'dischargingTime', {{ get: () => Infinity, configurable: true }});
-        Object.defineProperty(battery, 'level', {{ get: () => 1.0, configurable: true }});
-        return battery;
-      }});
-    }};
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 14. Intl.DateTimeFormat timezone consistency
-  // ──────────────────────────────────────────────────────────
-  const originalResolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
-  Intl.DateTimeFormat.prototype.resolvedOptions = function() {{
-    const opts = originalResolvedOptions.call(this);
-    opts.timeZone = FP.timezone;
-    return opts;
-  }};
-
-  // ──────────────────────────────────────────────────────────
-  // 15. Automation-related property cleanup
-  // ──────────────────────────────────────────────────────────
-  // Remove Playwright/Puppeteer markers
-  delete window.__playwright;
-  delete window.__pw_manual;
-  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-
-  // Remove Selenium markers
-  delete window._selenium;
-  delete window.callSelenium;
-  delete window._Selenium_IDE_Recorder;
-
-  // Remove generic automation markers
-  const automationProps = [
-    'domAutomation', 'domAutomationController',
-    'selenium', 'webdriver', 'driver',
-    '_phantom', '__nightmare', 'callPhantom',
-    '__webdriver_evaluate', '__selenium_evaluate',
-    '__webdriver_script_function', '__webdriver_script_func',
-    '__webdriver_script_fn', '__fxdriver_evaluate',
-    '__driver_unwrapped', '__webdriver_unwrapped',
-    '__driver_evaluate', '__lastWatirAlert',
-    '__lastWatirConfirm', '__lastWatirPrompt',
-    '_Selenium_IDE_Recorder', 'calledSelenium',
-    '_selenium', 'callSelenium',
-  ];
-
-  for (const prop of automationProps) {{
-    try {{
-      delete window[prop];
-    }} catch(e) {{}}
-  }}
-
-  // ──────────────────────────────────────────────────────────
-  // 16. Error stack trace cleanup
-  // ──────────────────────────────────────────────────────────
-  const originalPrepareStackTrace = Error.prepareStackTrace;
-  Error.prepareStackTrace = function(error, structuredStackTrace) {{
-    const stack = originalPrepareStackTrace
-      ? originalPrepareStackTrace(error, structuredStackTrace)
-      : structuredStackTrace;
-    return stack;
-  }};
-
-}})();
-"""
+    return "\n".join(parts)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -882,276 +891,145 @@ class StealthAdapter:
             self._fingerprint.chrome_version,
         )
 
-    # ──────────────────────────────────────────────────────────
-    # Properties
-    # ──────────────────────────────────────────────────────────
-
     @property
     def fingerprint(self) -> BrowserFingerprint:
-        """The current browser fingerprint."""
+        """Get the current browser fingerprint."""
         return self._fingerprint
 
     @property
     def stealth_script(self) -> str:
-        """The JavaScript injection script."""
+        """Get the JavaScript stealth injection script."""
         return self._stealth_script
 
-    @property
-    def user_agent(self) -> str:
-        """The spoofed User-Agent string."""
-        return self._fingerprint.user_agent
-
-    # ──────────────────────────────────────────────────────────
-    # Application Methods
-    # ──────────────────────────────────────────────────────────
-
-    async def apply_to_context(self, context: Any) -> None:
+    async def apply_to_context(self, context: BrowserContext) -> None:
         """
         Apply stealth patches to a browser context.
 
-        All pages created within this context will automatically
-        have the stealth script injected before any page JavaScript.
+        All pages created from this context will inherit the patches.
 
         Args:
-            context: Playwright BrowserContext instance.
+            context: Playwright BrowserContext.
         """
         ctx_id = id(context)
         if ctx_id in self._applied_contexts:
+            logger.debug("Stealth already applied to context %s", ctx_id)
             return
 
-        # Inject init script (runs before page JS on every navigation)
         await context.add_init_script(self._stealth_script)
-
-        # Set user agent at context level
-        # (Note: Playwright doesn't allow changing UA after context creation,
-        #  so this is handled via context options in BrowserManager)
-
         self._applied_contexts.add(ctx_id)
-        logger.debug("Stealth applied to context %d", ctx_id)
+        logger.debug("Stealth patches applied to context %s", ctx_id)
 
-    async def apply_to_page(self, page: Any) -> None:
+    async def apply_to_page(self, page: Page) -> None:
         """
-        Apply stealth patches to a single page.
-
-        Use this for pages created outside of a stealth-patched context.
+        Apply stealth patches to a specific page.
 
         Args:
-            page: Playwright Page instance.
+            page: Playwright Page.
         """
         page_id = id(page)
         if page_id in self._applied_pages:
+            logger.debug("Stealth already applied to page %s", page_id)
             return
 
-        # Add init script for future navigations
         await page.add_init_script(self._stealth_script)
-
-        # Execute immediately for current page state
-        try:
-            await page.evaluate(self._stealth_script)
-        except Exception as e:
-            logger.debug("Could not evaluate stealth script on current page: %s", e)
-
         self._applied_pages.add(page_id)
-        logger.debug("Stealth applied to page %d", page_id)
+        logger.debug("Stealth patches applied to page %s", page_id)
 
-    async def apply_to_page_on_navigation(self, page: Any) -> None:
+    async def apply_to_browser(self, browser: Browser) -> None:
         """
-        Register stealth injection on every navigation event.
+        Apply stealth patches to all contexts in a browser.
 
-        This ensures patches are re-applied after SPA navigations
-        or page reloads.
+        Note: This applies to existing contexts. New contexts
+        created after this call will NOT have the patches unless
+        you call apply_to_context on them.
 
         Args:
-            page: Playwright Page instance.
+            browser: Playwright Browser.
         """
-        async def _on_frame_navigated(frame: Any) -> None:
-            if frame == page.main_frame:
-                try:
-                    await page.evaluate(self._stealth_script)
-                except Exception:
-                    pass
+        for context in browser.contexts:
+            await self.apply_to_context(context)
+        logger.info("Stealth patches applied to %d existing contexts", len(browser.contexts))
 
-        page.on("framenavigated", _on_frame_navigated)
-        await self.apply_to_page(page)
-
-    # ──────────────────────────────────────────────────────────
-    # Fingerprint Management
-    # ──────────────────────────────────────────────────────────
-
-    def regenerate_fingerprint(
-        self,
-        platform_category: str | None = None,
-        os_name: str | None = None,
-        seed: int | None = None,
-    ) -> BrowserFingerprint:
-        """
-        Generate a new random fingerprint and rebuild the injection script.
-
-        Args:
-            platform_category: Override platform category.
-            os_name: Override OS name.
-            seed: Random seed for reproducibility.
-
-        Returns:
-            The new BrowserFingerprint.
-        """
-        category = platform_category or self._fingerprint.platform_category
-        os = os_name or self._fingerprint.os_name
-
-        self._fingerprint = BrowserFingerprint.generate(
-            platform_category=category,
-            os_name=os,
-            locale=self._config.locale,
-            timezone=self._config.timezone,
-            seed=seed,
-        )
-
-        if self._config.user_agent:
-            self._fingerprint.user_agent = self._config.user_agent
-
-        self._stealth_script = _build_stealth_script(self._fingerprint)
-
-        # Clear applied tracking (new script needs re-application)
+    def reset(self) -> None:
+        """Reset the adapter (clears tracking, generates new fingerprint)."""
         self._applied_contexts.clear()
         self._applied_pages.clear()
-
-        logger.info(
-            "Fingerprint regenerated (platform=%s, os=%s)",
-            self._fingerprint.platform_category,
-            self._fingerprint.os_name,
+        self._fingerprint = BrowserFingerprint.generate(
+            platform_category=self._fingerprint.platform_category,
+            locale=self._fingerprint.language,
+            timezone=self._fingerprint.timezone,
         )
+        self._stealth_script = _build_stealth_script(self._fingerprint)
+        logger.info("StealthAdapter reset with new fingerprint")
 
-        return self._fingerprint
 
-    def get_context_options_override(self) -> dict[str, Any]:
-        """
-        Get context options that should be set for fingerprint consistency.
+# ══════════════════════════════════════════════════════════════
+# Convenience Functions
+# ══════════════════════════════════════════════════════════════
 
-        These options should be merged into BrowserConfig.to_context_options()
-        to ensure the browser-level settings match the injected fingerprint.
+async def apply_stealth(
+    target: BrowserContext | Page | Browser,
+    config: BrowserConfig | None = None,
+    fingerprint: BrowserFingerprint | None = None,
+    platform_category: str = "desktop",
+    seed: int | None = None,
+) -> StealthAdapter:
+    """
+    Convenience function to apply stealth patches to a target.
 
-        Returns:
-            Dictionary of Playwright context options.
-        """
-        return {
-            "userAgent": self._fingerprint.user_agent,
-            "locale": self._fingerprint.language,
-            "timezoneId": self._fingerprint.timezone,
-            "viewport": {
-                "width": self._fingerprint.screen_width,
-                "height": self._fingerprint.screen_height,
-            },
-            "deviceScaleFactor": self._fingerprint.device_pixel_ratio,
-            "isMobile": self._fingerprint.platform_category == "mobile",
-            "hasTouch": self._fingerprint.max_touch_points > 0,
-            "colorScheme": "light",
-        }
+    Args:
+        target: BrowserContext, Page, or Browser to patch.
+        config: Optional browser configuration.
+        fingerprint: Optional pre-built fingerprint.
+        platform_category: Platform type for fingerprint generation.
+        seed: Random seed for reproducible fingerprints.
 
-    # ──────────────────────────────────────────────────────────
-    # Verification
-    # ──────────────────────────────────────────────────────────
+    Returns:
+        StealthAdapter instance (useful for accessing fingerprint).
+    """
+    adapter = StealthAdapter(
+        config=config,
+        fingerprint=fingerprint,
+        platform_category=platform_category,
+        seed=seed,
+    )
 
-    async def verify(self, page: Any) -> dict[str, Any]:
-        """
-        Verify that stealth patches are active on a page.
+    if hasattr(target, "new_page"):  # Browser
+        await adapter.apply_to_browser(target)
+    elif hasattr(target, "add_init_script"):  # Page
+        await adapter.apply_to_page(target)
+    elif hasattr(target, "contexts"):  # BrowserContext
+        await adapter.apply_to_context(target)
+    else:
+        raise TypeError(f"Unsupported target type: {type(target)}")
 
-        Navigates to a test page and checks key indicators.
+    return adapter
 
-        Args:
-            page: Playwright Page instance (should already have stealth applied).
 
-        Returns:
-            Dictionary of verification results.
-        """
-        results: dict[str, Any] = {}
+def generate_fingerprint(
+    platform_category: str = "desktop",
+    os_name: str | None = None,
+    locale: str = "en-US",
+    timezone: str | None = None,
+    seed: int | None = None,
+) -> BrowserFingerprint:
+    """
+    Generate a randomized browser fingerprint.
 
-        try:
-            # Check navigator.webdriver
-            webdriver = await page.evaluate("() => navigator.webdriver")
-            results["webdriver_undefined"] = webdriver is None or webdriver is False
+    Args:
+        platform_category: 'desktop', 'mobile', or 'tablet'.
+        os_name: Force a specific OS ('Windows', 'macOS', 'Linux', 'Android', 'iOS').
+        locale: Primary locale for language settings.
+        timezone: Force a specific timezone.
+        seed: Random seed for reproducibility.
 
-            # Check chrome runtime
-            has_chrome = await page.evaluate("() => !!window.chrome")
-            results["chrome_runtime"] = has_chrome
-
-            # Check plugins
-            plugin_count = await page.evaluate("() => navigator.plugins.length")
-            results["plugins_count"] = plugin_count
-            results["plugins_present"] = plugin_count > 0
-
-            # Check platform
-            platform = await page.evaluate("() => navigator.platform")
-            results["platform"] = platform
-            results["platform_matches"] = platform == self._fingerprint.platform
-
-            # Check hardware concurrency
-            hw = await page.evaluate("() => navigator.hardwareConcurrency")
-            results["hardware_concurrency"] = hw
-            results["hw_matches"] = hw == self._fingerprint.hardware_concurrency
-
-            # Check languages
-            langs = await page.evaluate("() => navigator.languages")
-            results["languages"] = langs
-            results["languages_match"] = langs == self._fingerprint.languages
-
-            # Check WebGL
-            webgl_vendor = await page.evaluate("""() => {
-                try {
-                    const canvas = document.createElement('canvas');
-                    const gl = canvas.getContext('webgl');
-                    if (!gl) return null;
-                    const ext = gl.getExtension('WEBGL_debug_renderer_info');
-                    if (!ext) return null;
-                    return gl.getParameter(ext.UNMASKED_VENDOR_WEBGL);
-                } catch(e) { return null; }
-            }""")
-            results["webgl_vendor"] = webgl_vendor
-            results["webgl_spoofed"] = webgl_vendor == self._fingerprint.webgl_vendor
-
-            # Check screen
-            screen_w = await page.evaluate("() => screen.width")
-            results["screen_width"] = screen_w
-            results["screen_matches"] = screen_w == self._fingerprint.screen_width
-
-            # Check Function.toString protection
-            to_string_native = await page.evaluate("""() => {
-                return navigator.hardwareConcurrency.toString !== undefined;
-            }""")
-            results["function_tostring_patched"] = to_string_native
-
-            # Overall
-            checks = [
-                results.get("webdriver_undefined", False),
-                results.get("chrome_runtime", False),
-                results.get("plugins_present", False),
-                results.get("platform_matches", False),
-                results.get("hw_matches", False),
-            ]
-            results["overall_pass"] = all(checks)
-            results["score"] = f"{sum(checks)}/{len(checks)}"
-
-        except Exception as e:
-            results["error"] = str(e)
-            results["overall_pass"] = False
-
-        return results
-
-    # ──────────────────────────────────────────────────────────
-    # Serialization
-    # ──────────────────────────────────────────────────────────
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize adapter state."""
-        return {
-            "fingerprint": self._fingerprint.to_dict(),
-            "applied_contexts": len(self._applied_contexts),
-            "applied_pages": len(self._applied_pages),
-            "script_length": len(self._stealth_script),
-        }
-
-    def __repr__(self) -> str:
-        return (
-            f"StealthAdapter(platform={self._fingerprint.platform_category}, "
-            f"os={self._fingerprint.os_name}, "
-            f"chrome={self._fingerprint.chrome_version})"
-        )
+    Returns:
+        BrowserFingerprint with randomized values.
+    """
+    return BrowserFingerprint.generate(
+        platform_category=platform_category,
+        os_name=os_name,
+        locale=locale,
+        timezone=timezone,
+        seed=seed,
+    )

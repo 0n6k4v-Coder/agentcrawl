@@ -18,7 +18,7 @@ Features:
     - FastAPI middleware integration
 
 Usage:
-    from agentcrawl.server.auth.rate_limiter import (
+    from server.auth.rate_limiter import (
         RateLimiter,
         RateLimitMiddleware,
         RateLimitConfig,
@@ -48,7 +48,7 @@ from __future__ import annotations
 import logging
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 

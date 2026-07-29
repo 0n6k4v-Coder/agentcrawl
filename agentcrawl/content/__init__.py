@@ -60,43 +60,6 @@ Quick Start:
 
 from __future__ import annotations
 
-# ──────────────────────────────────────────────────────────────
-# HTML Parser
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.content.html_parser import (
-    HTMLParser,
-    HeadingInfo,
-    ImageInfo,
-    LinkInfo,
-    MainContent,
-    PageMetadata,
-)
-
-# ──────────────────────────────────────────────────────────────
-# HTML to Markdown
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.content.html_to_markdown import (
-    HTMLToMarkdown,
-    MarkdownOptions,
-    clean_markdown,
-    html_to_markdown,
-)
-
-# ──────────────────────────────────────────────────────────────
-# Content Filters
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.content.content_filter import (
-    ContentBlock,
-    ContentFilter,
-    ContentFilterResult,
-    PruningContentFilter,
-    create_content_filter,
-    create_content_filter_from_config,
-)
-
 from agentcrawl.content.bm25_filter import (
     BM25ContentFilter,
     BM25Scorer,
@@ -105,18 +68,9 @@ from agentcrawl.content.bm25_filter import (
     TextBlock,
 )
 
-from agentcrawl.content.pruning_filter import (
-    AdvancedPruningFilter,
-    BoilerplateDetector,
-    ContentDensityAnalyzer,
-    DensityReport,
-    create_pruning_filter,
-)
-
 # ──────────────────────────────────────────────────────────────
 # Chunkers
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.content.chunker import (
     Chunk,
     Chunker,
@@ -130,6 +84,58 @@ from agentcrawl.content.chunker import (
     create_chunker_from_config,
 )
 
+# ──────────────────────────────────────────────────────────────
+# Citations
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.content.citation import (
+    BibliographyFormat,
+    Citation,
+    CitationExtractor,
+    CitationManager,
+    CitationResult,
+    CitationSource,
+)
+
+# ──────────────────────────────────────────────────────────────
+# Content Filters
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.content.content_filter import (
+    ContentBlock,
+    ContentFilter,
+    ContentFilterResult,
+    PruningContentFilter,
+    create_content_filter,
+    create_content_filter_from_config,
+)
+
+# ──────────────────────────────────────────────────────────────
+# HTML Parser
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.content.html_parser import (
+    HeadingInfo,
+    HTMLParser,
+    ImageInfo,
+    LinkInfo,
+    MainContent,
+    PageMetadata,
+)
+
+# ──────────────────────────────────────────────────────────────
+# HTML to Markdown
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.content.html_to_markdown import (
+    HTMLToMarkdown,
+    MarkdownOptions,
+    clean_markdown,
+    html_to_markdown,
+)
+from agentcrawl.content.pruning_filter import (
+    AdvancedPruningFilter,
+    BoilerplateDetector,
+    ContentDensityAnalyzer,
+    DensityReport,
+    create_pruning_filter,
+)
 from agentcrawl.content.regex_chunker import (
     AdvancedRegexChunker,
     PrebuiltPatterns,
@@ -138,7 +144,6 @@ from agentcrawl.content.regex_chunker import (
     test_pattern,
     validate_pattern,
 )
-
 from agentcrawl.content.sentence_chunker import (
     AdvancedSentenceChunker,
     SentenceTokenizer,
@@ -148,7 +153,6 @@ from agentcrawl.content.sentence_chunker import (
     detect_language,
     split_sentences,
 )
-
 from agentcrawl.content.topic_chunker import (
     AdvancedTopicChunker,
     HeadingHierarchy,
@@ -159,20 +163,6 @@ from agentcrawl.content.topic_chunker import (
     extract_sections,
     generate_toc,
 )
-
-# ──────────────────────────────────────────────────────────────
-# Citations
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.content.citation import (
-    BibliographyFormat,
-    Citation,
-    CitationExtractor,
-    CitationManager,
-    CitationResult,
-    CitationSource,
-)
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

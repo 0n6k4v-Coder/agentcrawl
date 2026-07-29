@@ -9,7 +9,7 @@ Modules:
     responses — Response body schemas with serialization
 
 Usage:
-    from agentcrawl.server.schemas import (
+    from server.schemas import (
         ScrapeRequest,
         ScrapeResponse,
         ErrorResponse,
@@ -25,7 +25,7 @@ Usage:
 from __future__ import annotations
 
 # Requests
-from agentcrawl.server.schemas.requests import (
+from server.schemas.requests import (
     ActionStep,
     BatchScrapeRequest,
     CrawlRequest,
@@ -38,7 +38,7 @@ from agentcrawl.server.schemas.requests import (
 )
 
 # Responses
-from agentcrawl.server.schemas.responses import (
+from server.schemas.responses import (
     APIInfoResponse,
     BatchResultItem,
     BatchScrapeResponse,
@@ -56,11 +56,10 @@ from agentcrawl.server.schemas.responses import (
     PaginatedResponse,
     PaginationMeta,
     ScrapeResponse,
-    SearchResultItem,
     SearchResponse,
+    SearchResultItem,
     SessionResponse,
 )
-
 
 __all__ = [
     # Requests

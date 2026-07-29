@@ -15,7 +15,7 @@ Features:
     - /metrics endpoint handler
 
 Usage:
-    from agentcrawl.server.monitoring.metrics import (
+    from server.monitoring.metrics import (
         MetricsCollector,
         MetricsMiddleware,
         get_metrics,
@@ -41,7 +41,6 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -496,7 +495,7 @@ async def metrics_endpoint(request: Request) -> PlainTextResponse:
     Prometheus metrics endpoint handler.
 
     Usage:
-        from agentcrawl.server.monitoring.metrics import metrics_endpoint
+        from server.monitoring.metrics import metrics_endpoint
 
         @app.get("/metrics")
         async def metrics(request: Request):

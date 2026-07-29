@@ -45,7 +45,7 @@ import random
 import re
 import time
 from typing import Any
-from urllib.parse import parse_qs, quote_plus, urlparse
+from urllib.parse import parse_qs, urlparse
 
 from agentcrawl.search.engine import SearchResult
 

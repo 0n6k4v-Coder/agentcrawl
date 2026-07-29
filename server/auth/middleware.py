@@ -15,7 +15,7 @@ Features:
     - Auth logging
 
 Usage:
-    from agentcrawl.server.auth.middleware import AuthMiddleware
+    from server.auth.middleware import AuthMiddleware
 
     app = FastAPI()
     app.add_middleware(
@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Callable
+from typing import Any
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request

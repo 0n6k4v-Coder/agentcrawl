@@ -15,8 +15,6 @@ Run:
 from __future__ import annotations
 
 import asyncio
-import json
-
 
 # ══════════════════════════════════════════════════════════════
 # Example 1: Simplest Scrape

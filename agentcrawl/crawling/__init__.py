@@ -57,10 +57,16 @@ Quick Start:
 
 from __future__ import annotations
 
+from agentcrawl.crawling.adaptive import (
+    AdaptiveCrawler,
+    AdaptiveStats,
+    ContentSimilarityTracker,
+    URLPatternAnalyzer,
+)
+
 # ──────────────────────────────────────────────────────────────
 # Base
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.crawling.base import (
     CrawlConfig,
     CrawlProgress,
@@ -69,31 +75,23 @@ from agentcrawl.crawling.base import (
     URLFilter,
     URLScorer,
 )
+from agentcrawl.crawling.best_first import BestFirstCrawler
 
 # ──────────────────────────────────────────────────────────────
 # Strategies
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.crawling.bfs import BFSCrawler
 from agentcrawl.crawling.dfs import DFSCrawler
-from agentcrawl.crawling.best_first import BestFirstCrawler
-from agentcrawl.crawling.adaptive import (
-    AdaptiveCrawler,
-    AdaptiveStats,
-    ContentSimilarityTracker,
-    URLPatternAnalyzer,
-)
-from agentcrawl.crawling.single import SinglePageCrawler
 
 # ──────────────────────────────────────────────────────────────
 # Discovery
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.crawling.domain_mapper import (
     DomainMapper,
     MapResult,
     URLPatternInfo,
 )
+from agentcrawl.crawling.single import SinglePageCrawler
 from agentcrawl.crawling.sitemap_parser import (
     SitemapEntry,
     SitemapInfo,
@@ -104,7 +102,6 @@ from agentcrawl.crawling.sitemap_parser import (
 # ──────────────────────────────────────────────────────────────
 # Filtering & Scoring (Extended)
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.crawling.url_filter import (
     AdvancedURLFilter,
     FilterPreset,
@@ -118,7 +115,6 @@ from agentcrawl.crawling.url_scorer import (
     ScoringPreset,
     ScoringWeights,
 )
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

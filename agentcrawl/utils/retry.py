@@ -56,9 +56,10 @@ import functools
 import logging
 import random
 import time
-from dataclasses import dataclass, field
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Sequence, Type
+from typing import Any
 
 logger = logging.getLogger("agentcrawl.utils.retry")
 
@@ -92,7 +93,7 @@ class RetryConfig:
     backoff_factor: float = 2.0
     jitter: bool = True
     jitter_range: float = 0.25
-    retry_on: tuple[Type[Exception], ...] = ()
+    retry_on: tuple[type[Exception], ...] = ()
     retry_if: Callable[[Exception], bool] | None = None
     timeout: float = 0.0
     on_retry: Callable[[int, Exception, float], None] | None = None
@@ -160,7 +161,7 @@ def retry(
     max_delay: float = 60.0,
     backoff_factor: float = 2.0,
     jitter: bool = True,
-    retry_on: tuple[Type[Exception], ...] | Sequence[Type[Exception]] = (),
+    retry_on: tuple[type[Exception], ...] | Sequence[type[Exception]] = (),
     retry_if: Callable[[Exception], bool] | None = None,
     timeout: float = 0.0,
     config: RetryConfig | None = None,
@@ -401,7 +402,7 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         recovery_timeout: float = 60.0,
         success_threshold: int = 2,
-        excluded_exceptions: tuple[Type[Exception], ...] = (),
+        excluded_exceptions: tuple[type[Exception], ...] = (),
     ):
         self._failure_threshold = failure_threshold
         self._recovery_timeout = recovery_timeout

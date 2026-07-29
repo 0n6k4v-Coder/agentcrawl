@@ -50,7 +50,6 @@ from __future__ import annotations
 
 import fnmatch
 import re
-from typing import Any
 from urllib.parse import (
     parse_qs,
     quote,
@@ -60,7 +59,6 @@ from urllib.parse import (
     urlparse,
     urlunparse,
 )
-
 
 # ══════════════════════════════════════════════════════════════
 # Normalization

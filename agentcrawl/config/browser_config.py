@@ -37,13 +37,11 @@ Usage:
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 # ══════════════════════════════════════════════════════════════
 # Browser Settings (Pydantic)
@@ -355,7 +353,6 @@ class BrowserSettings(BaseSettings):
         from agentcrawl.browser.config import (
             BrowserConfig,
             BrowserPoolConfig,
-            GeolocationConfig,
             ProxyConfig,
             ProxyRotationStrategy,
             SessionConfig,
@@ -480,7 +477,7 @@ class BrowserSettings(BaseSettings):
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {filepath}")
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
 
         # Support nested 'browser:' key

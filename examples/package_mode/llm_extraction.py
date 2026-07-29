@@ -21,15 +21,15 @@ from __future__ import annotations
 import asyncio
 import json
 
-
 # ══════════════════════════════════════════════════════════════
 # Example 1: LLM Extraction with Pydantic Schema
 # ══════════════════════════════════════════════════════════════
 
 async def example_llm_pydantic() -> None:
     """Extract structured data using LLM + Pydantic model."""
-    from agentcrawl import CrawlEngine, LLMExtractor, LLMConfig
     from pydantic import BaseModel
+
+    from agentcrawl import CrawlEngine, LLMConfig, LLMExtractor
 
     print("\n[1] LLM Extraction (Pydantic Schema)")
     print("-" * 45)
@@ -110,8 +110,9 @@ async def example_llm_json_schema() -> None:
 
 async def example_llm_instructions() -> None:
     """Extract with additional instructions for the LLM."""
-    from agentcrawl import CrawlEngine, LLMExtractor
     from pydantic import BaseModel
+
+    from agentcrawl import CrawlEngine, LLMExtractor
 
     print("\n[3] LLM Extraction (Custom Instructions)")
     print("-" * 45)
@@ -252,7 +253,7 @@ async def example_regex_extraction() -> None:
 
 async def example_table_extraction() -> None:
     """Extract data from HTML tables."""
-    from agentcrawl import CrawlEngine, TableExtractor
+    from agentcrawl import TableExtractor
 
     print("\n[7] Table Extraction")
     print("-" * 45)
@@ -295,7 +296,7 @@ async def example_table_extraction() -> None:
 
 async def example_schema_builder() -> None:
     """Build extraction schemas with the fluent API."""
-    from agentcrawl import SchemaBuilder, JsonCssExtractor, CrawlEngine
+    from agentcrawl import CrawlEngine, JsonCssExtractor, SchemaBuilder
 
     print("\n[8] Schema Builder")
     print("-" * 45)
@@ -353,8 +354,9 @@ async def example_schema_templates() -> None:
 
 async def example_factory() -> None:
     """Create extractors with the factory function."""
-    from agentcrawl import create_extractor, CrawlEngine
     from pydantic import BaseModel
+
+    from agentcrawl import CrawlEngine, create_extractor
 
     print("\n[10] Extractor Factory")
     print("-" * 45)
@@ -392,8 +394,9 @@ async def example_factory() -> None:
 
 async def example_engine_extract() -> None:
     """Use engine.extract() convenience method."""
-    from agentcrawl import CrawlEngine
     from pydantic import BaseModel
+
+    from agentcrawl import CrawlEngine
 
     print("\n[11] Engine Extract")
     print("-" * 45)
@@ -424,8 +427,9 @@ async def example_engine_extract() -> None:
 
 async def example_validation() -> None:
     """Handle extraction validation errors."""
-    from agentcrawl import LLMExtractor
     from pydantic import BaseModel, Field
+
+    from agentcrawl import LLMExtractor
 
     print("\n[12] Extraction Validation")
     print("-" * 45)
@@ -453,8 +457,9 @@ async def example_validation() -> None:
 
 async def example_cost_tracking() -> None:
     """Track LLM token usage and costs."""
-    from agentcrawl import LLMExtractor, LLMConfig
     from pydantic import BaseModel
+
+    from agentcrawl import LLMConfig, LLMExtractor
 
     print("\n[13] Cost Tracking")
     print("-" * 45)

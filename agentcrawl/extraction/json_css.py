@@ -71,8 +71,6 @@ from typing import Any
 
 from agentcrawl.extraction.base import (
     ExtractionConfig,
-    ExtractionResult,
-    ExtractionStatus,
     ExtractionStrategy,
 )
 
@@ -233,6 +231,18 @@ class JsonCssExtractor(ExtractionStrategy):
 
         else:
             # Single item: extract from the whole document
+            logger.debug("No baseSelector, extracting from whole document (tree type: %s)", type(tree))
+            # Debug: check what elements exist
+            from lxml.cssselect import CSSSelector
+            try:
+                h1_css = CSSSelector("h1")
+                h1_matches = h1_css(tree)
+                logger.debug(f"h1 selector matched {len(h1_matches)} elements")
+                if h1_matches:
+                    logger.debug(f"First h1 text: {h1_matches[0].text_content()}")
+            except Exception as e:
+                logger.debug(f"h1 selector error: {e}")
+
             return self._extract_fields(tree, fields)
 
     # ──────────────────────────────────────────────────────────
@@ -332,6 +342,7 @@ class JsonCssExtractor(ExtractionStrategy):
             from lxml.cssselect import CSSSelector
             css = CSSSelector(selector)
             matches = css(element)
+            logger.debug(f"Selector '{selector}' matched {len(matches)} elements")
             return matches[0] if matches else None
         except Exception as e:
             logger.debug("Selector error '%s': %s", selector, e)

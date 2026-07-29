@@ -49,7 +49,7 @@ import logging
 import re
 import time
 import xml.etree.ElementTree as ET
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urljoin, urlparse

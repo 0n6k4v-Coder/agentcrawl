@@ -46,13 +46,11 @@ import functools
 import json
 import logging
 import logging.handlers
-import os
 import sys
 import time
+from collections.abc import Callable
 from contextvars import ContextVar
-from dataclasses import dataclass, field
-from typing import Any, Callable
-
+from typing import Any
 
 # ══════════════════════════════════════════════════════════════
 # Context Variables

@@ -171,10 +171,11 @@ def _create_job(
 class CrawlRequest(BaseModel):
     """Request body for POST /crawl."""
 
-    url: str = Field(..., description="Starting URL to crawl")
+    url: str = Field(..., description="Starting URL to crawl", min_length=1)
     strategy: str = Field(
         default="bfs",
         description="Crawl strategy: bfs, dfs, best_first, adaptive",
+        pattern="^(bfs|dfs|best_first|adaptive)$",
     )
     max_depth: int = Field(default=3, ge=1, le=10, description="Maximum link depth")
     max_pages: int = Field(default=50, ge=1, le=500, description="Maximum pages to crawl")
@@ -342,10 +343,10 @@ async def _run_crawl_job(
         request: Validated request.
     """
     from agentcrawl.config.crawler_config import CrawlerConfig
+    from agentcrawl.crawling.adaptive import AdaptiveCrawler
+    from agentcrawl.crawling.best_first import BestFirstCrawler
     from agentcrawl.crawling.bfs import BFSCrawler
     from agentcrawl.crawling.dfs import DFSCrawler
-    from agentcrawl.crawling.best_first import BestFirstCrawler
-    from agentcrawl.crawling.adaptive import AdaptiveCrawler
     from agentcrawl.crawling.url_filter import URLFilter
 
     job.status = JobStatus.RUNNING
@@ -377,7 +378,9 @@ async def _run_crawl_job(
                 exclude_patterns=request.exclude_patterns,
                 same_domain=request.same_domain,
             )
-            strategy_kwargs["url_filter"] = url_filter
+            # Only pass url_filter to strategies that support it
+            if strategy_cls in (BFSCrawler, DFSCrawler, BestFirstCrawler):
+                strategy_kwargs["url_filter"] = url_filter
 
         strategy = strategy_cls(**strategy_kwargs)
 

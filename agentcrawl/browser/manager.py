@@ -55,15 +55,11 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from agentcrawl.browser.config import (
     BrowserConfig,
-    BrowserPoolConfig,
     BrowserType,
-    ProxyConfig,
-    SessionConfig,
 )
 
 logger = logging.getLogger("agentcrawl.browser.manager")

@@ -42,7 +42,6 @@ from __future__ import annotations
 # ──────────────────────────────────────────────────────────────
 # HTML
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.output.html import (
     HtmlOutputFormatter,
     HtmlSanitizer,
@@ -51,25 +50,21 @@ from agentcrawl.output.html import (
 # ──────────────────────────────────────────────────────────────
 # JSON
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.output.json import JsonOutputFormatter
 
 # ──────────────────────────────────────────────────────────────
 # Markdown
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.output.markdown import MarkdownOutputFormatter
 
 # ──────────────────────────────────────────────────────────────
 # Screenshot
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.output.screenshot import (
     ScreenshotDiff,
     ScreenshotHandler,
     ScreenshotInfo,
 )
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

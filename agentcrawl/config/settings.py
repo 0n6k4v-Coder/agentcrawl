@@ -40,7 +40,6 @@ Usage:
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -48,8 +47,8 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from agentcrawl.config.browser_config import BrowserSettings
-from agentcrawl.config.proxy_config import ProxySettings
 from agentcrawl.config.llm_config import LLMConfig
+from agentcrawl.config.proxy_config import ProxySettings
 
 logger = logging.getLogger("agentcrawl.config")
 
@@ -559,7 +558,7 @@ class Settings(BaseSettings):
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {filepath}")
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
 
         return cls.from_dict(data)
@@ -673,7 +672,7 @@ class Settings(BaseSettings):
         if mask_secrets:
             secret_fields = ["api_key", "jwt_secret"]
             for field_name in secret_fields:
-                if field_name in data and data[field_name]:
+                if data.get(field_name):
                     val = data[field_name]
                     if len(val) > 8:
                         data[field_name] = f"{val[:4]}...{val[-4:]}"

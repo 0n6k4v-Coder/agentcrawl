@@ -14,7 +14,7 @@ Features:
     - Health status aggregation
 
 Usage:
-    from agentcrawl.server.monitoring.health import (
+    from server.monitoring.health import (
         HealthChecker,
         HealthStatus,
         ComponentHealth,

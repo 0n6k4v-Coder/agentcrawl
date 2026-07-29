@@ -41,14 +41,13 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
 import fnmatch
 import logging
-import re
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Coroutine
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 logger = logging.getLogger("agentcrawl.crawling")
@@ -255,6 +254,9 @@ class URLFilter:
         self._exclude_query_params = set(exclude_query_params or [])
         self._allow_fragments = allow_fragments
 
+        # Deduplication tracking
+        self._seen_urls: set[str] = set()
+
     def set_base_domain(self, url: str) -> None:
         """Set the base domain from a URL."""
         try:
@@ -362,6 +364,17 @@ class URLFilter:
             normalized = normalized.rstrip("/")
 
         return normalized
+
+    # Deduplication methods
+    def is_seen(self, url: str) -> bool:
+        """Check if URL has been seen before (normalized)."""
+        normalized = self.normalize(url)
+        return normalized in self._seen_urls
+
+    def mark_seen(self, url: str) -> None:
+        """Mark a URL as seen."""
+        normalized = self.normalize(url)
+        self._seen_urls.add(normalized)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -579,16 +592,26 @@ class CrawlStrategy(ABC):
         self,
         max_depth: int = 3,
         max_pages: int = 50,
+        max_concurrent: int = 3,
         url_filter: URLFilter | None = None,
         url_scorer: URLScorer | None = None,
         config: CrawlConfig | None = None,
     ):
+        if max_depth <= 0:
+            raise ValueError("max_depth must be positive")
+        if max_pages <= 0:
+            raise ValueError("max_pages must be positive")
+        if max_concurrent <= 0:
+            raise ValueError("max_concurrent must be positive")
+
         self._config = config or CrawlConfig(
             max_depth=max_depth,
             max_pages=max_pages,
+            max_concurrent=max_concurrent,
         )
         self._config.max_depth = max_depth
         self._config.max_pages = max_pages
+        self._config.max_concurrent = max_concurrent
 
         self._filter = url_filter or URLFilter(
             include_patterns=self._config.include_patterns,
@@ -620,6 +643,21 @@ class CrawlStrategy(ABC):
         """Current crawl progress."""
         self._progress.elapsed_ms = (time.time() - self._start_time) * 1000
         return self._progress
+
+    @property
+    def max_depth(self) -> int:
+        """Maximum crawl depth."""
+        return self._config.max_depth
+
+    @property
+    def max_pages(self) -> int:
+        """Maximum pages to crawl."""
+        return self._config.max_pages
+
+    @property
+    def max_concurrent(self) -> int:
+        """Maximum concurrent requests."""
+        return self._config.max_concurrent
 
     @property
     def visited_count(self) -> int:

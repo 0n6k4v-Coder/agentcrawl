@@ -55,14 +55,14 @@ from __future__ import annotations
 import importlib
 import logging
 import pkgutil
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from agentcrawl.hooks.executor import (
     HookContext,
     HookEvent,
     HookExecutor,
-    HookRegistration,
 )
 
 logger = logging.getLogger("agentcrawl.hooks.registry")
@@ -757,7 +757,7 @@ class HookRegistry:
         """
         import json
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             config = json.load(f)
 
         self._disabled_groups = set(config.get("disabled_groups", []))

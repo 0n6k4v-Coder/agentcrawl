@@ -44,7 +44,7 @@ import base64
 import io
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger("agentcrawl.output.screenshot")

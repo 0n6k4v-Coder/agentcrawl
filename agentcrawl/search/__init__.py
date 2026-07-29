@@ -58,7 +58,6 @@ from __future__ import annotations
 # ──────────────────────────────────────────────────────────────
 # Engine & Providers
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.search.engine import (
     PROVIDERS,
     BraveProvider,
@@ -74,21 +73,17 @@ from agentcrawl.search.engine import (
 # ──────────────────────────────────────────────────────────────
 # Google
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.search.google import GoogleSearchProvider
 
 # ──────────────────────────────────────────────────────────────
 # Scraper
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.search.scraper import SearchScraper
 
 # ──────────────────────────────────────────────────────────────
 # SearXNG
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.search.searxng import SearXNGProvider
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

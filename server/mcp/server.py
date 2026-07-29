@@ -254,7 +254,7 @@ async def handle_search_web(args: dict[str, Any]) -> str:
 
 async def handle_crawl_website(args: dict[str, Any]) -> str:
     """Handle crawl_website tool call."""
-    from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+    from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
     url = args.get("url", "")
     max_pages = args.get("max_pages", 10)
@@ -329,8 +329,9 @@ async def handle_discover_urls(args: dict[str, Any]) -> str:
 
 async def handle_extract_data(args: dict[str, Any]) -> str:
     """Handle extract_data tool call."""
-    from agentcrawl import CrawlEngine, CrawlerConfig
     from pydantic import create_model
+
+    from agentcrawl import CrawlEngine
 
     url = args.get("url", "")
     fields_str = args.get("fields", "")
@@ -348,7 +349,7 @@ async def handle_extract_data(args: dict[str, Any]) -> str:
 
     try:
         # Build dynamic model
-        field_definitions = {name: (str, "") for name in field_names}
+        field_definitions = dict.fromkeys(field_names, (str, ""))
         DynamicModel = create_model("ExtractedData", **field_definitions)
 
         async with CrawlEngine.default() as engine:
@@ -396,9 +397,10 @@ def create_mcp_server() -> Any:
         MCP Server instance.
     """
     try:
-        from mcp.server import Server
-        from mcp.server.models import InitializationOptions
         import mcp.types as types
+        from mcp.server.models import InitializationOptions
+
+        from mcp.server import Server
     except ImportError:
         print(
             "MCP library not installed. Install with: pip install mcp",
@@ -530,10 +532,10 @@ async def run_stdio() -> None:
 async def run_sse(host: str = "0.0.0.0", port: int = 8080) -> None:
     """Run MCP server with SSE transport."""
     try:
+        import uvicorn
         from mcp.server.sse import SseServerTransport
         from starlette.applications import Starlette
         from starlette.routing import Route
-        import uvicorn
     except ImportError:
         print(
             "SSE transport requires: pip install uvicorn starlette",

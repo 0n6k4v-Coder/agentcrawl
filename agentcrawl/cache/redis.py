@@ -47,8 +47,6 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
-import fnmatch
 import logging
 import time
 import zlib
@@ -58,7 +56,6 @@ from agentcrawl.cache.base import (
     CacheBackend,
     CacheConfig,
     CacheEntry,
-    CacheStats,
 )
 
 logger = logging.getLogger("agentcrawl.cache.redis")

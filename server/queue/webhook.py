@@ -23,7 +23,7 @@ Events:
     job.cancelled   — Job was cancelled
 
 Usage:
-    from agentcrawl.server.queue.webhook import (
+    from server.queue.webhook import (
         WebhookDispatcher,
         WebhookConfig,
     )

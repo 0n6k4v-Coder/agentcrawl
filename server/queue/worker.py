@@ -15,7 +15,7 @@ Features:
     - Health tracking
 
 Usage:
-    from agentcrawl.server.queue.worker import WorkerPool
+    from server.queue.worker import WorkerPool
 
     pool = WorkerPool(
         backend=queue_backend,
@@ -33,9 +33,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger("agentcrawl.server.queue.worker")
 
@@ -510,10 +511,10 @@ async def handle_crawl_job(engine: Any, item: Any) -> dict[str, Any]:
         Crawl result dictionary.
     """
     from agentcrawl.config.crawler_config import CrawlerConfig
+    from agentcrawl.crawling.adaptive import AdaptiveCrawler
+    from agentcrawl.crawling.best_first import BestFirstCrawler
     from agentcrawl.crawling.bfs import BFSCrawler
     from agentcrawl.crawling.dfs import DFSCrawler
-    from agentcrawl.crawling.best_first import BestFirstCrawler
-    from agentcrawl.crawling.adaptive import AdaptiveCrawler
 
     payload = item.payload
 

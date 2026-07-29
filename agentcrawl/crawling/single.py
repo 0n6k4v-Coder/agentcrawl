@@ -52,12 +52,10 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass, field
 from typing import Any
 
 from agentcrawl.crawling.base import (
     CrawlConfig,
-    CrawlProgress,
     CrawlStrategy,
     DiscoveredURL,
     URLFilter,
@@ -338,7 +336,7 @@ class SinglePageCrawler(CrawlStrategy):
         return base
 
     def __repr__(self) -> str:
-        parts = [f"SinglePageCrawler(url_count=1"]
+        parts = ["SinglePageCrawler(url_count=1"]
         if self._actions:
             parts.append(f"actions={len(self._actions)}")
         if self._wait_for_selector:

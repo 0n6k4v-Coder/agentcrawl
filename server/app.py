@@ -23,7 +23,7 @@ Usage:
     uvicorn agentcrawl.server.app:app --host 0.0.0.0 --port 8000
 
     # Programmatic
-    from agentcrawl.server.app import create_app
+    from server.app import create_app
     app = create_app()
 """
 
@@ -31,8 +31,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,7 +98,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     _state.start_time = time.time()
 
     logger.info("Starting AgentCrawl server...")
-    logger.info("  Browser: %s (headless=%s)", settings.browser_type, settings.headless)
+    logger.info("  Browser: %s (headless=%s)", settings.browser.browser_type, settings.browser.headless)
     logger.info("  Cache: %s", settings.cache_backend)
     logger.info("  Log level: %s", settings.log_level)
 
@@ -313,7 +314,7 @@ def _register_routes(app: FastAPI) -> None:
 
         Converts a web page into clean Markdown, HTML, or structured JSON.
         """
-        from agentcrawl.server.routes.scrape import handle_scrape
+        from server.api.v1.scrape import handle_scrape
 
         body = await request.json()
         _state.total_scrapes += 1
@@ -328,7 +329,7 @@ def _register_routes(app: FastAPI) -> None:
 
         Returns a job_id for tracking progress.
         """
-        from agentcrawl.server.routes.crawl import handle_start_crawl
+        from server.api.v1.crawl import handle_start_crawl
 
         body = await request.json()
         _state.total_crawls += 1
@@ -338,14 +339,14 @@ def _register_routes(app: FastAPI) -> None:
     @app.get("/crawl/{job_id}", tags=["Crawling"])
     async def get_crawl_status(job_id: str) -> JSONResponse:
         """Get crawl job status and results."""
-        from agentcrawl.server.routes.crawl import handle_get_crawl
+        from server.api.v1.crawl import handle_get_crawl
 
         return await handle_get_crawl(job_id)
 
     @app.delete("/crawl/{job_id}", tags=["Crawling"])
     async def cancel_crawl(job_id: str) -> JSONResponse:
         """Cancel a running crawl job."""
-        from agentcrawl.server.routes.crawl import handle_cancel_crawl
+        from server.api.v1.crawl import handle_cancel_crawl
 
         result = await handle_cancel_crawl(job_id)
         _state.active_crawls = max(0, _state.active_crawls - 1)
@@ -360,7 +361,7 @@ def _register_routes(app: FastAPI) -> None:
 
         Uses sitemap, robots.txt, and link crawling.
         """
-        from agentcrawl.server.routes.map import handle_map
+        from server.api.v1.map import handle_map
 
         body = await request.json()
         return await handle_map(_state.engine, body)
@@ -374,7 +375,7 @@ def _register_routes(app: FastAPI) -> None:
 
         Supports multiple providers (DuckDuckGo, Tavily, Brave, etc.).
         """
-        from agentcrawl.server.routes.search import handle_search
+        from server.api.v1.search import handle_search
 
         body = await request.json()
         return await handle_search(body)
@@ -388,7 +389,7 @@ def _register_routes(app: FastAPI) -> None:
 
         Supports CSS, XPath, LLM, and regex extraction methods.
         """
-        from agentcrawl.server.routes.extract import handle_extract
+        from server.api.v1.extract import handle_extract
 
         body = await request.json()
         return await handle_extract(_state.engine, body)
@@ -402,7 +403,7 @@ def _register_routes(app: FastAPI) -> None:
 
         Processes URLs concurrently with configurable parallelism.
         """
-        from agentcrawl.server.routes.batch import handle_batch_scrape
+        from server.api.v1.batch import handle_batch_scrape
 
         body = await request.json()
         return await handle_batch_scrape(_state.engine, body)
@@ -414,6 +415,7 @@ def _register_routes(app: FastAPI) -> None:
 
 def _register_error_handlers(app: FastAPI) -> None:
     """Register global error handlers."""
+    import json
 
     @app.exception_handler(404)
     async def not_found_handler(request: Request, exc: Any) -> JSONResponse:
@@ -435,6 +437,19 @@ def _register_error_handlers(app: FastAPI) -> None:
                 "error": {
                     "code": "VALIDATION_ERROR",
                     "message": "Request validation failed",
+                    "details": str(exc),
+                }
+            },
+        )
+
+    @app.exception_handler(json.JSONDecodeError)
+    async def json_decode_error_handler(request: Request, exc: json.JSONDecodeError) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid JSON body",
                     "details": str(exc),
                 }
             },

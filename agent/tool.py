@@ -36,7 +36,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Optional, Type
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -177,8 +177,8 @@ class _EngineManager:
             if self._engine is not None:
                 return self._engine
 
-            from agentcrawl.core.engine import CrawlEngine
             from agentcrawl.config.settings import Settings
+            from agentcrawl.core.engine import CrawlEngine
 
             settings = Settings()
             self._engine = CrawlEngine.from_settings(settings)
@@ -396,7 +396,6 @@ class AgentCrawlToolkit:
         engine = await _engine_manager.get_engine()
 
         from agentcrawl.config.crawler_config import CrawlerConfig
-        from agentcrawl.config.browser_config import BrowserConfig
 
         config = CrawlerConfig(
             output_format=output_format,
@@ -437,7 +436,7 @@ class AgentCrawlToolkit:
         engine = await _engine_manager.get_engine()
 
         from agentcrawl.config.crawler_config import CrawlerConfig
-        from agentcrawl.crawling import BFSCrawler, DFSCrawler, BestFirstCrawler, URLFilter
+        from agentcrawl.crawling import BestFirstCrawler, BFSCrawler, DFSCrawler, URLFilter
 
         strategy_map = {
             "bfs": BFSCrawler,
@@ -571,8 +570,8 @@ class AgentCrawlToolkit:
             from agentcrawl.extraction import JsonXPathExtractor
             extraction = JsonXPathExtractor(schema=schema)
         else:
-            from agentcrawl.extraction import LLMExtractor
             from agentcrawl.config.llm_config import LLMConfig
+            from agentcrawl.extraction import LLMExtractor
             extraction = LLMExtractor(
                 schema=schema,
                 llm_config=LLMConfig(),
@@ -719,8 +718,8 @@ try:
             "'output_format' (markdown/json/html), 'include_links' (bool), "
             "'include_metadata' (bool), and 'stealth' (bool) fields."
         )
-        args_schema: Type[BaseModel] = WebScrapeInput
-        toolkit: Optional[AgentCrawlToolkit] = None
+        args_schema: type[BaseModel] = WebScrapeInput
+        toolkit: AgentCrawlToolkit | None = None
         return_direct: bool = False
 
         def _get_toolkit(self) -> AgentCrawlToolkit:
@@ -792,8 +791,8 @@ try:
             "Use this when you need to find information across the web. "
             "Input should be a search query string."
         )
-        args_schema: Type[BaseModel] = WebSearchInput
-        toolkit: Optional[AgentCrawlToolkit] = None
+        args_schema: type[BaseModel] = WebSearchInput
+        toolkit: AgentCrawlToolkit | None = None
 
         def _get_toolkit(self) -> AgentCrawlToolkit:
             if self.toolkit is None:
@@ -843,8 +842,8 @@ try:
             "multiple pages. Use this when you need content from multiple pages of a site. "
             "Input should be a starting URL."
         )
-        args_schema: Type[BaseModel] = WebCrawlInput
-        toolkit: Optional[AgentCrawlToolkit] = None
+        args_schema: type[BaseModel] = WebCrawlInput
+        toolkit: AgentCrawlToolkit | None = None
 
         def _get_toolkit(self) -> AgentCrawlToolkit:
             if self.toolkit is None:
@@ -942,7 +941,7 @@ try:
             "Input: a JSON string with 'url' (required) and optional "
             "'output_format', 'include_links', 'stealth' fields."
         )
-        toolkit: Optional[AgentCrawlToolkit] = None
+        toolkit: AgentCrawlToolkit | None = None
 
         def _get_toolkit(self) -> AgentCrawlToolkit:
             if self.toolkit is None:
@@ -980,7 +979,7 @@ try:
             "Search the web for information. "
             "Input: a JSON string with 'query' (required) and optional 'max_results'."
         )
-        toolkit: Optional[AgentCrawlToolkit] = None
+        toolkit: AgentCrawlToolkit | None = None
 
         def _get_toolkit(self) -> AgentCrawlToolkit:
             if self.toolkit is None:

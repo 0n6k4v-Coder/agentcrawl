@@ -52,21 +52,13 @@ Quick Start:
 from __future__ import annotations
 
 # ──────────────────────────────────────────────────────────────
-# Global Settings
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.config.settings import Settings
-
-# ──────────────────────────────────────────────────────────────
 # Browser Configuration
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.config.browser_config import BrowserSettings
 
 # ──────────────────────────────────────────────────────────────
 # Crawler Run Configuration
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.config.crawler_config import (
     ChunkerType,
     ContentFilterType,
@@ -80,15 +72,17 @@ from agentcrawl.config.crawler_config import (
 # ──────────────────────────────────────────────────────────────
 # LLM Configuration
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.config.llm_config import LLMConfig
 
 # ──────────────────────────────────────────────────────────────
 # Proxy Configuration
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.config.proxy_config import ProxySettings
 
+# ──────────────────────────────────────────────────────────────
+# Global Settings
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.config.settings import Settings
 
 # ──────────────────────────────────────────────────────────────
 # Public API

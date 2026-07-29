@@ -11,7 +11,7 @@ Each schema includes:
     - Pagination metadata
 
 Usage:
-    from agentcrawl.server.schemas.responses import (
+    from server.schemas.responses import (
         ScrapeResponse,
         ErrorResponse,
         CrawlJobStatusResponse,
@@ -31,7 +31,6 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ══════════════════════════════════════════════════════════════
 # Error

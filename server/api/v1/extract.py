@@ -289,9 +289,7 @@ def _build_dynamic_model(fields_str: str) -> Any:
     if not field_names:
         return None
 
-    field_definitions: dict[str, Any] = {
-        name: (str, "") for name in field_names
-    }
+    field_definitions: dict[str, Any] = dict.fromkeys(field_names, (str, ""))
 
     return create_model("ExtractedData", **field_definitions)
 

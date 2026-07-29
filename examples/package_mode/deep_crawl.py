@@ -17,14 +17,13 @@ from __future__ import annotations
 import asyncio
 import time
 
-
 # ══════════════════════════════════════════════════════════════
 # Example 1: BFS Crawl (Breadth-First)
 # ══════════════════════════════════════════════════════════════
 
 async def example_bfs() -> None:
     """Breadth-first crawl — explores level by level."""
-    from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+    from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
     print("\n[1] BFS Crawl")
     print("-" * 40)
@@ -50,7 +49,7 @@ async def example_bfs() -> None:
         )
         elapsed = (time.perf_counter() - start) * 1000
 
-        print(f"  Strategy: BFS")
+        print("  Strategy: BFS")
         print(f"  Pages: {job.total_pages} ({job.successful_pages} ok, {job.failed_pages} fail)")
         print(f"  Words: {job.total_words}")
         print(f"  Tokens: {job.total_tokens}")
@@ -67,7 +66,7 @@ async def example_bfs() -> None:
 
 async def example_dfs() -> None:
     """Depth-first crawl — explores deep branches first."""
-    from agentcrawl import CrawlEngine, DFSCrawler, CrawlerConfig
+    from agentcrawl import CrawlEngine, CrawlerConfig, DFSCrawler
 
     print("\n[2] DFS Crawl")
     print("-" * 40)
@@ -90,7 +89,7 @@ async def example_dfs() -> None:
             config=config,
         )
 
-        print(f"  Strategy: DFS")
+        print("  Strategy: DFS")
         print(f"  Pages: {job.total_pages}")
         print(f"  Words: {job.total_words}")
 
@@ -105,7 +104,7 @@ async def example_dfs() -> None:
 
 async def example_best_first() -> None:
     """Best-first crawl — explores highest-scored URLs first."""
-    from agentcrawl import CrawlEngine, BestFirstCrawler, CrawlerConfig
+    from agentcrawl import BestFirstCrawler, CrawlEngine, CrawlerConfig
 
     print("\n[3] BestFirst Crawl")
     print("-" * 40)
@@ -128,7 +127,7 @@ async def example_best_first() -> None:
             config=config,
         )
 
-        print(f"  Strategy: BestFirst")
+        print("  Strategy: BestFirst")
         print(f"  Pages: {job.total_pages}")
         print(f"  Words: {job.total_words}")
 
@@ -143,7 +142,7 @@ async def example_best_first() -> None:
 
 async def example_adaptive() -> None:
     """Adaptive crawl — learns site patterns and adapts."""
-    from agentcrawl import CrawlEngine, AdaptiveCrawler, CrawlerConfig
+    from agentcrawl import AdaptiveCrawler, CrawlEngine, CrawlerConfig
 
     print("\n[4] Adaptive Crawl")
     print("-" * 40)
@@ -167,7 +166,7 @@ async def example_adaptive() -> None:
             config=config,
         )
 
-        print(f"  Strategy: Adaptive")
+        print("  Strategy: Adaptive")
         print(f"  Pages: {job.total_pages}")
         print(f"  Words: {job.total_words}")
 
@@ -182,7 +181,7 @@ async def example_adaptive() -> None:
 
 async def example_url_filter() -> None:
     """Crawl with URL include/exclude patterns."""
-    from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+    from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
     from agentcrawl.crawling import URLFilter
 
     print("\n[5] Crawl with URL Filter")
@@ -213,7 +212,7 @@ async def example_url_filter() -> None:
             config=config,
         )
 
-        print(f"  Filter: same_domain=True, exclude=[*.pdf, *.zip, *.png, *.jpg]")
+        print("  Filter: same_domain=True, exclude=[*.pdf, *.zip, *.png, *.jpg]")
         print(f"  Pages: {job.total_pages}")
 
         for page in job.pages:
@@ -226,7 +225,7 @@ async def example_url_filter() -> None:
 
 async def example_crawl_with_processing() -> None:
     """Crawl with content filtering and chunking."""
-    from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+    from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
     print("\n[6] Crawl with Content Processing")
     print("-" * 40)
@@ -315,7 +314,7 @@ async def example_sitemap() -> None:
     print(f"  Total URLs: {result.total_urls}")
 
     if result.entries:
-        print(f"\n  Sample entries:")
+        print("\n  Sample entries:")
         for entry in result.entries[:5]:
             print(f"    • {entry.url}")
             if entry.lastmod:
@@ -349,7 +348,7 @@ async def example_engine_map() -> None:
 
 async def example_result_analysis() -> None:
     """Analyze crawl job results in detail."""
-    from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+    from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
     print("\n[10] Crawl Result Analysis")
     print("-" * 40)
@@ -382,7 +381,7 @@ async def example_result_analysis() -> None:
         print(f"  Duration: {job.duration_ms:.0f}ms")
 
         # Per-page analysis
-        print(f"\n  Per-page breakdown:")
+        print("\n  Per-page breakdown:")
         for page in job.pages:
             title = page.metadata.get("title", "N/A")
             print(f"    {page.url}")
@@ -398,11 +397,11 @@ async def example_result_analysis() -> None:
 async def example_compare_strategies() -> None:
     """Compare different crawl strategies on the same site."""
     from agentcrawl import (
-        CrawlEngine,
-        BFSCrawler,
-        DFSCrawler,
         BestFirstCrawler,
+        BFSCrawler,
+        CrawlEngine,
         CrawlerConfig,
+        DFSCrawler,
     )
 
     print("\n[11] Strategy Comparison")

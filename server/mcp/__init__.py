@@ -14,7 +14,7 @@ Usage:
     python -m agentcrawl.server.mcp.server
 
     # Programmatic
-    from agentcrawl.server.mcp import create_mcp_server, ToolRegistry
+    from server.mcp import create_mcp_server, ToolRegistry
 
     server = create_mcp_server()
     registry = ToolRegistry()
@@ -22,12 +22,12 @@ Usage:
 
 from __future__ import annotations
 
-from agentcrawl.server.mcp.server import create_mcp_server
-from agentcrawl.server.mcp.tools import ToolDefinition, ToolRegistry, get_tool_registry
+from server.mcp.server import create_mcp_server
+from server.mcp.tools import ToolDefinition, ToolRegistry, get_tool_registry
 
 __all__ = [
-    "create_mcp_server",
-    "ToolRegistry",
     "ToolDefinition",
+    "ToolRegistry",
+    "create_mcp_server",
     "get_tool_registry",
 ]

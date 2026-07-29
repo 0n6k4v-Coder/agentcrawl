@@ -292,7 +292,7 @@ class AgentCrawlTools:
         max_pages: int = 10,
     ) -> str:
         """Crawl a website."""
-        from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+        from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
         config = CrawlerConfig(
             output_format="markdown",
@@ -333,14 +333,14 @@ class AgentCrawlTools:
         fields: str,
     ) -> str:
         """Extract structured data."""
-        from agentcrawl import CrawlEngine, CrawlerConfig
+        from agentcrawl import CrawlEngine
 
         field_names = [f.strip() for f in fields.split(",") if f.strip()]
 
         # Build dynamic schema
         from pydantic import create_model
 
-        field_definitions = {name: (str, "") for name in field_names}
+        field_definitions = dict.fromkeys(field_names, (str, ""))
         DynamicModel = create_model("ExtractedData", **field_definitions)
 
         async with CrawlEngine.default() as engine:
@@ -459,7 +459,7 @@ async def run_agent(
             # No tool calls — final response
             final_content = message.content or ""
             if verbose:
-                print(f"\n[Final Response]")
+                print("\n[Final Response]")
 
             return final_content
 

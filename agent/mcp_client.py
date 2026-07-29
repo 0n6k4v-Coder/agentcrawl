@@ -32,9 +32,10 @@ import asyncio
 import json
 import logging
 import uuid
+from collections.abc import AsyncIterator, Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncIterator, Callable, Coroutine
+from typing import Any
 
 import httpx
 

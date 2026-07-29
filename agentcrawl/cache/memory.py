@@ -50,7 +50,6 @@ from agentcrawl.cache.base import (
     CacheBackend,
     CacheConfig,
     CacheEntry,
-    CacheStats,
 )
 
 logger = logging.getLogger("agentcrawl.cache.memory")

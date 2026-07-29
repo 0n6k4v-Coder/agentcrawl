@@ -46,8 +46,9 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, date
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import date, datetime
+from typing import Any
 
 logger = logging.getLogger("agentcrawl.output.json")
 

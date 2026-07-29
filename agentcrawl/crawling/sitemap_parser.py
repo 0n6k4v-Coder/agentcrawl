@@ -39,14 +39,13 @@ from __future__ import annotations
 
 import asyncio
 import gzip
-import io
 import logging
 import re
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 logger = logging.getLogger("agentcrawl.crawling.sitemap")
 

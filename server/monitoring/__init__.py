@@ -10,7 +10,7 @@ Modules:
     metrics  — Metrics collection and Prometheus exposition
 
 Quick Start:
-    from agentcrawl.server.monitoring import (
+    from server.monitoring import (
         HealthChecker,
         configure_server_logging,
         MetricsCollector,
@@ -33,7 +33,7 @@ Quick Start:
 from __future__ import annotations
 
 # Health
-from agentcrawl.server.monitoring.health import (
+from server.monitoring.health import (
     ComponentHealth,
     HealthChecker,
     HealthReport,
@@ -41,7 +41,7 @@ from agentcrawl.server.monitoring.health import (
 )
 
 # Logging
-from agentcrawl.server.monitoring.logging import (
+from server.monitoring.logging import (
     AccessLogMiddleware,
     RequestIdMiddleware,
     SensitiveDataFilter,
@@ -54,7 +54,7 @@ from agentcrawl.server.monitoring.logging import (
 )
 
 # Metrics
-from agentcrawl.server.monitoring.metrics import (
+from server.monitoring.metrics import (
     Counter,
     Gauge,
     Histogram,
@@ -63,7 +63,6 @@ from agentcrawl.server.monitoring.metrics import (
     get_metrics,
     metrics_endpoint,
 )
-
 
 __all__ = [
     # Health

@@ -55,7 +55,6 @@ from typing import Any
 
 from agentcrawl.crawling.base import (
     CrawlConfig,
-    CrawlProgress,
     CrawlStrategy,
     DiscoveredURL,
     URLFilter,

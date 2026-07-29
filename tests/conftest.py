@@ -31,13 +31,13 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
-from typing import Any, AsyncGenerator, Generator
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
-
 
 # ══════════════════════════════════════════════════════════════
 # Pytest Configuration

@@ -49,13 +49,11 @@ from __future__ import annotations
 import asyncio
 import heapq
 import logging
-import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from agentcrawl.crawling.base import (
     CrawlConfig,
-    CrawlProgress,
     CrawlStrategy,
     DiscoveredURL,
     URLFilter,

@@ -22,45 +22,44 @@ Quick Start:
     agentcrawl serve --port 8000
 
     # MCP server
-    from agentcrawl.server.mcp import create_mcp_server
+    from server.mcp import create_mcp_server
     server = create_mcp_server()
 """
 
 from __future__ import annotations
 
-# App
-from agentcrawl.server.app import AppState, create_app, get_state
-
-# Main
-from agentcrawl.server.main import run_server
-
 # API
-from agentcrawl.server.api import api_v1_router
+from server.api import api_v1_router
+
+# App
+from server.app import AppState, create_app, get_state
 
 # Auth
-from agentcrawl.server.auth import (
+from server.auth import (
     APIKeyManager,
     AuthMiddleware,
     JWTManager,
-    RateLimiter,
     RateLimitConfig,
+    RateLimiter,
 )
 
+# Main
+from server.main import run_server
+
 # Monitoring
-from agentcrawl.server.monitoring import (
+from server.monitoring import (
     HealthChecker,
     MetricsCollector,
     configure_server_logging,
 )
 
 # Queue
-from agentcrawl.server.queue import (
+from server.queue import (
     MemoryQueueBackend,
     QueueBackend,
     QueueItem,
     WorkerPool,
 )
-
 
 __all__ = [
     # App

@@ -9,7 +9,7 @@ Modules:
     deps    — FastAPI dependency injection
 
 Usage:
-    from agentcrawl.server.api import api_v1_router
+    from server.api import api_v1_router
 
     app = FastAPI()
     app.include_router(api_v1_router)
@@ -17,7 +17,7 @@ Usage:
 
 from __future__ import annotations
 
-from agentcrawl.server.api.v1 import api_v1_router
+from server.api.v1 import api_v1_router
 
 __all__ = [
     "api_v1_router",

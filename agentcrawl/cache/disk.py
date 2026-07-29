@@ -45,7 +45,6 @@ import hashlib
 import json
 import logging
 import os
-import shutil
 import tempfile
 import time
 import zlib
@@ -56,7 +55,6 @@ from agentcrawl.cache.base import (
     CacheBackend,
     CacheConfig,
     CacheEntry,
-    CacheStats,
 )
 
 logger = logging.getLogger("agentcrawl.cache.disk")
@@ -74,8 +72,14 @@ class _EntryMeta:
     """
 
     __slots__ = (
-        "key", "created_at", "expires_at", "access_count",
-        "last_accessed_at", "size_bytes", "tags", "compressed",
+        "access_count",
+        "compressed",
+        "created_at",
+        "expires_at",
+        "key",
+        "last_accessed_at",
+        "size_bytes",
+        "tags",
     )
 
     def __init__(

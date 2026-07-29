@@ -8,7 +8,7 @@ Registers all route handlers under the /api/v1 prefix with
 proper tags, dependencies, and OpenAPI metadata.
 
 Usage:
-    from agentcrawl.server.api.v1.router import api_v1_router
+    from server.api.v1.router import api_v1_router
 
     app = FastAPI()
     app.include_router(api_v1_router)
@@ -17,7 +17,6 @@ Usage:
 from __future__ import annotations
 
 import logging
-import time
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -48,7 +47,7 @@ api_v1_router = APIRouter(
 
 def _get_engine(request: Request) -> Any:
     """Get the CrawlEngine from app state."""
-    from agentcrawl.server.app import get_state
+    from server.app import get_state
 
     state = get_state()
     return state.engine
@@ -56,7 +55,7 @@ def _get_engine(request: Request) -> Any:
 
 def _increment_stat(request: Request, stat: str) -> None:
     """Increment a stat counter in app state."""
-    from agentcrawl.server.app import get_state
+    from server.app import get_state
 
     state = get_state()
     current = getattr(state, stat, 0)
@@ -75,7 +74,7 @@ async def health_check() -> JSONResponse:
     Returns server status, uptime, and resource information.
     No authentication required.
     """
-    from agentcrawl.server.app import get_state
+    from server.app import get_state
 
     state = get_state()
     engine = state.engine
@@ -139,7 +138,7 @@ async def scrape_page(request: Request) -> JSONResponse:
     Converts a web page into clean Markdown, HTML, or structured JSON.
     Supports page actions, content filtering, and chunking.
     """
-    from agentcrawl.server.routes.scrape import handle_scrape
+    from server.routes.scrape import handle_scrape
 
     body = await request.json()
     _increment_stat(request, "total_scrapes")
@@ -155,7 +154,7 @@ async def batch_scrape(request: Request) -> JSONResponse:
     Processes URLs concurrently with configurable parallelism.
     Maximum 100 URLs per request.
     """
-    from agentcrawl.server.api.v1.batch import handle_batch_scrape
+    from server.api.v1.batch import handle_batch_scrape
 
     body = await request.json()
     _increment_stat(request, "total_scrapes")
@@ -175,12 +174,12 @@ async def start_crawl(request: Request) -> JSONResponse:
     Returns a job_id for tracking progress via GET /crawl/{job_id}.
     Supports BFS, DFS, BestFirst, and Adaptive strategies.
     """
-    from agentcrawl.server.api.v1.crawl import handle_start_crawl
+    from server.api.v1.crawl import handle_start_crawl
 
     body = await request.json()
     _increment_stat(request, "total_crawls")
 
-    from agentcrawl.server.app import get_state
+    from server.app import get_state
     get_state().active_crawls += 1
 
     engine = _get_engine(request)
@@ -194,7 +193,7 @@ async def get_crawl_status(job_id: str) -> JSONResponse:
 
     Returns progress for running jobs, full results for completed jobs.
     """
-    from agentcrawl.server.api.v1.crawl import handle_get_crawl
+    from server.api.v1.crawl import handle_get_crawl
 
     return await handle_get_crawl(job_id)
 
@@ -206,9 +205,8 @@ async def cancel_crawl(job_id: str) -> JSONResponse:
 
     Only works for jobs in 'queued' or 'running' status.
     """
-    from agentcrawl.server.api.v1.crawl import handle_cancel_crawl
-
-    from agentcrawl.server.app import get_state
+    from server.api.v1.crawl import handle_cancel_crawl
+    from server.app import get_state
     get_state().active_crawls = max(0, get_state().active_crawls - 1)
 
     return await handle_cancel_crawl(job_id)
@@ -226,7 +224,7 @@ async def map_site(request: Request) -> JSONResponse:
     Uses sitemap.xml, robots.txt, and link crawling to find URLs.
     Does not scrape page content.
     """
-    from agentcrawl.server.api.v1.map import handle_map
+    from server.api.v1.map import handle_map
 
     body = await request.json()
     engine = _get_engine(request)
@@ -245,7 +243,7 @@ async def search_web(request: Request) -> JSONResponse:
     Supports multiple providers: duckduckgo, tavily, brave, exa, searxng.
     Optionally scrape result pages for full content.
     """
-    from agentcrawl.server.routes.search import handle_search
+    from server.routes.search import handle_search
 
     body = await request.json()
     return await handle_search(body)
@@ -263,7 +261,7 @@ async def extract_data(request: Request) -> JSONResponse:
     Supports CSS, XPath, LLM, and regex extraction methods.
     Provide a schema defining the fields to extract.
     """
-    from agentcrawl.server.api.v1.extract import handle_extract
+    from server.api.v1.extract import handle_extract
 
     body = await request.json()
     engine = _get_engine(request)
@@ -282,7 +280,7 @@ async def interact(request: Request) -> JSONResponse:
     Supports click, type, scroll, wait, screenshot, evaluate,
     and navigate actions. Can maintain session state.
     """
-    from agentcrawl.server.api.v1.interact import handle_interact
+    from server.api.v1.interact import handle_interact
 
     body = await request.json()
     engine = _get_engine(request)
@@ -297,7 +295,7 @@ async def create_session(request: Request) -> JSONResponse:
     Sessions maintain cookies and browser state across
     multiple interaction requests.
     """
-    from agentcrawl.server.api.v1.interact import handle_create_session
+    from server.api.v1.interact import handle_create_session
 
     body = await request.json()
     engine = _get_engine(request)
@@ -311,7 +309,7 @@ async def get_session(session_id: str) -> JSONResponse:
 
     Returns session status, URL, and action count.
     """
-    from agentcrawl.server.api.v1.interact import handle_get_session
+    from server.api.v1.interact import handle_get_session
 
     return await handle_get_session(session_id)
 
@@ -323,7 +321,7 @@ async def destroy_session(session_id: str) -> JSONResponse:
 
     Releases browser resources associated with the session.
     """
-    from agentcrawl.server.api.v1.interact import handle_destroy_session
+    from server.api.v1.interact import handle_destroy_session
 
     return await handle_destroy_session(session_id)
 

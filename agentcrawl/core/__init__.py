@@ -46,7 +46,6 @@ from __future__ import annotations
 # ──────────────────────────────────────────────────────────────
 # Engine
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.core.engine import (
     CrawlEngine,
     CrawlJobResult,
@@ -57,7 +56,6 @@ from agentcrawl.core.engine import (
 # ──────────────────────────────────────────────────────────────
 # Pipeline
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.core.pipeline import (
     CacheReadStage,
     CacheWriteStage,
@@ -81,7 +79,6 @@ from agentcrawl.core.pipeline import (
 # ──────────────────────────────────────────────────────────────
 # Session
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.core.session import (
     CrawlSession,
     PageVisit,
@@ -91,30 +88,63 @@ from agentcrawl.core.session import (
 # ──────────────────────────────────────────────────────────────
 # Types (enums, protocols, type guards — no circular deps)
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.core.types import (
+    URL,
+    # Type aliases
+    AsyncCallback,
+    Base64String,
     # Enums
     BrowserType,
-    CacheBackendType,
-    ChunkerType,
-    ContentFilterType,
-    CrawlStrategy,
-    ExtractionMethod,
-    JobStatus,
-    LogLevel,
-    OutputFormat,
-    ProxyRotationStrategy,
-    QueueBackendType,
     # Protocols
     Cacheable,
+    CacheBackendType,
     Chunkable,
+    ChunkerType,
+    ChunkList,
+    CitationList,
+    ContentFilterType,
+    Cookies,
     Crawlable,
+    # TypedDicts
+    CrawlJobResponseDict,
+    CrawlRequestDict,
+    CrawlStrategy,
+    CssSelector,
+    ErrorHandler,
+    ErrorResponseDict,
     Extractable,
+    ExtractionMethod,
+    ExtractRequestDict,
     Filterable,
+    Headers,
+    HealthResponseDict,
+    HtmlString,
+    JobId,
+    JobStatus,
+    JsonDict,
+    JsonList,
+    JsonString,
+    JsonValue,
+    LinkList,
+    LogLevel,
+    MapRequestDict,
+    MarkdownString,
+    Metadata,
+    OutputFormat,
+    ProgressCallback,
+    ProxyRotationStrategy,
+    QueueBackendType,
+    RequestId,
     Scrapable,
+    ScrapeRequestDict,
+    ScrapeResponseDict,
     Searchable,
+    SearchRequestDict,
     Serializable,
+    SessionId,
     Startable,
+    SyncCallback,
+    XPathExpression,
     # Type guards
     is_chunk,
     is_citation,
@@ -127,42 +157,7 @@ from agentcrawl.core.types import (
     is_pipeline_context,
     is_session_state,
     is_url,
-    # TypedDicts
-    CrawlJobResponseDict,
-    CrawlRequestDict,
-    ErrorResponseDict,
-    ExtractRequestDict,
-    HealthResponseDict,
-    MapRequestDict,
-    ScrapeRequestDict,
-    ScrapeResponseDict,
-    SearchRequestDict,
-    # Type aliases
-    AsyncCallback,
-    Base64String,
-    ChunkList,
-    CitationList,
-    Cookies,
-    CssSelector,
-    ErrorHandler,
-    Headers,
-    HtmlString,
-    JobId,
-    JsonDict,
-    JsonList,
-    JsonString,
-    JsonValue,
-    LinkList,
-    MarkdownString,
-    Metadata,
-    ProgressCallback,
-    RequestId,
-    SessionId,
-    SyncCallback,
-    URL,
-    XPathExpression,
 )
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

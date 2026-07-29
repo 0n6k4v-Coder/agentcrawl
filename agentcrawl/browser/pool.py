@@ -53,11 +53,12 @@ import asyncio
 import logging
 import time
 import uuid
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
-from agentcrawl.browser.config import BrowserConfig, BrowserPoolConfig
+from agentcrawl.browser.config import BrowserConfig
 
 logger = logging.getLogger("agentcrawl.browser.pool")
 

@@ -13,7 +13,7 @@ Modules:
     webhook — Webhook event delivery
 
 Quick Start:
-    from agentcrawl.server.queue import (
+    from server.queue import (
         MemoryQueueBackend,
         WorkerPool,
         QueueItem,
@@ -35,7 +35,7 @@ Quick Start:
 from __future__ import annotations
 
 # Base
-from agentcrawl.server.queue.base import (
+from server.queue.base import (
     JobPriority,
     JobStatus,
     QueueBackend,
@@ -44,25 +44,24 @@ from agentcrawl.server.queue.base import (
 )
 
 # Backends
-from agentcrawl.server.queue.memory import MemoryQueueBackend
-from agentcrawl.server.queue.redis import RedisQueueBackend
-
-# Workers
-from agentcrawl.server.queue.worker import (
-    QueueWorker,
-    WorkerInfo,
-    WorkerPool,
-    WorkerState,
-)
+from server.queue.memory import MemoryQueueBackend
+from server.queue.redis import RedisQueueBackend
 
 # Webhooks
-from agentcrawl.server.queue.webhook import (
+from server.queue.webhook import (
     DeliveryResult,
     WebhookConfig,
     WebhookDispatcher,
     WebhookEvent,
 )
 
+# Workers
+from server.queue.worker import (
+    QueueWorker,
+    WorkerInfo,
+    WorkerPool,
+    WorkerState,
+)
 
 __all__ = [
     # Base

@@ -36,7 +36,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 # ══════════════════════════════════════════════════════════════
 # Schema Generation
 # ══════════════════════════════════════════════════════════════
@@ -364,7 +363,7 @@ def print_stats(schema: dict[str, Any]) -> None:
                 total_endpoints += 1
                 methods_count[method.upper()] = methods_count.get(method.upper(), 0) + 1
 
-    print(f"\n  Schema Statistics:")
+    print("\n  Schema Statistics:")
     print(f"    OpenAPI version: {schema.get('openapi', 'unknown')}")
     print(f"    Endpoints: {total_endpoints}")
     for method, count in sorted(methods_count.items()):

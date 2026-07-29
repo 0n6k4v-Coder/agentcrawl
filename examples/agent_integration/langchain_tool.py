@@ -46,8 +46,8 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import json
-from typing import Any, Iterator, Sequence
+from collections.abc import Iterator
+from typing import Any
 
 try:
     from langchain_core.documents import Document
@@ -59,7 +59,6 @@ except ImportError:
     )
 
 from pydantic import BaseModel, Field
-
 
 # ══════════════════════════════════════════════════════════════
 # Document Loader
@@ -363,7 +362,7 @@ class AgentCrawlCrawlTool(BaseTool):
 
     async def _arun(self, url: str, max_pages: int = 10) -> str:
         """Async execution."""
-        from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+        from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
         config = CrawlerConfig(
             output_format="markdown",

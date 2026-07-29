@@ -62,6 +62,20 @@ logger = logging.getLogger("agentcrawl.browser")
 # Configuration (always available)
 # ──────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────
+# Actions (always available — no Playwright import needed)
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.browser.actions import (
+    Action,
+    ActionExecutionError,
+    ActionResult,
+    ActionStatus,
+    ActionType,
+    PageActions,
+    PageActionsBuilder,
+    ScrollDirection,
+    WaitCondition,
+)
 from agentcrawl.browser.config import (
     BrowserConfig,
     BrowserPoolConfig,
@@ -76,25 +90,28 @@ from agentcrawl.browser.config import (
 )
 
 # ──────────────────────────────────────────────────────────────
-# Actions (always available — no Playwright import needed)
+# Manager & Pool (require Playwright at runtime, not import time)
 # ──────────────────────────────────────────────────────────────
-
-from agentcrawl.browser.actions import (
-    Action,
-    ActionResult,
-    ActionStatus,
-    ActionType,
-    ActionExecutionError,
-    PageActions,
-    PageActionsBuilder,
-    ScrollDirection,
-    WaitCondition,
+from agentcrawl.browser.manager import (
+    BrowserLaunchError,
+    BrowserManager,
+    BrowserManagerError,
+    BrowserNotStartedError,
+    PageAcquisitionError,
+    PoolExhaustedError,
+)
+from agentcrawl.browser.pool import (
+    AcquirePriority,
+    BrowserPool,
+    PageState,
+    PooledPage,
+    PoolEventType,
+    PoolStats,
 )
 
 # ──────────────────────────────────────────────────────────────
 # Proxy (always available)
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.browser.proxy import (
     ProxyManager,
     ProxyProtocol,
@@ -105,34 +122,10 @@ from agentcrawl.browser.proxy import (
 # ──────────────────────────────────────────────────────────────
 # Stealth (always available)
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.browser.stealth import (
     BrowserFingerprint,
     StealthAdapter,
 )
-
-# ──────────────────────────────────────────────────────────────
-# Manager & Pool (require Playwright at runtime, not import time)
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.browser.manager import (
-    BrowserManager,
-    BrowserManagerError,
-    BrowserLaunchError,
-    BrowserNotStartedError,
-    PageAcquisitionError,
-    PoolExhaustedError,
-)
-
-from agentcrawl.browser.pool import (
-    AcquirePriority,
-    BrowserPool,
-    PageState,
-    PoolEventType,
-    PoolStats,
-    PooledPage,
-)
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

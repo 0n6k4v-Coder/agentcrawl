@@ -60,8 +60,8 @@ from typing import Any
 
 from agentcrawl.cache.base import (
     CacheBackend,
-    CacheConfig,
     CacheBackendType,
+    CacheConfig,
     CacheKeyGenerator,
     CacheStats,
     NullCacheBackend,

@@ -44,7 +44,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, Type
+from typing import Any
 
 try:
     from crewai.tools import BaseTool
@@ -55,7 +55,6 @@ except ImportError:
     )
 
 from pydantic import BaseModel, Field
-
 
 # ══════════════════════════════════════════════════════════════
 # Input Schemas
@@ -135,7 +134,7 @@ class AgentCrawlScrapeTool(BaseTool):
         "Removes navigation, ads, and boilerplate. "
         "Use this to read the content of a specific URL."
     )
-    args_schema: Type[BaseModel] = ScrapeInput
+    args_schema: type[BaseModel] = ScrapeInput
 
     def _run(
         self,
@@ -218,7 +217,7 @@ class AgentCrawlSearchTool(BaseTool):
         "Search the web and return results with titles, URLs, and snippets. "
         "Use this to find relevant pages before scraping them."
     )
-    args_schema: Type[BaseModel] = SearchInput
+    args_schema: type[BaseModel] = SearchInput
 
     def _run(self, query: str, max_results: int = 5) -> str:
         """Execute the search tool."""
@@ -275,7 +274,7 @@ class AgentCrawlCrawlTool(BaseTool):
         "multiple pages. Use this to gather information from an entire "
         "website or documentation section."
     )
-    args_schema: Type[BaseModel] = CrawlInput
+    args_schema: type[BaseModel] = CrawlInput
 
     def _run(
         self,
@@ -292,7 +291,7 @@ class AgentCrawlCrawlTool(BaseTool):
         max_pages: int = 10,
         max_depth: int = 2,
     ) -> str:
-        from agentcrawl import CrawlEngine, BFSCrawler, CrawlerConfig
+        from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
 
         config = CrawlerConfig(
             output_format="markdown",
@@ -357,7 +356,7 @@ class AgentCrawlExtractTool(BaseTool):
         "you want to extract (e.g., 'title,price,description'). "
         "Returns the extracted data as JSON."
     )
-    args_schema: Type[BaseModel] = ExtractInput
+    args_schema: type[BaseModel] = ExtractInput
 
     def _run(self, url: str, fields: str) -> str:
         """Execute the extract tool."""
@@ -376,9 +375,7 @@ class AgentCrawlExtractTool(BaseTool):
             # Build a dynamic Pydantic model
             from pydantic import create_model
 
-            field_definitions: dict[str, Any] = {
-                name: (str, "") for name in field_names
-            }
+            field_definitions: dict[str, Any] = dict.fromkeys(field_names, (str, ""))
             DynamicModel = create_model("ExtractedData", **field_definitions)
 
             # Scrape and extract

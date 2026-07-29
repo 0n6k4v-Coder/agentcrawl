@@ -493,6 +493,7 @@ class HTMLParser:
             return ""
 
         from copy import deepcopy
+
         from lxml.html import tostring
 
         clone = deepcopy(self._root)

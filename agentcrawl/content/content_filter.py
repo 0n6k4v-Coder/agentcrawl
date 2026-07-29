@@ -153,6 +153,12 @@ class ContentFilterResult:
     reduction_ratio: float = 0.0
     noise_blocks_removed: int = 0
 
+    def __post_init__(self) -> None:
+        if self.original_word_count > 0:
+            self.reduction_ratio = 1.0 - (self.filtered_word_count / self.original_word_count)
+        else:
+            self.reduction_ratio = 0.0
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "filter_type": self.filter_type,
@@ -335,6 +341,8 @@ class ContentFilter(ABC):
             nav_keywords = [
                 "navigation", "menu", "sidebar", "breadcrumb",
                 "skip to", "toggle navigation", "hamburger",
+                "cookie notice", "cookie banner",
+                "cookie consent",
             ]
             if any(kw in stripped.lower() for kw in nav_keywords):
                 _flush()
@@ -350,6 +358,7 @@ class ContentFilter(ABC):
             footer_keywords = [
                 "copyright", "all rights reserved", "privacy policy",
                 "terms of service", "terms of use", "cookie policy",
+                "cookie notice", "cookie consent",
                 "powered by", "built with",
             ]
             if any(kw in stripped.lower() for kw in footer_keywords):

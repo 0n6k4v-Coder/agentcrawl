@@ -18,7 +18,7 @@ Prerequisites:
     pip install pyjwt cryptography
 
 Usage:
-    from agentcrawl.server.auth.jwt import JWTManager
+    from server.auth.jwt import JWTManager
 
     manager = JWTManager(secret="your-secret-key")
 
@@ -40,7 +40,7 @@ Usage:
     new_tokens = manager.refresh(tokens.refresh_token)
 
     # FastAPI dependency
-    from agentcrawl.server.auth.jwt import require_jwt
+    from server.auth.jwt import require_jwt
 
     @app.post("/scrape")
     async def scrape(auth=Depends(require_jwt)):
@@ -601,13 +601,13 @@ async def require_jwt(
 
     Usage:
         from fastapi import Depends
-        from agentcrawl.server.auth.jwt import require_jwt
+        from server.auth.jwt import require_jwt
 
         @app.post("/scrape")
         async def scrape(claims=Depends(require_jwt)):
             print(f"User: {claims.sub}")
     """
-    from fastapi import Header, HTTPException
+    from fastapi import HTTPException
 
     if not authorization:
         raise HTTPException(

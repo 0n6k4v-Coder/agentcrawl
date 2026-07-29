@@ -14,8 +14,8 @@ Features:
     - Expired item cleanup
 
 Usage:
-    from agentcrawl.server.queue.memory import MemoryQueueBackend
-    from agentcrawl.server.queue.base import QueueItem
+    from server.queue.memory import MemoryQueueBackend
+    from server.queue.base import QueueItem
 
     backend = MemoryQueueBackend()
     await backend.start()
@@ -39,7 +39,7 @@ import logging
 import time
 from typing import Any
 
-from agentcrawl.server.queue.base import (
+from server.queue.base import (
     JobStatus,
     QueueBackend,
     QueueItem,
@@ -63,7 +63,7 @@ class _PrioritizedItem:
         3. Creation time (older = first)
     """
 
-    __slots__ = ("priority_key", "scheduled_at", "created_at", "seq", "item")
+    __slots__ = ("created_at", "item", "priority_key", "scheduled_at", "seq")
 
     _counter: int = 0
 

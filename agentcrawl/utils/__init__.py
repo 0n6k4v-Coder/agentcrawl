@@ -49,7 +49,6 @@ from __future__ import annotations
 # ──────────────────────────────────────────────────────────────
 # Crypto
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.utils.crypto import (
     CryptoManager,
     b64_decode,
@@ -77,7 +76,6 @@ from agentcrawl.utils.crypto import (
 # ──────────────────────────────────────────────────────────────
 # HTML
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.utils.html import (
     clean_html,
     collapse_spaces,
@@ -104,7 +102,6 @@ from agentcrawl.utils.html import (
 # ──────────────────────────────────────────────────────────────
 # Logging
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.utils.logging import (
     ColoredFormatter,
     ContextFilter,
@@ -124,7 +121,6 @@ from agentcrawl.utils.logging import (
 # ──────────────────────────────────────────────────────────────
 # Retry
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.utils.retry import (
     CircuitBreaker,
     CircuitBreakerError,
@@ -138,7 +134,6 @@ from agentcrawl.utils.retry import (
 # ──────────────────────────────────────────────────────────────
 # Text
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.utils.text import (
     STOP_WORDS,
     TextStats,
@@ -169,7 +164,6 @@ from agentcrawl.utils.text import (
 # ──────────────────────────────────────────────────────────────
 # URL
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.utils.url import (
     TRACKING_PARAMS,
     add_query_params,
@@ -203,7 +197,6 @@ from agentcrawl.utils.url import (
     url_matches_regex,
     urls_equal,
 )
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

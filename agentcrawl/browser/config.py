@@ -44,7 +44,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-
 # ══════════════════════════════════════════════════════════════
 # Enums
 # ══════════════════════════════════════════════════════════════
@@ -608,17 +607,17 @@ class BrowserConfig:
                 "width": self.viewport.width,
                 "height": self.viewport.height,
             },
-            "deviceScaleFactor": self.viewport.device_scale_factor,
-            "isMobile": self.viewport.is_mobile,
-            "hasTouch": self.viewport.has_touch,
-            "javaScriptEnabled": self.java_script_enabled,
-            "ignoreHTTPSErrors": self.ignore_https_errors,
-            "bypassCSP": self.bypass_csp,
+            "device_scale_factor": self.viewport.device_scale_factor,
+            "is_mobile": self.viewport.is_mobile,
+            "has_touch": self.viewport.has_touch,
+            "java_script_enabled": self.java_script_enabled,
+            "ignore_https_errors": self.ignore_https_errors,
+            "bypass_csp": self.bypass_csp,
             "locale": self.locale,
-            "colorScheme": self.color_scheme,
-            "reducedMotion": self.reduced_motion,
-            "forcedColors": self.forced_colors,
-            "acceptDownloads": self.accept_downloads,
+            "color_scheme": self.color_scheme,
+            "reduced_motion": self.reduced_motion,
+            "forced_colors": self.forced_colors,
+            "accept_downloads": self.accept_downloads,
         }
 
         if self.user_agent:

@@ -16,9 +16,7 @@ Run:
 from __future__ import annotations
 
 import asyncio
-import json
 import time
-
 
 # ══════════════════════════════════════════════════════════════
 # Example 1: Basic Search (DuckDuckGo)
@@ -37,7 +35,7 @@ async def example_basic_search() -> None:
     results = await engine.search("python asyncio tutorial", max_results=5)
     elapsed = (time.perf_counter() - start) * 1000
 
-    print(f"  Query: \"python asyncio tutorial\"")
+    print("  Query: \"python asyncio tutorial\"")
     print(f"  Results: {len(results)}")
     print(f"  Time: {elapsed:.0f}ms")
 
@@ -101,7 +99,7 @@ async def example_search_and_scrape() -> None:
 
         elapsed = (time.perf_counter() - start) * 1000
 
-        print(f"  Query: \"python web scraping best practices\"")
+        print("  Query: \"python web scraping best practices\"")
         print(f"  Scraped: {len(results)} pages")
         print(f"  Total time: {elapsed:.0f}ms")
 
@@ -169,7 +167,7 @@ async def example_multiple_queries() -> None:
 
 async def example_research_pipeline() -> None:
     """Full research pipeline: search → scrape → extract."""
-    from agentcrawl import CrawlEngine, SearchEngine, CrawlerConfig
+    from agentcrawl import CrawlEngine, CrawlerConfig, SearchEngine
 
     print("\n[6] Research Pipeline")
     print("-" * 45)
@@ -211,7 +209,7 @@ async def example_research_pipeline() -> None:
     total_chunks = sum(len(r.chunks) for r in scrape_results if r.success)
     print(f"    Total words: {total_words}")
     print(f"    Total chunks: {total_chunks}")
-    print(f"    Ready for RAG ingestion")
+    print("    Ready for RAG ingestion")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -348,7 +346,7 @@ async def example_provider_comparison() -> None:
 
 async def example_research_workflow() -> None:
     """Simulate an AI agent research workflow."""
-    from agentcrawl import CrawlEngine, SearchEngine, CrawlerConfig
+    from agentcrawl import CrawlEngine, CrawlerConfig, SearchEngine
 
     print("\n[12] Research Agent Workflow")
     print("-" * 45)
@@ -409,7 +407,7 @@ async def example_research_workflow() -> None:
     # Phase 5: Ready for LLM
     print("\n  Phase 5: Ready for LLM")
     print(f"    Context window needed: ~{total_tokens} tokens")
-    print(f"    Can proceed with RAG or direct LLM query")
+    print("    Can proceed with RAG or direct LLM query")
 
 
 # ══════════════════════════════════════════════════════════════

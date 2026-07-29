@@ -22,14 +22,14 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import pytest
 import pytest_asyncio
 
-from agentcrawl.server.queue.base import JobPriority, JobStatus, QueueItem
-from agentcrawl.server.queue.memory import MemoryQueueBackend
-
+from server.queue.base import JobPriority, JobStatus, QueueItem
+from server.queue.memory import MemoryQueueBackend
 
 # ══════════════════════════════════════════════════════════════
 # Fixtures

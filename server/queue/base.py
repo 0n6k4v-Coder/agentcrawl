@@ -14,7 +14,7 @@ Backends:
     - RedisQueueBackend (distributed, production)
 
 Usage:
-    from agentcrawl.server.queue.base import QueueBackend, QueueItem
+    from server.queue.base import QueueBackend, QueueItem
 
     class MyBackend(QueueBackend):
         async def enqueue(self, item): ...
@@ -29,7 +29,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
-
 
 # ══════════════════════════════════════════════════════════════
 # Data Models

@@ -52,13 +52,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import math
 import re
 import time
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger("agentcrawl.crawling.adaptive")
 
@@ -651,6 +650,26 @@ class AdaptiveCrawler:
     def crawled_count(self) -> int:
         """Number of pages crawled."""
         return len(self._crawled_urls)
+
+    @property
+    def max_depth(self) -> int:
+        """Maximum crawl depth."""
+        return self._max_depth
+
+    @property
+    def max_pages(self) -> int:
+        """Maximum pages to crawl."""
+        return self._max_pages
+
+    @property
+    def max_concurrent(self) -> int:
+        """Maximum concurrent requests."""
+        return self._max_concurrent
+
+    @property
+    def strategy_name(self) -> str:
+        """Strategy identifier."""
+        return "adaptive"
 
     # ──────────────────────────────────────────────────────────
     # Discovery

@@ -71,16 +71,14 @@ from agentcrawl.cache.base import (
 )
 
 # ──────────────────────────────────────────────────────────────
-# Memory backend (always available)
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.cache.memory import MemoryCacheBackend
-
-# ──────────────────────────────────────────────────────────────
 # Disk backend (always available)
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.cache.disk import DiskCacheBackend
+
+# ──────────────────────────────────────────────────────────────
+# Memory backend (always available)
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.cache.memory import MemoryCacheBackend
 
 # ──────────────────────────────────────────────────────────────
 # Redis backend (conditional — requires redis package)
@@ -103,7 +101,6 @@ from agentcrawl.cache.manager import (
     create_cache_from_env,
     create_cache_manager,
 )
-
 
 # ──────────────────────────────────────────────────────────────
 # Public API

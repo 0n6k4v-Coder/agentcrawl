@@ -40,11 +40,9 @@ import argparse
 import asyncio
 import json
 import statistics
-import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any
-
 
 # ══════════════════════════════════════════════════════════════
 # Data Models
@@ -297,7 +295,7 @@ class BenchmarkRunner:
 
     async def bench_crawl(self) -> list[BenchmarkResult]:
         """Benchmark different crawl strategies."""
-        from agentcrawl import CrawlEngine, BFSCrawler, DFSCrawler, BestFirstCrawler
+        from agentcrawl import BestFirstCrawler, BFSCrawler, CrawlEngine, DFSCrawler
 
         strategies = {
             "bfs": BFSCrawler(max_depth=2, max_pages=10),
@@ -343,7 +341,7 @@ class BenchmarkRunner:
 
     async def bench_content_processing(self) -> list[BenchmarkResult]:
         """Benchmark content filtering and chunking."""
-        from agentcrawl import CrawlEngine, CrawlerConfig
+        from agentcrawl import CrawlEngine
 
         results: list[BenchmarkResult] = []
 

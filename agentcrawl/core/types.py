@@ -27,18 +27,16 @@ Usage:
 
 from __future__ import annotations
 
+from collections.abc import Callable, Coroutine
 from enum import Enum
 from typing import (
     Any,
-    Callable,
-    Coroutine,
     Protocol,
     TypeAlias,
-    TypeGuard,
     TypedDict,
+    TypeGuard,
     runtime_checkable,
 )
-
 
 # ══════════════════════════════════════════════════════════════
 # Type Aliases

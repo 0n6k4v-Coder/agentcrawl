@@ -1,4 +1,4 @@
-"""
+r"""
 AgentCrawl — URL Filter (Extended)
 ======================================
 
@@ -55,12 +55,10 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import (
     parse_qs,
-    quote,
-    unquote,
     urlencode,
     urlparse,
     urlunparse,
@@ -620,7 +618,7 @@ class URLValidator:
 # ══════════════════════════════════════════════════════════════
 
 class AdvancedURLFilter(URLFilter):
-    """
+    r"""
     Extended URL filter with regex support and robots.txt integration.
 
     Adds regex pattern matching, robots.txt enforcement, and
@@ -811,7 +809,7 @@ class FilterPreset:
     def blog(cls, **kwargs: Any) -> AdvancedURLFilter:
         """Filter for blog/article content."""
         return AdvancedURLFilter(
-            include_patterns=["/blog/*", "/post/*", "/article/*", "/news/*", "/\d{4}/\d{2}/*"],
+            include_patterns=["/blog/*", "/post/*", "/article/*", "/news/*", r"/\d{4}/\d{2}/*"],
             exclude_patterns=["/category/*", "/tag/*", "/author/*", "/page/*"],
             **kwargs,
         )
@@ -874,11 +872,11 @@ class FilterPreset:
 # ══════════════════════════════════════════════════════════════
 
 __all__ = [
-    "URLFilter",
     "AdvancedURLFilter",
-    "URLNormalizer",
-    "RobotsTxtParser",
-    "RobotsRule",
-    "URLValidator",
     "FilterPreset",
+    "RobotsRule",
+    "RobotsTxtParser",
+    "URLFilter",
+    "URLNormalizer",
+    "URLValidator",
 ]

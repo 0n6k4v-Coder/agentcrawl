@@ -43,7 +43,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Type
+from typing import Any
 
 logger = logging.getLogger("agentcrawl.extraction")
 

@@ -16,7 +16,7 @@ Features:
     - Usage tracking
 
 Usage:
-    from agentcrawl.server.auth.api_key import APIKeyManager
+    from server.auth.api_key import APIKeyManager
 
     manager = APIKeyManager()
 
@@ -32,7 +32,7 @@ Usage:
 
     # Middleware usage
     from fastapi import Depends
-    from agentcrawl.server.auth.api_key import require_api_key
+    from server.auth.api_key import require_api_key
 
     @app.post("/scrape")
     async def scrape(auth=Depends(require_api_key)):
@@ -619,13 +619,13 @@ async def require_api_key(
 
     Usage:
         from fastapi import Depends
-        from agentcrawl.server.auth.api_key import require_api_key
+        from server.auth.api_key import require_api_key
 
         @app.post("/scrape")
         async def scrape(key_info=Depends(require_api_key)):
             print(f"Authenticated as: {key_info.name}")
     """
-    from fastapi import Header, Query, HTTPException
+    from fastapi import HTTPException
 
     # This is a simplified version — in production, use the
     # full dependency from server/api/deps.py

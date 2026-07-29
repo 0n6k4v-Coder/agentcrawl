@@ -72,7 +72,6 @@ from __future__ import annotations
 # ──────────────────────────────────────────────────────────────
 # Base
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.extraction.base import (
     ExtractionConfig,
     ExtractionMethod,
@@ -83,14 +82,6 @@ from agentcrawl.extraction.base import (
     create_extractor,
     create_extractor_from_config,
 )
-
-# ──────────────────────────────────────────────────────────────
-# Strategies
-# ──────────────────────────────────────────────────────────────
-
-from agentcrawl.extraction.llm import LLMExtractor
-from agentcrawl.extraction.json_css import JsonCssExtractor
-from agentcrawl.extraction.json_xpath import JsonXPathExtractor
 from agentcrawl.extraction.cosine import (
     Cluster,
     CosineExtractor,
@@ -98,20 +89,20 @@ from agentcrawl.extraction.cosine import (
     HTMLElementParser,
     TFIDFVectorizer,
 )
-from agentcrawl.extraction.regex import RegexExtractor
-from agentcrawl.extraction.markdown import MarkdownExtractor
 from agentcrawl.extraction.fit_markdown import FitMarkdownExtractor
-from agentcrawl.extraction.table import (
-    ColumnTypeInferrer,
-    TableColumn,
-    TableData,
-    TableExtractor,
-)
+from agentcrawl.extraction.json_css import JsonCssExtractor
+from agentcrawl.extraction.json_xpath import JsonXPathExtractor
+
+# ──────────────────────────────────────────────────────────────
+# Strategies
+# ──────────────────────────────────────────────────────────────
+from agentcrawl.extraction.llm import LLMExtractor
+from agentcrawl.extraction.markdown import MarkdownExtractor
+from agentcrawl.extraction.regex import RegexExtractor
 
 # ──────────────────────────────────────────────────────────────
 # Schema Utilities
 # ──────────────────────────────────────────────────────────────
-
 from agentcrawl.extraction.schema import (
     FieldDef,
     SchemaBuilder,
@@ -120,7 +111,12 @@ from agentcrawl.extraction.schema import (
     SchemaValidator,
     infer_schema_from_html,
 )
-
+from agentcrawl.extraction.table import (
+    ColumnTypeInferrer,
+    TableColumn,
+    TableData,
+    TableExtractor,
+)
 
 # ──────────────────────────────────────────────────────────────
 # Public API

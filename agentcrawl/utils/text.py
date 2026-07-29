@@ -60,7 +60,6 @@ import unicodedata
 from collections import Counter
 from typing import Any
 
-
 # ══════════════════════════════════════════════════════════════
 # Cleaning & Normalization
 # ══════════════════════════════════════════════════════════════
@@ -780,7 +779,6 @@ class TextStats:
         }
 
 
-from dataclasses import dataclass  # noqa: E402
 
 
 def analyze_text(text: str) -> TextStats:

@@ -64,10 +64,9 @@ __license__ = "Apache-2.0"
 # Top-Level Imports (lightweight, always available)
 # ══════════════════════════════════════════════════════════════
 
-from agentcrawl.core.engine import CrawlEngine, CrawlJobResult, CrawlResult
 from agentcrawl.config.crawler_config import CrawlerConfig
 from agentcrawl.config.settings import Settings
-
+from agentcrawl.core.engine import CrawlEngine, CrawlJobResult, CrawlResult
 
 # ══════════════════════════════════════════════════════════════
 # Lazy Imports (heavy modules loaded on first access)

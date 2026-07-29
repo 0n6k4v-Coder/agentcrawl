@@ -22,12 +22,13 @@ Run:
 from __future__ import annotations
 
 import asyncio
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import pytest
 import pytest_asyncio
+from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
-
 
 # ══════════════════════════════════════════════════════════════
 # Fixtures
@@ -36,26 +37,28 @@ from httpx import ASGITransport, AsyncClient
 @pytest_asyncio.fixture
 async def app() -> AsyncGenerator[Any, None]:
     """Create a test FastAPI app."""
-    from agentcrawl.server.app import create_app
     from agentcrawl.config.settings import Settings
+    from server.app import create_app
 
     settings = Settings(
         log_level="WARNING",
         headless=True,
         cache_backend="memory",
         cache_ttl=60,
+        auth_enabled=False,
     )
 
     application = create_app(settings)
 
-    yield application
+    # Use TestClient which properly handles lifespan
+    with TestClient(application) as client:
+        yield application
 
 
 @pytest_asyncio.fixture
 async def client(app: Any) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client."""
     transport = ASGITransport(app=app)
-
     async with AsyncClient(
         transport=transport,
         base_url="http://testserver",

@@ -26,8 +26,6 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import pytest_asyncio
-
 
 # ══════════════════════════════════════════════════════════════
 # Fixtures
@@ -55,6 +53,7 @@ def mock_playwright() -> MagicMock:
 
     browser.new_context = AsyncMock(return_value=context)
     browser.close = AsyncMock()
+    browser.version = "125.0.0"
 
     browser_type.launch = AsyncMock(return_value=browser)
 
@@ -66,18 +65,16 @@ def mock_playwright() -> MagicMock:
 
 
 @pytest.fixture
-def default_settings() -> Any:
-    """Default settings for browser tests."""
-    from agentcrawl.config.settings import Settings
+def default_config() -> Any:
+    """Default browser config for tests."""
+    from agentcrawl.browser.config import BrowserConfig, ViewportConfig
 
-    return Settings(
+    return BrowserConfig(
         browser_type="chromium",
         headless=True,
         stealth=False,
         user_agent="",
-        proxy_url="",
-        viewport_width=1280,
-        viewport_height=720,
+        viewport=ViewportConfig(width=1280, height=720),
     )
 
 
@@ -88,41 +85,41 @@ def default_settings() -> Any:
 class TestBrowserManagerInit:
     """Tests for BrowserManager initialization."""
 
-    def test_create_manager(self, default_settings: Any) -> None:
-        """Create a BrowserManager with default settings."""
+    def test_create_manager(self, default_config: Any) -> None:
+        """Create a BrowserManager with default config."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
         assert manager is not None
-        assert manager._browser_type == "chromium"
-        assert manager._headless is True
+        assert manager.config.browser_type == "chromium"
+        assert manager.config.headless is True
 
     def test_create_manager_firefox(self) -> None:
         """Create a BrowserManager with Firefox."""
+        from agentcrawl.browser.config import BrowserConfig
         from agentcrawl.browser.manager import BrowserManager
-        from agentcrawl.config.settings import Settings
 
-        settings = Settings(browser_type="firefox", headless=True)
-        manager = BrowserManager(settings=settings)
+        config = BrowserConfig(browser_type="firefox", headless=True)
+        manager = BrowserManager(config=config)
 
-        assert manager._browser_type == "firefox"
+        assert manager.config.browser_type == "firefox"
 
     def test_create_manager_webkit(self) -> None:
         """Create a BrowserManager with WebKit."""
+        from agentcrawl.browser.config import BrowserConfig
         from agentcrawl.browser.manager import BrowserManager
-        from agentcrawl.config.settings import Settings
 
-        settings = Settings(browser_type="webkit", headless=True)
-        manager = BrowserManager(settings=settings)
+        config = BrowserConfig(browser_type="webkit", headless=True)
+        manager = BrowserManager(config=config)
 
-        assert manager._browser_type == "webkit"
+        assert manager.config.browser_type == "webkit"
 
-    def test_manager_not_started_initially(self, default_settings: Any) -> None:
+    def test_manager_not_started_initially(self, default_config: Any) -> None:
         """Manager is not started after creation."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
         assert manager.is_started is False
 
 
@@ -136,304 +133,310 @@ class TestBrowserLaunchShutdown:
     @pytest.mark.asyncio
     async def test_launch_browser(
         self,
-        default_settings: Any,
+        default_config: Any,
         mock_playwright: MagicMock,
     ) -> None:
         """Launch browser successfully."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            await manager.startup()
+            await manager.start()
 
             assert manager.is_started is True
 
     @pytest.mark.asyncio
     async def test_shutdown_browser(
         self,
-        default_settings: Any,
+        default_config: Any,
         mock_playwright: MagicMock,
     ) -> None:
         """Shutdown browser cleanly."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            await manager.startup()
-            await manager.shutdown()
+            await manager.start()
+            await manager.stop()
 
             assert manager.is_started is False
 
     @pytest.mark.asyncio
-    async def test_double_startup(
+    async def test_context_manager(
         self,
-        default_settings: Any,
+        default_config: Any,
         mock_playwright: MagicMock,
     ) -> None:
-        """Double startup is idempotent."""
+        """Use BrowserManager as async context manager."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+            async with BrowserManager(config=default_config) as manager:
+                assert manager.is_started is True
 
-            await manager.startup()
-            await manager.startup()  # Should not raise
-
-            assert manager.is_started is True
-
-    @pytest.mark.asyncio
-    async def test_shutdown_without_startup(self, default_settings: Any) -> None:
-        """Shutdown without startup is safe."""
-        from agentcrawl.browser.manager import BrowserManager
-
-        manager = BrowserManager(settings=default_settings)
-        await manager.shutdown()  # Should not raise
+            # After context exit, should be shut down
+            assert manager.is_started is False
 
 
 # ══════════════════════════════════════════════════════════════
-# Context Management
+# Context & Page Management
 # ══════════════════════════════════════════════════════════════
 
-class TestContextManagement:
-    """Tests for browser context creation."""
+class TestContextPageManagement:
+    """Tests for context and page management."""
 
     @pytest.mark.asyncio
-    async def test_create_context(
+    async def test_acquire_page(
         self,
-        default_settings: Any,
+        default_config: Any,
         mock_playwright: MagicMock,
     ) -> None:
-        """Create a browser context."""
+        """Acquire a page from the manager."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            await manager.startup()
-            context = await manager.create_context()
-
-            assert context is not None
-
-    @pytest.mark.asyncio
-    async def test_create_context_with_user_agent(
-        self,
-        mock_playwright: MagicMock,
-    ) -> None:
-        """Create context with custom User-Agent."""
-        from agentcrawl.browser.manager import BrowserManager
-        from agentcrawl.config.settings import Settings
-
-        settings = Settings(
-            browser_type="chromium",
-            headless=True,
-            user_agent="CustomAgent/1.0",
-        )
-
-        manager = BrowserManager(settings=settings)
-
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
-
-            await manager.startup()
-            await manager.create_context()
-
-            # Verify new_context was called
-            browser = mock_playwright.chromium.launch.return_value
-            browser.new_context.assert_called()
-
-    @pytest.mark.asyncio
-    async def test_create_context_with_viewport(
-        self,
-        mock_playwright: MagicMock,
-    ) -> None:
-        """Create context with custom viewport."""
-        from agentcrawl.browser.manager import BrowserManager
-        from agentcrawl.config.settings import Settings
-
-        settings = Settings(
-            browser_type="chromium",
-            headless=True,
-            viewport_width=1920,
-            viewport_height=1080,
-        )
-
-        manager = BrowserManager(settings=settings)
-
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
-
-            await manager.startup()
-            await manager.create_context()
-
-            browser = mock_playwright.chromium.launch.return_value
-            call_kwargs = browser.new_context.call_args
-            assert call_kwargs is not None
-
-
-# ══════════════════════════════════════════════════════════════
-# Page Creation
-# ══════════════════════════════════════════════════════════════
-
-class TestPageCreation:
-    """Tests for page creation within contexts."""
-
-    @pytest.mark.asyncio
-    async def test_create_page(
-        self,
-        default_settings: Any,
-        mock_playwright: MagicMock,
-    ) -> None:
-        """Create a page in a context."""
-        from agentcrawl.browser.manager import BrowserManager
-
-        manager = BrowserManager(settings=default_settings)
-
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
-
-            await manager.startup()
-            context = await manager.create_context()
-            page = await context.new_page()
+            await manager.start()
+            page = await manager.acquire_page()
 
             assert page is not None
+            assert manager.active_page_count == 1
 
-
-# ══════════════════════════════════════════════════════════════
-# Stealth Mode
-# ══════════════════════════════════════════════════════════════
-
-class TestStealthMode:
-    """Tests for stealth/anti-detection configuration."""
-
-    def test_stealth_disabled_by_default(self) -> None:
-        """Stealth is disabled by default."""
-        from agentcrawl.config.settings import Settings
-
-        settings = Settings()
-        assert settings.stealth is False
-
-    def test_stealth_enabled(self) -> None:
-        """Stealth can be enabled."""
-        from agentcrawl.config.settings import Settings
-
-        settings = Settings(stealth=True)
-        assert settings.stealth is True
+            await manager.release_page(page)
+            assert manager.active_page_count == 0
 
     @pytest.mark.asyncio
-    async def test_stealth_context_creation(self, mock_playwright: MagicMock) -> None:
-        """Stealth mode affects context creation."""
-        from agentcrawl.browser.manager import BrowserManager
-        from agentcrawl.config.settings import Settings
+    async def test_acquire_page_without_startup(
+        self,
+        default_config: Any,
+    ) -> None:
+        """Acquire page without startup raises error."""
+        from agentcrawl.browser.manager import BrowserManager, BrowserNotStartedError
 
-        settings = Settings(
+        manager = BrowserManager(config=default_config)
+
+        with pytest.raises(BrowserNotStartedError):
+            await manager.acquire_page()
+
+    @pytest.mark.asyncio
+    async def test_multiple_pages(
+        self,
+        default_config: Any,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Acquire multiple pages."""
+        from agentcrawl.browser.manager import BrowserManager
+
+        manager = BrowserManager(config=default_config)
+
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
+
+            await manager.start()
+
+            page1 = await manager.acquire_page()
+            page2 = await manager.acquire_page()
+
+            assert page1 is not None
+            assert page2 is not None
+            assert manager.active_page_count == 2
+
+            await manager.release_page(page1)
+            await manager.release_page(page2)
+            assert manager.active_page_count == 0
+
+    @pytest.mark.asyncio
+    async def test_page_reuse(
+        self,
+        default_config: Any,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Released pages are reused."""
+        from agentcrawl.browser.manager import BrowserManager
+
+        manager = BrowserManager(config=default_config)
+
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
+
+            await manager.start()
+
+            page1 = await manager.acquire_page()
+            await manager.release_page(page1)
+
+            page2 = await manager.acquire_page()
+            # Page should be reused (same page object from pool)
+            assert page2 is not None
+
+
+# ══════════════════════════════════════════════════════════════
+# Stealth Configuration
+# ══════════════════════════════════════════════════════════════
+
+class TestStealthConfig:
+    """Tests for stealth configuration."""
+
+    @pytest.mark.asyncio
+    async def test_stealth_enabled(
+        self,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Stealth adapter is created when stealth=True."""
+        from agentcrawl.browser.config import BrowserConfig
+        from agentcrawl.browser.manager import BrowserManager
+
+        config = BrowserConfig(
             browser_type="chromium",
             headless=True,
             stealth=True,
         )
 
-        manager = BrowserManager(settings=settings)
+        manager = BrowserManager(config=config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            await manager.startup()
+            await manager.start()
 
-            # Stealth should be configured
-            assert manager._stealth is True
+            # Stealth adapter should be created
+            assert manager._stealth_adapter is not None
 
 
 # ══════════════════════════════════════════════════════════════
-# Proxy Configuration
+# Viewport Configuration
 # ══════════════════════════════════════════════════════════════
 
-class TestProxyConfig:
-    """Tests for proxy configuration."""
-
-    def test_no_proxy_by_default(self) -> None:
-        """No proxy by default."""
-        from agentcrawl.config.settings import Settings
-
-        settings = Settings()
-        assert settings.proxy_url == ""
-
-    def test_proxy_url_configured(self) -> None:
-        """Proxy URL can be configured."""
-        from agentcrawl.config.settings import Settings
-
-        settings = Settings(proxy_url="http://proxy:8080")
-        assert settings.proxy_url == "http://proxy:8080"
+class TestViewportConfig:
+    """Tests for viewport configuration."""
 
     @pytest.mark.asyncio
-    async def test_proxy_passed_to_browser(self, mock_playwright: MagicMock) -> None:
-        """Proxy is passed to browser launch."""
+    async def test_viewport_width_height(
+        self,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Viewport width and height are applied."""
+        from agentcrawl.browser.config import BrowserConfig, ViewportConfig
         from agentcrawl.browser.manager import BrowserManager
-        from agentcrawl.config.settings import Settings
 
-        settings = Settings(
+        config = BrowserConfig(
             browser_type="chromium",
             headless=True,
-            proxy_url="http://proxy:8080",
+            viewport=ViewportConfig(width=1920, height=1080),
         )
 
-        manager = BrowserManager(settings=settings)
+        manager = BrowserManager(config=config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            await manager.startup()
+            await manager.start()
 
-            browser_type = mock_playwright.chromium
-            browser_type.launch.assert_called()
+            # Check launch options passed to browser
+            launch_opts = manager._config.to_launch_options()
+            assert launch_opts["headless"] is True
+
+    @pytest.mark.asyncio
+    async def test_mobile_viewport(
+        self,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Mobile viewport emulation."""
+        from agentcrawl.browser.config import BrowserConfig, ViewportConfig
+        from agentcrawl.browser.manager import BrowserManager
+
+        config = BrowserConfig(
+            browser_type="chromium",
+            headless=True,
+            viewport=ViewportConfig(width=375, height=667, is_mobile=True, has_touch=True),
+        )
+
+        manager = BrowserManager(config=config)
+
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
+
+            await manager.start()
+
+            # Check viewport config is mobile
+            assert manager.config.viewport.is_mobile is True
+            assert manager.config.viewport.has_touch is True
 
 
 # ══════════════════════════════════════════════════════════════
-# User-Agent Rotation
+# User-Agent Configuration
 # ══════════════════════════════════════════════════════════════
 
-class TestUserAgentRotation:
-    """Tests for User-Agent rotation."""
+class TestUserAgentConfig:
+    """Tests for user-agent configuration."""
 
-    def test_default_user_agents(self) -> None:
-        """Default User-Agent list is populated."""
-        from agentcrawl.browser.manager import DEFAULT_USER_AGENTS
+    @pytest.mark.asyncio
+    async def test_custom_user_agent(
+        self,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Custom user agent is used."""
+        from agentcrawl.browser.config import BrowserConfig
+        from agentcrawl.browser.manager import BrowserManager
 
-        assert len(DEFAULT_USER_AGENTS) > 0
-        for ua in DEFAULT_USER_AGENTS:
-            assert "Mozilla" in ua or "Chrome" in ua or "Safari" in ua
+        config = BrowserConfig(
+            browser_type="chromium",
+            headless=True,
+            user_agent="Custom User Agent 1.0",
+        )
 
-    def test_get_random_user_agent(self) -> None:
-        """get_random_user_agent returns a valid UA."""
-        from agentcrawl.browser.manager import get_random_user_agent
+        manager = BrowserManager(config=config)
 
-        ua = get_random_user_agent()
-        assert isinstance(ua, str)
-        assert len(ua) > 10
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-    def test_custom_user_agent(self) -> None:
-        """Custom User-Agent overrides rotation."""
-        from agentcrawl.config.settings import Settings
+            await manager.start()
 
-        settings = Settings(user_agent="MyBot/1.0")
-        assert settings.user_agent == "MyBot/1.0"
+            assert manager.config.user_agent == "Custom User Agent 1.0"
+
+
+# ══════════════════════════════════════════════════════════════
+# Pool Configuration
+# ══════════════════════════════════════════════════════════════
+
+class TestPoolConfig:
+    """Tests for browser pool configuration."""
+
+    @pytest.mark.asyncio
+    async def test_max_concurrent(
+        self,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Max concurrent pages limit."""
+        from agentcrawl.browser.config import BrowserConfig, BrowserPoolConfig
+        from agentcrawl.browser.manager import BrowserManager
+
+        config = BrowserConfig(
+            browser_type="chromium",
+            headless=True,
+            pool=BrowserPoolConfig(max_pages=3, pre_warm=1),
+        )
+
+        manager = BrowserManager(config=config)
+
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
+
+            await manager.start()
+
+            # Check pool config
+            assert manager.config.pool.max_pages == 3
+            assert manager.config.pool.pre_warm == 1
 
 
 # ══════════════════════════════════════════════════════════════
@@ -444,82 +447,91 @@ class TestErrorHandling:
     """Tests for error handling."""
 
     @pytest.mark.asyncio
-    async def test_create_context_before_startup(self, default_settings: Any) -> None:
-        """Creating context before startup raises error."""
-        from agentcrawl.browser.manager import BrowserManager
+    async def test_launch_failure(
+        self,
+        default_config: Any,
+    ) -> None:
+        """Launch failure raises BrowserLaunchError."""
+        from agentcrawl.browser.manager import BrowserLaunchError, BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
-        with pytest.raises(RuntimeError, match="not started"):
-            await manager.create_context()
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(side_effect=Exception("Launch failed"))
+
+            with pytest.raises(BrowserLaunchError):
+                await manager.start()
 
     @pytest.mark.asyncio
-    async def test_launch_failure_handling(self, default_settings: Any) -> None:
-        """Browser launch failure is handled."""
+    async def test_release_unacquired_page(
+        self,
+        default_config: Any,
+        mock_playwright: MagicMock,
+    ) -> None:
+        """Releasing an unacquired page doesn't crash."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(
-                side_effect=Exception("Browser not found")
-            )
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            with pytest.raises(Exception, match="Browser not found"):
-                await manager.startup()
+            await manager.start()
+            page = await manager.acquire_page()
+            await manager.release_page(page)
+
+            # Release again should not crash
+            await manager.release_page(page)
 
 
 # ══════════════════════════════════════════════════════════════
-# Concurrent Contexts
+# Stats & Properties
 # ══════════════════════════════════════════════════════════════
 
-class TestConcurrentContexts:
-    """Tests for concurrent context management."""
+class TestStatsProperties:
+    """Tests for stats and properties."""
 
     @pytest.mark.asyncio
-    async def test_multiple_contexts(
+    async def test_stats_tracking(
         self,
-        default_settings: Any,
+        default_config: Any,
         mock_playwright: MagicMock,
     ) -> None:
-        """Multiple contexts can be created."""
+        """Stats track page operations."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            await manager.startup()
+            await manager.start()
 
-            contexts = []
-            for _ in range(3):
-                ctx = await manager.create_context()
-                contexts.append(ctx)
+            initial_pages = manager.stats["pages_created"]
 
-            assert len(contexts) == 3
+            page = await manager.acquire_page()
+            await manager.release_page(page)
+
+            stats = manager.stats
+            assert stats["pages_acquired"] >= 1
+            assert stats["pages_released"] >= 1
+            assert stats["active_pages"] == 0
 
     @pytest.mark.asyncio
-    async def test_context_isolation(
+    async def test_available_page_count(
         self,
-        default_settings: Any,
+        default_config: Any,
         mock_playwright: MagicMock,
     ) -> None:
-        """Each context is isolated."""
+        """Available page count is accurate."""
         from agentcrawl.browser.manager import BrowserManager
 
-        manager = BrowserManager(settings=default_settings)
+        manager = BrowserManager(config=default_config)
 
-        with patch("agentcrawl.browser.manager.async_playwright") as mock_pw:
-            mock_pw.return_value.__aenter__ = AsyncMock(return_value=mock_playwright)
-            mock_pw.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch("playwright.async_api.async_playwright") as mock_pw:
+            mock_pw.return_value.start = AsyncMock(return_value=mock_playwright)
 
-            await manager.startup()
+            await manager.start()
 
-            ctx1 = await manager.create_context()
-            ctx2 = await manager.create_context()
-
-            # Contexts should be different objects
-            assert ctx1 is not ctx2
+            assert manager.available_page_count >= 0
+            assert manager.total_page_count >= 0

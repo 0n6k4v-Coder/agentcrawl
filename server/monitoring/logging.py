@@ -15,7 +15,7 @@ Features:
     - Integration with utils/logging.py
 
 Usage:
-    from agentcrawl.server.monitoring.logging import (
+    from server.monitoring.logging import (
         configure_server_logging,
         RequestIdMiddleware,
         AccessLogMiddleware,

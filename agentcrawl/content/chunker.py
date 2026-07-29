@@ -445,9 +445,12 @@ class Chunker(ABC):
                 })
 
             # Move position with overlap
+            prev_pos = pos
             pos = end - self._overlap if self._overlap > 0 else end
-            if pos <= (end - self._max_chunk_size):
-                pos = end  # Prevent infinite loop
+
+            # Prevent infinite loop: if we're at the end of text or not advancing
+            if end == len(text) or pos <= prev_pos:
+                break
 
         return sub_segments
 
