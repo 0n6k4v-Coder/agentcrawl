@@ -67,6 +67,7 @@ class SearchRequest(BaseModel):
     time_range: str = Field(
         default="",
         description="Time range filter: day, week, month, year",
+        pattern="^(day|week|month|year)?$",
     )
     safe_search: bool = Field(
         default=False,
