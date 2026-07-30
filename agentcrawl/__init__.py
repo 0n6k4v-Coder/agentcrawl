@@ -68,6 +68,9 @@ from agentcrawl.config.crawler_config import CrawlerConfig
 from agentcrawl.config.settings import Settings
 from agentcrawl.core.engine import CrawlEngine, CrawlJobResult, CrawlResult
 
+# Alias for CrawlEngine
+Crawler = CrawlEngine
+
 # ══════════════════════════════════════════════════════════════
 # Lazy Imports (heavy modules loaded on first access)
 # ══════════════════════════════════════════════════════════════
@@ -293,6 +296,7 @@ __all__ = [
     "CrawlJobResult",
     "CrawlResult",
     "CrawlSession",
+    "Crawler",
     "CrawlerConfig",
     "DFSCrawler",
     "DomainMapper",

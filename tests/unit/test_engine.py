@@ -655,3 +655,18 @@ class TestEngineErrors:
                 assert results[0].success is True
                 assert results[1].success is False
                 await engine.shutdown()
+
+
+class TestCrawlerAlias:
+    """Test Crawler alias for CrawlEngine."""
+
+    def test_crawler_alias_is_crawl_engine(self) -> None:
+        from agentcrawl import CrawlEngine, Crawler
+
+        assert Crawler is CrawlEngine
+
+    def test_crawler_in_all(self) -> None:
+        import agentcrawl
+
+        assert "Crawler" in agentcrawl.__all__
+
