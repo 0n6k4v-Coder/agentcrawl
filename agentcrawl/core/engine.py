@@ -52,7 +52,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from agentcrawl.browser.manager import BrowserManager
 from agentcrawl.config.crawler_config import CrawlerConfig
@@ -566,7 +566,7 @@ class CrawlEngine:
 
         # Convert exceptions to failed results
         processed: list[CrawlResult] = []
-        for url, result in zip(urls, results):
+        for url, result in zip(urls, results, strict=True):
             if isinstance(result, Exception):
                 processed.append(CrawlResult(
                     url=url,
