@@ -194,11 +194,11 @@ class JsonXPathExtractor(ExtractionStrategy):
 
         try:
             from lxml import html as lxml_html
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "lxml is required for XPath extraction. "
                 "Install with: pip install lxml"
-            )
+            ) from err
 
         try:
             tree = lxml_html.document_fromstring(html)
@@ -292,10 +292,7 @@ class JsonXPathExtractor(ExtractionStrategy):
             return self._extract_fields(element, nested_fields)
 
         # Evaluate XPath
-        if not xpath:
-            target = element
-        else:
-            target = self._xpath_one(element, xpath)
+        target = element if not xpath else self._xpath_one(element, xpath)
 
         if target is None:
             return default

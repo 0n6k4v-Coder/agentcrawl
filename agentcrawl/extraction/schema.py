@@ -209,7 +209,7 @@ class SchemaBuilder:
         self,
         name: str,
         selector: str = "",
-        type: str = "text",
+        type_: str = "text",
         attribute: str = "",
         pattern: str = "",
         group: int = 0,
@@ -802,8 +802,8 @@ class SchemaConverter:
         """
         try:
             from pydantic import create_model
-        except ImportError:
-            raise ImportError("pydantic is required for dynamic model creation")
+        except ImportError as err:
+            raise ImportError("pydantic is required for dynamic model creation") from err
 
         properties = json_schema.get("properties", {})
         required = set(json_schema.get("required", []))

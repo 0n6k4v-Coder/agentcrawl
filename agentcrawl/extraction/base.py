@@ -657,7 +657,7 @@ class ExtractionStrategy(ABC):
             # Strip markdown code fences
             if text.startswith("```"):
                 lines = text.split("\n")
-                lines = [l for l in lines if not l.strip().startswith("```")]
+                lines = [line for line in lines if not line.strip().startswith("```")]
                 text = "\n".join(lines).strip()
 
             try:
@@ -742,11 +742,11 @@ def create_extractor(
     if isinstance(method, str):
         try:
             method = ExtractionMethod(method)
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 f"Unknown extraction method: '{method}'. "
                 f"Available: {', '.join(m.value for m in ExtractionMethod)}"
-            )
+            ) from err
 
     if method == ExtractionMethod.LLM:
         from agentcrawl.extraction.llm import LLMExtractor

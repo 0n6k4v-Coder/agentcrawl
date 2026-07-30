@@ -196,11 +196,11 @@ class JsonCssExtractor(ExtractionStrategy):
 
         try:
             from lxml import html as lxml_html
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "lxml is required for CSS extraction. "
                 "Install with: pip install lxml"
-            )
+            ) from err
 
         try:
             tree = lxml_html.document_fromstring(html)
@@ -308,10 +308,7 @@ class JsonCssExtractor(ExtractionStrategy):
             return self._extract_fields(element, nested_fields)
 
         # Find target element(s)
-        if not selector:
-            target = element
-        else:
-            target = self._select_one(element, selector)
+        target = element if not selector else self._select_one(element, selector)
 
         if target is None:
             return default

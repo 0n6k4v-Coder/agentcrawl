@@ -326,11 +326,11 @@ class LLMExtractor(ExtractionStrategy):
         # Fallback: use litellm directly
         try:
             import litellm
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "litellm is required for LLM extraction. "
                 "Install with: pip install 'agentcrawl[llm]'"
-            )
+            ) from err
 
         # Determine model
         model = "gpt-4o-mini"

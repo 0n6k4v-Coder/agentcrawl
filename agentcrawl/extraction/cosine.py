@@ -258,10 +258,10 @@ class HTMLElementParser:
     """
 
     # Tags that commonly contain repeated items
-    CANDIDATE_TAGS: set[str] = {
+    CANDIDATE_TAGS: frozenset[str] = frozenset({
         "div", "article", "section", "li", "tr", "td",
         "span", "p", "a", "figure", "aside",
-    }
+    })
 
     # Minimum text length for a candidate
     MIN_TEXT_LENGTH: int = 10
@@ -601,7 +601,7 @@ class CosineExtractor(ExtractionStrategy):
         similar_pairs.sort(key=lambda x: x[2], reverse=True)
 
         # Greedy merging
-        for i, j, sim in similar_pairs:
+        for i, j, _sim in similar_pairs:
             ci = element_cluster[i]
             cj = element_cluster[j]
 
@@ -623,7 +623,7 @@ class CosineExtractor(ExtractionStrategy):
         clusters: list[Cluster] = []
         cluster_id = 0
 
-        for root_idx, member_indices in cluster_map.items():
+        for _root_idx, member_indices in cluster_map.items():
             if len(member_indices) < self._min_cluster_size:
                 continue
 

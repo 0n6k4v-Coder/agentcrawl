@@ -52,6 +52,7 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from typing import Any
@@ -269,18 +270,14 @@ class FitMarkdownExtractor(ExtractionStrategy):
         content_el = self._find_content_element(clone)
 
         if content_el is not None:
-            try:
+            with contextlib.suppress(Exception):
                 return tostring(content_el, encoding="unicode", method="html")
-            except Exception:
-                pass
 
         # Fallback: return body
         body = clone.find(".//body")
         if body is not None:
-            try:
+            with contextlib.suppress(Exception):
                 return tostring(body, encoding="unicode", method="html")
-            except Exception:
-                pass
 
         return html
 
@@ -354,7 +351,8 @@ class FitMarkdownExtractor(ExtractionStrategy):
                         best = max(matches, key=lambda el: len(el.text_content()))
                         if len(best.text_content().strip()) > 100:
                             return best
-                except Exception:
+                except Exception as e:
+                    logger.debug("CSS selector %s failed: %s", selector, e)
                     continue
         except ImportError:
             pass

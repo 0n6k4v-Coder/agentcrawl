@@ -191,10 +191,10 @@ class RegexExtractor(ExtractionStrategy):
 
             try:
                 self._compiled[name] = re.compile(pattern, self._flags)
-            except re.error as e:
+            except re.error as err:
                 raise ValueError(
-                    f"Invalid regex pattern for field '{name}': {e}"
-                )
+                    f"Invalid regex pattern for field '{name}': {err}"
+                ) from err
 
     # ──────────────────────────────────────────────────────────
     # Core Extraction

@@ -198,11 +198,11 @@ class TableData:
         """
         try:
             import pandas as pd
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "pandas is required for DataFrame conversion. "
                 "Install with: pip install pandas"
-            )
+            ) from err
 
         return pd.DataFrame(self.rows)
 
@@ -235,7 +235,7 @@ class ColumnTypeInferrer:
     # Patterns for type detection
     INTEGER_RE = re.compile(r"^-?\d{1,3}(,\d{3})*$|^-?\d+$")
     FLOAT_RE = re.compile(r"^-?\d+\.\d+$|^-?\d{1,3}(,\d{3})*\.\d+$")
-    BOOLEAN_VALUES = {"true", "false", "yes", "no", "0", "1", "t", "f", "y", "n"}
+    BOOLEAN_VALUES: frozenset[str] = frozenset({"true", "false", "yes", "no", "0", "1", "t", "f", "y", "n"})
     DATE_RE = re.compile(
         r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$|"
         r"^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}$|"
@@ -430,11 +430,11 @@ class TableExtractor(ExtractionStrategy):
 
         try:
             from lxml import html as lxml_html
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "lxml is required for table extraction. "
                 "Install with: pip install lxml"
-            )
+            ) from err
 
         try:
             tree = lxml_html.document_fromstring(html)
@@ -606,7 +606,7 @@ class TableExtractor(ExtractionStrategy):
 
                     # Set rowspan carry for subsequent rows
                     if rowspan > 1:
-                        for r in range(1, rowspan):
+                        for _r in range(1, rowspan):
                             # Store for future rows
                             future_col = col_idx
                             rowspan_carry[future_col] = text
