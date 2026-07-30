@@ -164,6 +164,8 @@ from agentcrawl.content.topic_chunker import (
     generate_toc,
 )
 
+BM25Filter = BM25ContentFilter
+
 # ──────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────
@@ -174,6 +176,7 @@ __all__ = [
     "AdvancedSentenceChunker",
     "AdvancedTopicChunker",
     "BM25ContentFilter",
+    "BM25Filter",
     "BM25Scorer",
     "BM25Tokenizer",
     "BibliographyFormat",
