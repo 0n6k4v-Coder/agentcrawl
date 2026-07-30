@@ -77,7 +77,7 @@ Crawler = CrawlEngine
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     # Config
-    "BrowserConfig": ("agentcrawl.config.browser_config", "BrowserConfig"),
+    "BrowserConfig": ("agentcrawl.browser.config", "BrowserConfig"),
     "LLMConfig": ("agentcrawl.config.llm_config", "LLMConfig"),
     "CacheConfig": ("agentcrawl.config.cache_config", "CacheConfig"),
     "QueueConfig": ("agentcrawl.config.queue_config", "QueueConfig"),
@@ -96,7 +96,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "SentenceChunker": ("agentcrawl.content.chunker", "SentenceChunker"),
     "PruningContentFilter": ("agentcrawl.content.content_filter", "PruningContentFilter"),
     "BM25ContentFilter": ("agentcrawl.content.bm25_filter", "BM25ContentFilter"),
+    "BM25Filter": ("agentcrawl.content.bm25_filter", "BM25ContentFilter"),
     "CitationExtractor": ("agentcrawl.content.citation", "CitationExtractor"),
+    # Search
+    "GoogleSearch": ("agentcrawl.search.google", "GoogleSearchProvider"),
+    # Agent
+    "AgentCrawlTool": ("agentcrawl.agent.tool", "AgentCrawlTool"),
     # Extraction
     "LLMExtractor": ("agentcrawl.extraction.llm", "LLMExtractor"),
     "JsonCssExtractor": ("agentcrawl.extraction.json_css", "JsonCssExtractor"),
@@ -277,9 +282,11 @@ async def map_site(
 
 __all__ = [
     "AdaptiveCrawler",
+    "AgentCrawlTool",
     # Crawling
     "BFSCrawler",
     "BM25ContentFilter",
+    "BM25Filter",
     "BestFirstCrawler",
     # Lazy imports (available on access)
     # Config
@@ -301,6 +308,7 @@ __all__ = [
     "DFSCrawler",
     "DomainMapper",
     "FitMarkdownExtractor",
+    "GoogleSearch",
     # Content
     "HTMLParser",
     "HTMLToMarkdown",
