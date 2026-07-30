@@ -85,6 +85,8 @@ from agentcrawl.search.scraper import SearchScraper
 # ──────────────────────────────────────────────────────────────
 from agentcrawl.search.searxng import SearXNGProvider
 
+GoogleSearch = GoogleSearchProvider
+
 # ──────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────
@@ -95,6 +97,7 @@ __all__ = [
     # Providers
     "DuckDuckGoProvider",
     "ExaProvider",
+    "GoogleSearch",
     "GoogleSearchProvider",
     "SearXNGProvider",
     # Engine
