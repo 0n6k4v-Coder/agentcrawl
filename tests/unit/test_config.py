@@ -515,3 +515,12 @@ class TestConfigMerging:
 
         settings = Settings(browser=BrowserSettings(timeout=90))
         assert settings.browser.timeout == 90
+
+    def test_custom_env_settings_source(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test CustomEnvSettingsSource (AGENTCRAWL_BROWSER=chromium works)."""
+        from agentcrawl.config.settings import Settings
+
+        monkeypatch.setenv("AGENTCRAWL_BROWSER", "firefox")
+        settings = Settings()
+        assert settings.browser.browser_type == "firefox"
+

@@ -258,7 +258,10 @@ class JsonOutputFormatter:
             return dict(result)
 
         if hasattr(result, "to_dict"):
-            return result.to_dict()
+            res = result.to_dict()
+            if isinstance(res, dict):
+                return dict(res)
+            return {"data": res}
 
         if hasattr(result, "__dict__"):
             return {

@@ -67,6 +67,9 @@ from agentcrawl.content.bm25_filter import (
     FilterResult,
     TextBlock,
 )
+from agentcrawl.content.bm25_filter import (
+    BM25ContentFilter as BM25Filter,
+)
 
 # ──────────────────────────────────────────────────────────────
 # Chunkers
@@ -163,8 +166,6 @@ from agentcrawl.content.topic_chunker import (
     extract_sections,
     generate_toc,
 )
-
-BM25Filter = BM25ContentFilter
 
 # ──────────────────────────────────────────────────────────────
 # Public API

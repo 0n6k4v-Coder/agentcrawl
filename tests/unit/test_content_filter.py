@@ -413,6 +413,14 @@ class TestContentFilterResult:
         assert d["removed_blocks"] == 0
         assert d["noise_blocks_removed"] == 1
 
+    def test_bm25_filter_alias(self) -> None:
+        """Test BM25Filter alias import from agentcrawl.content."""
+        from agentcrawl.content import BM25ContentFilter, BM25Filter
+
+        assert BM25Filter is BM25ContentFilter
+        filt = BM25Filter(query="python")
+        assert filt._query == "python"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

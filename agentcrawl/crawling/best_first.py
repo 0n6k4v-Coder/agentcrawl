@@ -225,7 +225,7 @@ class BestFirstCrawler(CrawlStrategy):
                     self._progress.pages_failed += 1
                     continue
 
-                if result:
+                if isinstance(result, str):
                     pages_crawled += 1
                     self._crawl_order.append(result)
 

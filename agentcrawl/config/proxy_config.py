@@ -569,7 +569,7 @@ class ProxySettings(BaseSettings):
     @classmethod
     def from_env(cls, prefix: str = "AGENTCRAWL_PROXY") -> ProxySettings:
         """Create settings from environment variables."""
-        return cls(_env_prefix=f"{prefix}_")
+        return cls(_env_prefix=f"{prefix}_")  # type: ignore[call-arg]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProxySettings:
@@ -663,7 +663,7 @@ class ProxySettings(BaseSettings):
             enabled=True,
             url=url,
             username=username,
-            password=password,
+            password=SecretStr(password),
             rotation="none",
             **kwargs,
         )

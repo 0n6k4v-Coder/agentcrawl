@@ -406,10 +406,10 @@ class JsonXPathExtractor(ExtractionStrategy):
 
         try:
             from lxml.html import tostring
-            return tostring(target, encoding="unicode", method="html")
+            return str(tostring(target, encoding="unicode", method="html"))
         except Exception:
             if hasattr(target, "text_content"):
-                return target.text_content()
+                return str(target.text_content())
             return str(target)
 
     def _extract_attribute(
@@ -507,7 +507,7 @@ class JsonXPathExtractor(ExtractionStrategy):
         except re.error as e:
             logger.debug("Regex error '%s': %s", pattern, e)
 
-        return field_def.get("default", self._default_value)
+        return str(field_def.get("default", self._default_value))
 
     # ──────────────────────────────────────────────────────────
     # Transforms
@@ -555,17 +555,17 @@ class JsonXPathExtractor(ExtractionStrategy):
                     return value
 
             if "prefix" in transform:
-                return transform["prefix"] + value
+                return str(transform["prefix"]) + value
 
             if "suffix" in transform:
-                return value + transform["suffix"]
+                return value + str(transform["suffix"])
 
             if "split" in transform:
                 delimiter = transform["split"]
                 index = transform.get("index", 0)
                 parts = value.split(delimiter)
                 if 0 <= index < len(parts):
-                    return parts[index].strip()
+                    return str(parts[index]).strip()
                 return value
 
             if "replace" in transform:

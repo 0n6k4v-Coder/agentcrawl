@@ -488,7 +488,7 @@ class CosineExtractor(ExtractionStrategy):
         self._include_html = include_html
 
         if candidate_tags:
-            HTMLElementParser.CANDIDATE_TAGS = set(candidate_tags)
+            HTMLElementParser.CANDIDATE_TAGS = frozenset(candidate_tags)
         HTMLElementParser.MIN_TEXT_LENGTH = min_text_length
 
         self._parser = HTMLElementParser()

@@ -383,7 +383,7 @@ class BrowserSettings(BaseSettings):
             proxy = ProxyConfig(
                 server=self.proxy_url,
                 username=self.proxy_username,
-                password=self.proxy_password.get_secret_value() if self.proxy_password else None,
+                password=self.proxy_password,
                 bypass=self.proxy_bypass,
                 rotation=ProxyRotationStrategy(self.proxy_rotation),
                 proxy_list=proxy_list,
@@ -503,7 +503,7 @@ class BrowserSettings(BaseSettings):
         Returns:
             BrowserSettings instance.
         """
-        return cls(_env_prefix=f"{prefix}_")
+        return cls(_env_prefix=f"{prefix}_")  # type: ignore[call-arg]
 
     # ──────────────────────────────────────────────────────────
     # Serialization

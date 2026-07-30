@@ -239,7 +239,7 @@ class SchemaBuilder:
         self._fields.append(FieldDef(
             name=name,
             selector=selector,
-            type=type,
+            type=type_,
             attribute=attribute,
             pattern=pattern,
             group=group,
@@ -257,7 +257,7 @@ class SchemaBuilder:
         **kwargs: Any,
     ) -> SchemaBuilder:
         """Add a text field (shorthand)."""
-        return self.field(name, selector=selector, type="text", **kwargs)
+        return self.field(name, selector=selector, type_="text", **kwargs)
 
     def attribute_field(
         self,
@@ -268,7 +268,7 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add an attribute field (shorthand)."""
         return self.field(
-            name, selector=selector, type="attribute",
+            name, selector=selector, type_="attribute",
             attribute=attribute, **kwargs,
         )
 
@@ -280,7 +280,7 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add a link href field (shorthand)."""
         return self.field(
-            name, selector=selector, type="attribute",
+            name, selector=selector, type_="attribute",
             attribute="href", **kwargs,
         )
 
@@ -292,7 +292,7 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add an image src field (shorthand)."""
         return self.field(
-            name, selector=selector, type="attribute",
+            name, selector=selector, type_="attribute",
             attribute="src", **kwargs,
         )
 
@@ -305,7 +305,7 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add a regex field (shorthand)."""
         return self.field(
-            name, type="regex", pattern=pattern,
+            name, type_="regex", pattern=pattern,
             group=group, **kwargs,
         )
 
@@ -607,10 +607,14 @@ class SchemaConverter:
             return schema
 
         if hasattr(schema, "model_json_schema"):
-            return schema.model_json_schema()
+            res = schema.model_json_schema()
+            if isinstance(res, dict):
+                return dict(res)
 
         if hasattr(schema, "schema"):
-            return schema.schema()
+            res = schema.schema()
+            if isinstance(res, dict):
+                return dict(res)
 
         return {}
 

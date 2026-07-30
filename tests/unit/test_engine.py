@@ -670,3 +670,20 @@ class TestCrawlerAlias:
 
         assert "Crawler" in agentcrawl.__all__
 
+
+class TestAliases:
+    """Test public API aliases."""
+
+    def test_google_search_alias(self) -> None:
+        """Test GoogleSearch alias from agentcrawl.search."""
+        from agentcrawl.search import GoogleSearch, GoogleSearchProvider
+
+        assert GoogleSearch is GoogleSearchProvider
+
+    def test_agent_crawl_tool_import(self) -> None:
+        """Test AgentCrawlTool import from agentcrawl.agent."""
+        import agentcrawl.agent
+        from agentcrawl.agent import AgentCrawlTool
+
+        assert hasattr(agentcrawl.agent, "AgentCrawlTool")
+        assert AgentCrawlTool is agentcrawl.agent.AgentCrawlTool

@@ -31,7 +31,10 @@ Usage:
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # ══════════════════════════════════════════════════════════════
 # Core Tool Definitions (Source of Truth)
@@ -774,7 +777,7 @@ if __name__ == "__main__":
     fmt = sys.argv[1] if len(sys.argv) > 1 else "openai"
     tool_filter = sys.argv[2].split(",") if len(sys.argv) > 2 else None
 
-    format_map = {
+    format_map: dict[str, Callable[[Any], Any]] = {
         "openai": get_openai_tools_schema,
         "openai_legacy": get_openai_functions_schema,
         "anthropic": get_anthropic_tools_schema,

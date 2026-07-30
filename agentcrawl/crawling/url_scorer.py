@@ -57,11 +57,14 @@ import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qs, urlparse
 
 # Re-export base URLScorer
 from agentcrawl.crawling.base import URLScorer
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 logger = logging.getLogger("agentcrawl.crawling.url_scorer")
 
@@ -259,15 +262,15 @@ class AdvancedURLScorer(URLScorer):
     def __init__(
         self,
         weights: ScoringWeights | None = None,
-        content_keywords: list[str] | None = None,
-        noise_keywords: list[str] | None = None,
+        content_keywords: Sequence[str] | None = None,
+        noise_keywords: Sequence[str] | None = None,
         max_depth: int = 10,
         freshness_half_life_days: int = 90,
         **kwargs: Any,
     ):
         super().__init__(
-            content_keywords=content_keywords or self.CONTENT_KEYWORDS,
-            noise_keywords=noise_keywords or self.NOISE_KEYWORDS,
+            content_keywords=content_keywords if content_keywords is not None else self.CONTENT_KEYWORDS,
+            noise_keywords=noise_keywords if noise_keywords is not None else self.NOISE_KEYWORDS,
             **kwargs,
         )
 

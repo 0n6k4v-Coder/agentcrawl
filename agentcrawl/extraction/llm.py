@@ -199,10 +199,10 @@ class LLMExtractor(ExtractionStrategy):
     def estimated_cost(self) -> float:
         """Estimated total cost in USD."""
         if self._llm_config and hasattr(self._llm_config, "estimate_cost"):
-            return self._llm_config.estimate_cost(
+            return float(self._llm_config.estimate_cost(
                 self._total_input_tokens,
                 self._total_output_tokens,
-            )
+            ))
         return 0.0
 
     # ──────────────────────────────────────────────────────────

@@ -435,17 +435,17 @@ class HtmlOutputFormatter:
     # ──────────────────────────────────────────────────────────
 
     @staticmethod
-    def _markdown_to_html(markdown: str) -> str:
+    def _markdown_to_html(md_text: str) -> str:
         """Convert markdown to HTML."""
         try:
-            import markdown
-            return markdown.markdown(
-                markdown,
+            import markdown  # type: ignore[import-untyped]
+            return str(markdown.markdown(
+                md_text,
                 extensions=["tables", "fenced_code", "codehilite"],
-            )
+            ))
         except ImportError:
             # Fallback: basic conversion
-            html = markdown
+            html = md_text
             # Headers
             for i in range(6, 0, -1):
                 html = re.sub(
@@ -505,7 +505,7 @@ class HtmlOutputFormatter:
 
             await asyncio.to_thread(_write_bytes_sync, output_path, pdf_bytes)
 
-        return pdf_bytes
+        return bytes(pdf_bytes)
 
     # ──────────────────────────────────────────────────────────
     # Utilities

@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import Any
 
@@ -435,7 +435,7 @@ class CrawlerConfig:
                 actions = []
 
         # Filter to known fields
-        known = {f.name for f in cls.__dataclass_fields__.values()}  # type: ignore[attr-defined]
+        known = {f.name for f in fields(cls)}
         filtered = {k: v for k, v in data.items() if k in known}
 
         return cls(

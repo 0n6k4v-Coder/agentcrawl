@@ -48,7 +48,7 @@ def install_browsers() -> None:
 
     console.print("Installing Playwright browsers...")
 
-    async def _install():
+    async def _install() -> tuple[int, str]:
         # Use asyncio subprocess with explicit args - no shell, no user input
         proc = await asyncio.create_subprocess_exec(
             sys.executable,
@@ -59,8 +59,8 @@ def install_browsers() -> None:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        _, stderr = await proc.communicate()
-        return proc.returncode, stderr.decode()
+        _stdout, stderr = await proc.communicate()
+        return proc.returncode or 0, stderr.decode()
 
     returncode, stderr = asyncio.run(_install())
     if returncode == 0:
@@ -89,7 +89,7 @@ def scrape(url: str, output_format: str, headless: bool) -> None:
             if output_format == "json":
                 import json
 
-                console.print(json.dumps(result.model_dump(), indent=2, ensure_ascii=False))
+                console.print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
             else:
                 console.print(result.markdown or result.text or "")
 
@@ -108,11 +108,12 @@ def search(query: str, max_results: int, provider: str) -> None:
 
     async def _search() -> None:
         engine = SearchEngine(provider=provider)
-        results = await engine.search(query, max_results=max_results)
+        response = await engine.search(query, max_results=max_results)
+        results = getattr(response, "results", []) if hasattr(response, "results") else response
         for i, r in enumerate(results, 1):
-            console.print(f"[bold]{i}.[/bold] [cyan]{r.title}[/cyan]")
-            console.print(f"    [dim]{r.url}[/dim]")
-            console.print(f"    {r.snippet[:150]}...")
+            console.print(f"[bold]{i}.[/bold] [cyan]{getattr(r, 'title', '')}[/cyan]")
+            console.print(f"    [dim]{getattr(r, 'url', '')}[/dim]")
+            console.print(f"    {getattr(r, 'snippet', '')[:150]}...")
             console.print()
 
     asyncio.run(_search())

@@ -350,7 +350,7 @@ class JsonCssExtractor(ExtractionStrategy):
         try:
             from lxml.cssselect import CSSSelector
             css = CSSSelector(selector)
-            return css(element)
+            return list(css(element))
         except Exception as e:
             logger.debug("Selector error '%s': %s", selector, e)
             return []
@@ -379,9 +379,9 @@ class JsonCssExtractor(ExtractionStrategy):
         """Extract inner HTML from an element."""
         try:
             from lxml.html import tostring
-            return tostring(element, encoding="unicode", method="html")
+            return str(tostring(element, encoding="unicode", method="html"))
         except Exception:
-            return element.text_content()
+            return str(element.text_content())
 
     def _extract_attribute(
         self,
@@ -391,19 +391,20 @@ class JsonCssExtractor(ExtractionStrategy):
         """Extract an attribute value from an element."""
         attr_name = field_def.get("attribute", "")
         if not attr_name:
-            return ""
+            return str(self._default_value)
 
         value = element.get(attr_name, "")
+        if not value:
+            return str(field_def.get("default", self._default_value))
 
-        if self._strip_whitespace and isinstance(value, str):
-            value = value.strip()
+        value = str(value).strip()
 
         # Apply transform
         transform = field_def.get("transform")
         if transform and value:
             value = self._apply_transform(value, transform)
 
-        return value
+        return str(value)
 
     def _extract_list(
         self,
@@ -452,19 +453,19 @@ class JsonCssExtractor(ExtractionStrategy):
         pattern = field_def.get("pattern", "")
 
         if not pattern:
-            return text.strip()
+            return str(text).strip()
 
         try:
             match = re.search(pattern, text)
             if match:
                 # Return first group if available, else full match
                 if match.groups():
-                    return match.group(1).strip()
-                return match.group(0).strip()
+                    return str(match.group(1)).strip()
+                return str(match.group(0)).strip()
         except re.error as e:
             logger.debug("Regex error '%s': %s", pattern, e)
 
-        return field_def.get("default", self._default_value)
+        return str(field_def.get("default", self._default_value))
 
     # ──────────────────────────────────────────────────────────
     # Transforms

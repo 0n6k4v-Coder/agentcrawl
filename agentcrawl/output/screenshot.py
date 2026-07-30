@@ -76,7 +76,7 @@ class ScreenshotInfo:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "format": self.format_resolved,
+            "format": self.format,
             "width": self.width,
             "height": self.height,
             "size_bytes": self.size_bytes,
@@ -570,7 +570,7 @@ class ScreenshotHandler:
             img = Image.open(io.BytesIO(image_bytes))
 
             # Calculate thumbnail size (maintain aspect ratio)
-            img.thumbnail((max_width, max_height), Image.LANCZOS)
+            img.thumbnail((max_width, max_height), getattr(Image, "Resampling", Image).LANCZOS)
 
             # Save to buffer
             buffer = io.BytesIO()
@@ -614,7 +614,7 @@ class ScreenshotHandler:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "default_format": self._default_format_resolved,
+            "default_format": self._default_format,
             "default_quality": self._default_quality,
             "output_dir": self._output_dir,
         }

@@ -42,10 +42,9 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from pydantic import SecretStr
+from pydantic import SecretStr
 
 # Mask value for sensitive data
 MASK_VALUE = "********"
@@ -219,7 +218,7 @@ class ProxyConfig:
         return cls(
             server=f"{parsed.scheme}://{parsed.hostname}:{parsed.port or 8080}",
             username=parsed.username,
-            password=parsed.password,
+            password=SecretStr(parsed.password) if parsed.password else None,
         )
 
     @classmethod

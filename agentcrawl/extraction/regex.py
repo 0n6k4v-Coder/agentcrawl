@@ -444,10 +444,10 @@ class RegexExtractor(ExtractionStrategy):
                     return value
 
             if "prefix" in transform:
-                return transform["prefix"] + value
+                return str(transform["prefix"]) + value
 
             if "suffix" in transform:
-                return value + transform["suffix"]
+                return value + str(transform["suffix"])
 
             if "replace" in transform:
                 old = transform.get("old", "")

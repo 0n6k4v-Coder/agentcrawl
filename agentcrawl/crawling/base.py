@@ -51,7 +51,7 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
 logger = logging.getLogger("agentcrawl.crawling")
 
@@ -440,16 +440,16 @@ class URLScorer:
 
     def __init__(
         self,
-        content_keywords: list[str] | None = None,
-        noise_keywords: list[str] | None = None,
+        content_keywords: Sequence[str] | None = None,
+        noise_keywords: Sequence[str] | None = None,
         depth_penalty: float = 0.05,
         link_text_weight: float = 0.2,
     ):
         self._content_keywords = {
-            kw.lower() for kw in (content_keywords or self.DEFAULT_CONTENT_KEYWORDS)
+            kw.lower() for kw in (content_keywords if content_keywords is not None else self.DEFAULT_CONTENT_KEYWORDS)
         }
         self._noise_keywords = {
-            kw.lower() for kw in (noise_keywords or self.DEFAULT_NOISE_KEYWORDS)
+            kw.lower() for kw in (noise_keywords if noise_keywords is not None else self.DEFAULT_NOISE_KEYWORDS)
         }
         self._depth_penalty = depth_penalty
         self._link_text_weight = link_text_weight

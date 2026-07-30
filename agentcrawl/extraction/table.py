@@ -496,7 +496,7 @@ class TableExtractor(ExtractionStrategy):
         try:
             from lxml.cssselect import CSSSelector
             css = CSSSelector(self._table_selector)
-            return css(tree)
+            return list(css(tree))
         except Exception as e:
             logger.debug("Table selector error: %s", e)
             # Fallback: find all tables

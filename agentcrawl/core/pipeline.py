@@ -160,7 +160,7 @@ class PipelineContext:
     chunk_stats: dict[str, Any] = field(default_factory=dict)
 
     # Citation stage
-    citations: list[dict[str, Any]] = field(default_factory=dict)
+    citations: list[dict[str, Any]] = field(default_factory=list)
     bibliography: str = ""
 
     # Extraction stage

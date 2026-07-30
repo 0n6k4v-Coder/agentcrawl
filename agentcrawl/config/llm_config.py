@@ -614,7 +614,7 @@ class LLMConfig(BaseSettings):
     @classmethod
     def from_env(cls, prefix: str = "AGENTCRAWL_LLM") -> LLMConfig:
         """Create config from environment variables."""
-        return cls(_env_prefix=f"{prefix}_")
+        return cls(_env_prefix=f"{prefix}_")  # type: ignore[call-arg]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LLMConfig:

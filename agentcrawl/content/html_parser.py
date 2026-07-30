@@ -141,7 +141,7 @@ class PageMetadata:
         if self.twitter_image:
             d["twitter_image"] = self.twitter_image
         if self.extra:
-            d["extra"] = self.extra
+            d["extra"] = dict(self.extra)
         return d
 
 
@@ -498,7 +498,7 @@ class HTMLParser:
         self._remove_noise(clone, exclude_selectors or [])
 
         try:
-            return tostring(clone, encoding="unicode", method="html")
+            return str(tostring(clone, encoding="unicode", method="html"))
         except Exception:
             return ""
 
@@ -810,7 +810,7 @@ class HTMLParser:
         try:
             from lxml.cssselect import CSSSelector
             css = CSSSelector(selector)
-            return css(self._root)
+            return list(css(self._root))
         except Exception as e:
             logger.debug("CSS selector error '%s': %s", selector, e)
             return []
@@ -851,7 +851,8 @@ class HTMLParser:
             return []
 
         try:
-            return self._root.xpath(expression)
+            res = self._root.xpath(expression)
+            return list(res) if isinstance(res, list) else [res]
         except Exception as e:
             logger.debug("XPath error '%s': %s", expression, e)
             return []
@@ -982,7 +983,7 @@ class HTMLParser:
             return ""
 
         try:
-            return tostring(body, encoding="unicode", method="html")
+            return str(tostring(body, encoding="unicode", method="html"))
         except Exception:
             return ""
 

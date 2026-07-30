@@ -52,7 +52,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from agentcrawl.browser.manager import BrowserManager
 from agentcrawl.config.crawler_config import CrawlerConfig
@@ -441,10 +441,14 @@ class CrawlEngine:
             cached = await self._cache_manager.get(cache_key)
             if cached:
                 # Handle both dict and CrawlResult objects
-                if hasattr(cached, 'cached'):
+                if isinstance(cached, CrawlResult):
                     cached.cached = True
                     self._stats.record_scrape(cached)
                     return cached
+                elif hasattr(cached, "cached"):
+                    cached.cached = True
+                    self._stats.record_scrape(cached)
+                    return cast("CrawlResult", cached)
                 elif isinstance(cached, dict):
                     cached["cached"] = True
                     # Convert dict back to CrawlResult
@@ -573,8 +577,8 @@ class CrawlEngine:
                     success=False,
                     error=str(result),
                 ))
-            else:
-                processed.append(result)
+            elif not isinstance(result, Exception):
+                processed.append(cast(CrawlResult, result))
 
         return processed
 
@@ -764,7 +768,7 @@ class CrawlEngine:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         async with CrawlEngine.from_settings(Settings()) as engine:
             result = await engine.scrape("https://example.com")
             print(f"Success: {result.success}")

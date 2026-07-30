@@ -59,10 +59,15 @@ import secrets
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
+from pydantic import SecretStr
+
 from agentcrawl.browser.config import ProxyConfig, ProxyRotationStrategy
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 logger = logging.getLogger("agentcrawl.browser.proxy")
 
@@ -943,7 +948,7 @@ class ProxyManager:
                 port=urlparse(config.server).port or 8080,
                 protocol=ProxyProtocol(urlparse(config.server).scheme or "http"),
                 username=config.username,
-                password=config.password,
+                password=config.password.get_secret_value() if config.password else None,
             )
             self._proxies.append(proxy)
 
@@ -966,10 +971,11 @@ class ProxyManager:
 
     def to_config(self) -> ProxyConfig:
         """Convert back to a ProxyConfig."""
+        pw = self._proxies[0].password if self._proxies else None
         return ProxyConfig(
             server=self._proxies[0].server_url if self._proxies else None,
             username=self._proxies[0].username if self._proxies else None,
-            password=self._proxies[0].password if self._proxies else None,
+            password=SecretStr(pw) if pw else None,
             bypass=self._bypass,
             rotation=self._rotation,
             proxy_list=[p.url for p in self._proxies],
@@ -1009,7 +1015,7 @@ class ProxyManager:
     def __len__(self) -> int:
         return len(self._proxies)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ProxyServer]:
         return iter(self._proxies)
 
     def __bool__(self) -> bool:

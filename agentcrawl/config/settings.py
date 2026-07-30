@@ -586,7 +586,7 @@ class Settings(BaseSettings):
     @classmethod
     def from_env(cls, prefix: str = "AGENTCRAWL") -> Settings:
         """Create settings from environment variables."""
-        return cls(_env_prefix=f"{prefix}_")
+        return cls(_env_prefix=f"{prefix}_")  # type: ignore[call-arg]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:

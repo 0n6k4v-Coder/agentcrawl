@@ -408,7 +408,9 @@ class SearXNGProvider(SearchProvider):
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.get(f"{self._base_url}/config")
                 if resp.status_code == 200:
-                    return resp.json()
+                    data = resp.json()
+                    if isinstance(data, dict):
+                        return dict(data)
         except Exception as e:
             logger.warning("Failed to get SearXNG config: %s", e)
 

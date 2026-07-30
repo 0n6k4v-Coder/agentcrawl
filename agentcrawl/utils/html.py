@@ -74,12 +74,12 @@ def strip_tags(html: str, keep_tags: list[str] | None = None) -> str:
         # Remove all tags except kept ones
         keep_set = {t.lower() for t in keep_tags}
 
-        def _replace_tag(match: re.Match) -> str:
+        def _replace_tag(match: re.Match[str]) -> str:
             tag_match = re.match(r"</?(\w+)", match.group(0))
             if tag_match:
                 tag_name = tag_match.group(1).lower()
                 if tag_name in keep_set:
-                    return match.group(0)
+                    return str(match.group(0))
             return ""
 
         return re.sub(r"<[^>]+>", _replace_tag, html)

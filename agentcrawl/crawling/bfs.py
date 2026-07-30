@@ -271,7 +271,7 @@ class BFSCrawler(CrawlStrategy):
                     logger.debug("Level %d crawl error: %s", depth, result)
                     self._progress.pages_failed += 1
                     continue
-                if result:
+                if isinstance(result, str):
                     level_crawled += 1
                     pages_crawled += 1
                     self._crawl_order.append(result)
@@ -330,7 +330,7 @@ class BFSCrawler(CrawlStrategy):
                 if isinstance(result, Exception):
                     self._progress.pages_failed += 1
                     continue
-                if result:
+                if isinstance(result, str):
                     pages_crawled += 1
                     self._crawl_order.append(result)
                     depth = batch[i].depth

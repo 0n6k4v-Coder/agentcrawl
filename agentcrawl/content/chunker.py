@@ -46,7 +46,10 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 logger = logging.getLogger("agentcrawl.content.chunker")
 
@@ -207,7 +210,7 @@ class ChunkResult:
     def __len__(self) -> int:
         return len(self.chunks)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Chunk]:
         return iter(self.chunks)
 
     def __getitem__(self, index: int) -> Chunk:

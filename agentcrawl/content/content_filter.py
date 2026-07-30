@@ -724,7 +724,7 @@ class PruningContentFilter(ContentFilter):
 def create_content_filter(
     filter_type: str = "pruning",
     **kwargs: Any,
-) -> ContentFilter:
+) -> ContentFilter | Any:
     """
     Factory function to create a content filter by type.
 

@@ -598,7 +598,8 @@ class CrawlSession:
     async def get_cookies(self) -> list[dict[str, Any]]:
         """Get all cookies in the session context."""
         self._ensure_started()
-        return await self._context.cookies()
+        cookies = await self._context.cookies()
+        return list(cookies)
 
     async def set_cookies(self, cookies: list[dict[str, Any]]) -> None:
         """Set cookies in the session context."""

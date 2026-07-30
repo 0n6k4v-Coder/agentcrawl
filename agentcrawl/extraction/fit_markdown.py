@@ -271,13 +271,13 @@ class FitMarkdownExtractor(ExtractionStrategy):
 
         if content_el is not None:
             with contextlib.suppress(Exception):
-                return tostring(content_el, encoding="unicode", method="html")
+                return str(tostring(content_el, encoding="unicode", method="html"))
 
         # Fallback: return body
         body = clone.find(".//body")
         if body is not None:
             with contextlib.suppress(Exception):
-                return tostring(body, encoding="unicode", method="html")
+                return str(tostring(body, encoding="unicode", method="html"))
 
         return html
 

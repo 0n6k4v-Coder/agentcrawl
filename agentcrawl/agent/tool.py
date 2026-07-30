@@ -36,9 +36,12 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
+
+if TYPE_CHECKING:
+    from agentcrawl.extraction.base import ExtractionStrategy
 
 logger = logging.getLogger("agentcrawl.agent")
 
@@ -118,7 +121,7 @@ class WebExtractInput(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
 
     url: str = Field(description="The URL to extract data from.")
-    schema_json: str = Field(
+    extraction_schema_json: str = Field(
         description=(
             "JSON schema describing the data to extract. "
             'Example: {"type": "object", "properties": {"name": {"type": "string"}}}'
@@ -548,6 +551,7 @@ class AgentCrawlToolkit:
         self,
         url: str,
         schema_json: str = "{}",
+        extraction_schema_json: str = "",
         method: str = "llm",
         prompt: str = "",
         css_schema: dict[str, Any] | None = None,
@@ -555,16 +559,18 @@ class AgentCrawlToolkit:
     ) -> dict[str, Any]:
         engine = await _engine_manager.get_engine()
 
+        raw_schema = extraction_schema_json or schema_json
         from agentcrawl.config.crawler_config import CrawlerConfig
 
         try:
-            schema = json.loads(schema_json) if isinstance(schema_json, str) else schema_json
+            schema = json.loads(raw_schema) if isinstance(raw_schema, str) else raw_schema
         except json.JSONDecodeError as e:
             return {
                 "success": False,
                 "error": f"Invalid schema JSON: {e}",
             }
 
+        extraction: ExtractionStrategy | Any = None
         if method == "css" and css_schema:
             from agentcrawl.extraction import JsonCssExtractor
             extraction = JsonCssExtractor(schema=css_schema)
@@ -602,15 +608,15 @@ class AgentCrawlToolkit:
     ) -> dict[str, Any]:
         engine = await _engine_manager.get_engine()
 
-        from agentcrawl.config.crawler_config import CrawlerConfig
+        from agentcrawl.config.crawler_config import CrawlerConfig, ScreenshotOptions
 
         config = CrawlerConfig(
-            screenshot=True,
-            screenshot_full_page=full_page,
-            screenshot_format=format_,
-            screenshot_quality=quality,
-            viewport_width=viewport_width,
-            viewport_height=viewport_height,
+            include_screenshot=True,
+            screenshot=ScreenshotOptions(
+                full_page=full_page,
+                format=format_,
+                quality=quality,
+            ),
         )
 
         result = await engine.scrape(url=url, config=config)
@@ -781,7 +787,7 @@ try:
             if isinstance(result, dict):
                 if result.get("success") is False:
                     return f"Error scraping {url}: {result.get('error', 'Unknown error')}"
-                return result.get("content", str(result))
+                return str(result.get("content", str(result)))
             return str(result)
 
     class AgentCrawlSearchTool(BaseTool):
@@ -970,7 +976,7 @@ try:
             if isinstance(result, dict):
                 if result.get("success") is False:
                     return f"Error: {result.get('error', 'Unknown error')}"
-                return result.get("content", str(result))
+                return str(result.get("content", str(result)))
             return str(result)
 
     class CrewAISearchTool(CrewAIBaseTool):
@@ -1125,7 +1131,7 @@ class OpenAIFunctionHandler:
             >>> messages.append(response.choices[0].message)
             >>> messages.extend(results)
         """
-        tool_messages = []
+        tool_messages: list[dict[str, Any]] = []
 
         if not hasattr(message, "tool_calls") or not message.tool_calls:
             return tool_messages

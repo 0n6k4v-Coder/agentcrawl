@@ -265,7 +265,7 @@ class URLPatternAnalyzer:
                 template=template,
                 example_urls=group_urls[:5],
                 count=len(group_urls),
-                avg_depth=round(avg_depth, 1),
+                avg_depth=round(avg_depth),
                 score=score,
                 is_navigation=is_nav,
                 is_pagination=is_pag,
