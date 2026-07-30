@@ -406,7 +406,7 @@ class HealthChecker:
                         details={"backend": getattr(cache_mgr, "_backend_name", "unknown")},
                     )
             except Exception:
-                pass
+                logger.debug("Cache health check failed")
 
             return ComponentHealth(
                 name="cache",
@@ -502,7 +502,7 @@ class HealthChecker:
             resources["user_time_s"] = round(usage.ru_utime, 2)
             resources["system_time_s"] = round(usage.ru_stime, 2)
         except Exception:
-            pass
+            logger.debug("Error getting resource usage")
 
         return resources
 

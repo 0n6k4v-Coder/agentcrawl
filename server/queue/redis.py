@@ -172,7 +172,7 @@ class RedisQueueBackend(QueueBackend):
             raise ImportError(
                 "redis is required for RedisQueueBackend. "
                 "Install with: pip install redis"
-            )
+            ) from None
 
         self._redis = aioredis.from_url(
             self._redis_url,

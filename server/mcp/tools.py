@@ -26,9 +26,11 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
 
 logger = logging.getLogger("agentcrawl.mcp.tools")
 
@@ -494,12 +496,12 @@ async def handle_extract_data(args: dict[str, Any]) -> str:
 
     try:
         field_definitions = dict.fromkeys(field_names, (str, ""))
-        DynamicModel = create_model("ExtractedData", **field_definitions)
+        dynamic_model = create_model("ExtractedData", **field_definitions)
 
         async with CrawlEngine.default() as engine:
             result = await engine.extract(
                 url,
-                schema=DynamicModel,
+                schema=dynamic_model,
                 method="llm",
             )
 

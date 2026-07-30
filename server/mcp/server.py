@@ -350,12 +350,12 @@ async def handle_extract_data(args: dict[str, Any]) -> str:
     try:
         # Build dynamic model
         field_definitions = dict.fromkeys(field_names, (str, ""))
-        DynamicModel = create_model("ExtractedData", **field_definitions)
+        dynamic_model = create_model("ExtractedData", **field_definitions)
 
         async with CrawlEngine.default() as engine:
             result = await engine.extract(
                 url,
-                schema=DynamicModel,
+                schema=dynamic_model,
                 method="llm",
             )
 
@@ -399,7 +399,7 @@ def create_mcp_server() -> Any:
     try:
         import mcp.types as types
         from mcp.server import Server
-        from mcp.server.models import InitializationOptions
+
     except ImportError:
         print(
             "MCP library not installed. Install with: pip install mcp",
@@ -528,7 +528,7 @@ async def run_stdio() -> None:
         )
 
 
-async def run_sse(host: str = "0.0.0.0", port: int = 8080) -> None:
+async def run_sse(host: str = "127.0.0.1", port: int = 8080) -> None:
     """Run MCP server with SSE transport."""
     try:
         import uvicorn
@@ -587,8 +587,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--host",
-        default="0.0.0.0",
-        help="SSE host (default: 0.0.0.0)",
+        default="127.0.0.1",
+        help="SSE host (default: 127.0.0.1)",
     )
     parser.add_argument(
         "--port",

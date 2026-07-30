@@ -42,11 +42,13 @@ import logging
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 logger = logging.getLogger("agentcrawl.server.metrics")
 
@@ -221,28 +223,28 @@ class MetricsCollector:
     # Registration
     # ──────────────────────────────────────────────────────────
 
-    def register_counter(self, name: str, help: str = "") -> None:
+    def register_counter(self, name: str, help_text: str = "") -> None:
         """Register a counter metric."""
         with self._lock:
             if name not in self._counters:
-                self._counters[name] = Counter(name=name, help=help)
+                self._counters[name] = Counter(name=name, help=help_text)
 
-    def register_gauge(self, name: str, help: str = "") -> None:
+    def register_gauge(self, name: str, help_text: str = "") -> None:
         """Register a gauge metric."""
         with self._lock:
             if name not in self._gauges:
-                self._gauges[name] = Gauge(name=name, help=help)
+                self._gauges[name] = Gauge(name=name, help=help_text)
 
     def register_histogram(
         self,
         name: str,
-        help: str = "",
+        help_text: str = "",
         buckets: list[float] | None = None,
     ) -> None:
         """Register a histogram metric."""
         with self._lock:
             if name not in self._histograms:
-                kwargs: dict[str, Any] = {"name": name, "help": help}
+                kwargs: dict[str, Any] = {"name": name, "help": help_text}
                 if buckets:
                     kwargs["buckets"] = buckets
                 self._histograms[name] = Histogram(**kwargs)

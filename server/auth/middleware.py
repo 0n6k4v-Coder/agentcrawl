@@ -30,11 +30,13 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 logger = logging.getLogger("agentcrawl.server.auth.middleware")
 
@@ -332,21 +334,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if path in self._excluded_paths:
             return True
 
-        for prefix in self._excluded_prefixes:
-            if path.startswith(prefix):
-                return True
-
-        return False
+        return any(path.startswith(prefix) for prefix in self._excluded_prefixes)
 
     def _has_auth_configured(self) -> bool:
         """Check if any auth method is configured."""
         if self._api_key_manager and self._api_key_manager._keys:
             return True
 
-        if self._jwt_manager and self._jwt_manager._secret:
-            return True
-
-        return False
+        return bool(self._jwt_manager and self._jwt_manager._secret)
 
     @staticmethod
     def _unauthorized_response(message: str) -> JSONResponse:

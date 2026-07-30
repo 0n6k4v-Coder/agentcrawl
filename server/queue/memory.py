@@ -34,6 +34,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import heapq
 import logging
 import time
@@ -166,10 +167,8 @@ class MemoryQueueBackend(QueueBackend):
 
         if self._cleanup_task and not self._cleanup_task.done():
             self._cleanup_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info(
             "Memory queue backend stopped (pending=%d, processing=%d)",
@@ -505,7 +504,7 @@ class MemoryQueueBackend(QueueBackend):
 
         Skips cancelled items and items not yet scheduled.
         """
-        now = time.time()
+        time.time()
         skipped: list[_PrioritizedItem] = []
 
         while self._queue:

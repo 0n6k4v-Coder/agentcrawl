@@ -61,7 +61,7 @@ logger = logging.getLogger("agentcrawl.server.auth.rate_limiter")
 
 class RateLimitAlgorithm(str, Enum):
     """Rate limiting algorithms."""
-    TOKEN_BUCKET = "token_bucket"
+    RL_TB = "token-bucket"
     SLIDING_WINDOW = "sliding_window"
     FIXED_WINDOW = "fixed_window"
 
@@ -83,7 +83,7 @@ class RateLimitConfig:
     requests_per_minute: int = 60
     requests_per_hour: int = 0
     burst: int = 10
-    algorithm: RateLimitAlgorithm = RateLimitAlgorithm.TOKEN_BUCKET
+    algorithm: RateLimitAlgorithm = RateLimitAlgorithm.RL_TB
     window_seconds: float = 60.0
     cleanup_interval: float = 300.0
     enabled: bool = True
@@ -430,7 +430,7 @@ class RateLimiter:
         self._config = config or RateLimitConfig()
 
         # Create algorithm-specific limiter
-        if self._config.algorithm == RateLimitAlgorithm.TOKEN_BUCKET:
+        if self._config.algorithm == RateLimitAlgorithm.RL_TB:
             self._limiter: Any = TokenBucketLimiter(self._config)
         elif self._config.algorithm == RateLimitAlgorithm.SLIDING_WINDOW:
             self._limiter = SlidingWindowLimiter(self._config)
@@ -468,11 +468,10 @@ class RateLimiter:
 
         # Periodic cleanup
         now = time.time()
-        if hasattr(self._limiter, "_last_cleanup"):
-            if now - self._limiter._last_cleanup > self._config.cleanup_interval:
-                removed = self._limiter.cleanup()
-                self._limiter._last_cleanup = now
-                if removed > 0:
+        if hasattr(self._limiter, "_last_cleanup") and now - self._limiter._last_cleanup > self._config.cleanup_interval:
+            removed = self._limiter.cleanup()
+            self._limiter._last_cleanup = now
+            if removed > 0:
                     logger.debug("Rate limiter cleanup: removed %d entries", removed)
 
         return result

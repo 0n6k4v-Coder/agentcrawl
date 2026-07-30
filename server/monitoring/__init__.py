@@ -65,27 +65,27 @@ from server.monitoring.metrics import (
 )
 
 __all__ = [
+    "AccessLogMiddleware",
+    "ComponentHealth",
+    "Counter",
+    "Gauge",
     # Health
     "HealthChecker",
     "HealthReport",
     "HealthStatus",
-    "ComponentHealth",
-    # Logging
-    "configure_server_logging",
-    "RequestIdMiddleware",
-    "AccessLogMiddleware",
-    "ServerJsonFormatter",
-    "ServerColoredFormatter",
-    "SensitiveDataFilter",
-    "ServerLogger",
-    "get_request_id",
-    "set_request_id",
+    "Histogram",
     # Metrics
     "MetricsCollector",
     "MetricsMiddleware",
-    "Counter",
-    "Gauge",
-    "Histogram",
+    "RequestIdMiddleware",
+    "SensitiveDataFilter",
+    "ServerColoredFormatter",
+    "ServerJsonFormatter",
+    "ServerLogger",
+    # Logging
+    "configure_server_logging",
     "get_metrics",
+    "get_request_id",
     "metrics_endpoint",
+    "set_request_id",
 ]

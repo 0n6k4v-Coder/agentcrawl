@@ -366,7 +366,7 @@ class APIKeyManager:
         Returns:
             True if the key was found and revoked.
         """
-        for key_hash, info in self._keys.items():
+        for _key_hash, info in self._keys.items():
             if info.key_id == key_id:
                 info.is_active = False
                 self._save_to_file()
@@ -403,12 +403,10 @@ class APIKeyManager:
             New CreatedKey, or None if key not found.
         """
         old_info = None
-        old_hash = None
 
-        for key_hash, info in self._keys.items():
+        for _key_hash, info in self._keys.items():
             if info.key_id == key_id:
                 old_info = info
-                old_hash = key_hash
                 break
 
         if old_info is None:
