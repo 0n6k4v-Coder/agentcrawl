@@ -4,6 +4,7 @@
 
 AgentCrawl converts any URL into clean, LLM-optimized Markdown or structured JSON. It combines the API-first design of Firecrawl with the Python-native flexibility of Crawl4AI into a single unified engine.
 
+[![CI](https://github.com/0n6k4v-Coder/agentcrawl/actions/workflows/ci.yml/badge.svg)](https://github.com/0n6k4v-Coder/agentcrawl/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
@@ -595,13 +596,15 @@ GitHub Actions runs tests on Python 3.11, 3.12, 3.13 with Playwright Chromium pr
 | Memory (idle) | ~150 MB | ~400 MB (5 containers) | ~200 MB |
 | Docker image size | ~600 MB | ~1.2 GB (all services) | ~800 MB |
 
+*Disclaimer: Performance benchmarks are measured in internal controlled test environments. Actual results may vary depending on hardware specs, network bandwidth, target website responsiveness, and configuration settings.*
+
 ---
 
 ## 🛣️ Roadmap
 
-- [ ] v1.0 — Core engine, Package Mode, Server Mode, basic extraction
-- [ ] v1.1 — LLM extraction, deep crawling, RAG chunking
-- [ ] v1.2 — Search integration, MCP server, agent tools
+- [x] v1.0 — Core engine, Package Mode, Server Mode, basic extraction
+- [x] v1.1 — LLM extraction, deep crawling, RAG chunking
+- [x] v1.2 — Search integration, MCP server, agent tools
 - [ ] v1.3 — Rust-accelerated HTML-to-Markdown (PyO3)
 - [ ] v1.4 — Distributed crawling (multi-worker), ClickHouse analytics
 - [ ] v2.0 — Visual crawler builder, browser extension, managed cloud
@@ -614,11 +617,10 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ```bash
 # Dev setup
-git clone https://github.com/your-org/agentcrawl.git
+git clone https://github.com/0n6k4v-Coder/agentcrawl.git
 cd agentcrawl
 pip install -e ".[dev,all]"
 agentcrawl install-browsers
-pytest tests/unit/ -v
 ```
 
 ---
@@ -640,8 +642,8 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/your-org/agentcrawl/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/your-org/agentcrawl/discussions)
+- **Issues:** [GitHub Issues](https://github.com/0n6k4v-Coder/agentcrawl/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/0n6k4v-Coder/agentcrawl/discussions)
 - **Documentation:** [docs.agentcrawl.dev](https://docs.agentcrawl.dev)
 
 ---
