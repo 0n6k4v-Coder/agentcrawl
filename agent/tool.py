@@ -38,7 +38,7 @@ import json
 import logging
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 logger = logging.getLogger("agentcrawl.agent")
 
@@ -115,6 +115,8 @@ class WebMapInput(BaseModel):
 
 class WebExtractInput(BaseModel):
     """Input schema for web_extract tool."""
+    model_config = ConfigDict(protected_namespaces=())
+
     url: str = Field(description="The URL to extract data from.")
     schema_json: str = Field(
         description=(
