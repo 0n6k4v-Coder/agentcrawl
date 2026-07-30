@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import statistics
 import time
@@ -216,10 +217,8 @@ class BenchmarkRunner:
             # Warmup
             self._log(f"Warming up ({self._warmup} iterations)...")
             for _ in range(self._warmup):
-                try:
+                with contextlib.suppress(Exception):
                     await engine.scrape(self._url, config)
-                except Exception:
-                    pass
 
             # Benchmark
             self._log(f"Running {self._iterations} iterations...")
@@ -443,10 +442,8 @@ class BenchmarkRunner:
 
         async with CrawlEngine.default() as engine:
             # Prime cache
-            try:
+            with contextlib.suppress(Exception):
                 await engine.scrape(self._url, config_cache)
-            except Exception:
-                pass
 
             for _ in range(self._iterations):
                 start = time.perf_counter()

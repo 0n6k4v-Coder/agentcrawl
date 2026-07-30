@@ -1,5 +1,5 @@
 """
-AgentCrawl × OpenAI Function Calling Integration
+AgentCrawl x OpenAI Function Calling Integration
 ====================================================
 
 OpenAI function calling (tools) powered by AgentCrawl for web
@@ -51,10 +51,10 @@ from typing import Any
 
 try:
     import openai
-except ImportError:
+except ImportError as err:
     raise ImportError(
         "openai is required. Install with: pip install openai"
-    )
+    ) from err
 
 
 # ══════════════════════════════════════════════════════════════
@@ -341,12 +341,12 @@ class AgentCrawlTools:
         from pydantic import create_model
 
         field_definitions = dict.fromkeys(field_names, (str, ""))
-        DynamicModel = create_model("ExtractedData", **field_definitions)
+        dynamic_model = create_model("ExtractedData", **field_definitions)
 
         async with CrawlEngine.default() as engine:
             result = await engine.extract(
                 url,
-                schema=DynamicModel,
+                schema=dynamic_model,
                 method="llm",
             )
 
@@ -445,7 +445,7 @@ async def run_agent(
             results = await asyncio.gather(*tasks)
 
             # Add tool results to messages
-            for tool_call, result in zip(message.tool_calls, results):
+            for tool_call, result in zip(message.tool_calls, results, strict=True):
                 working_messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
@@ -695,7 +695,7 @@ async def run_assistant_thread(
 
 async def example_basic_agent() -> None:
     """Example: Basic agent with tool calling."""
-    print("AgentCrawl × OpenAI Function Calling — Basic Agent")
+    print("AgentCrawl x OpenAI Function Calling — Basic Agent")
     print("=" * 55)
 
     response = await run_agent(
@@ -723,7 +723,7 @@ async def example_basic_agent() -> None:
 
 async def example_structured_extraction() -> None:
     """Example: Structured data extraction."""
-    print("\nAgentCrawl × OpenAI — Structured Extraction")
+    print("\nAgentCrawl x OpenAI — Structured Extraction")
     print("=" * 55)
 
     schema = {
@@ -743,7 +743,7 @@ async def example_structured_extraction() -> None:
 
 async def example_parallel_tools() -> None:
     """Example: Parallel tool execution."""
-    print("\nAgentCrawl × OpenAI — Parallel Tool Calls")
+    print("\nAgentCrawl x OpenAI — Parallel Tool Calls")
     print("=" * 55)
 
     tools = AgentCrawlTools()

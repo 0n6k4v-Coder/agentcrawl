@@ -357,7 +357,7 @@ def print_stats(schema: dict[str, Any]) -> None:
     total_endpoints = 0
     methods_count: dict[str, int] = {}
 
-    for path, methods in paths.items():
+    for _path, methods in paths.items():
         for method in methods:
             if method in ("get", "post", "put", "delete", "patch"):
                 total_endpoints += 1

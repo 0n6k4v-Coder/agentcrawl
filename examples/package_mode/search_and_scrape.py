@@ -314,7 +314,7 @@ async def example_error_handling() -> None:
 
     # Invalid provider
     try:
-        bad_engine = SearchEngine(provider="nonexistent")
+        SearchEngine(provider="nonexistent")
     except ValueError as e:
         print(f"  Invalid provider error: {e}")
 
@@ -402,7 +402,7 @@ async def example_research_workflow() -> None:
     total_tokens = sum(k["tokens"] for k in knowledge_base)
     print(f"    Knowledge chunks: {len(knowledge_base)}")
     print(f"    Total tokens: {total_tokens}")
-    print(f"    Sources: {len(set(k['source'] for k in knowledge_base))}")
+    print(f"    Sources: {len({k['source'] for k in knowledge_base})}")
 
     # Phase 5: Ready for LLM
     print("\n  Phase 5: Ready for LLM")

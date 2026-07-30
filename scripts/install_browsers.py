@@ -37,10 +37,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import platform
 import shutil
-import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -133,7 +133,7 @@ def print_error(text: str) -> None:
 def check_disk_space(required_mb: int = MIN_DISK_SPACE_MB) -> bool:
     """Check if there's enough disk space."""
     try:
-        total, used, free = shutil.disk_usage("/")
+        _total, _used, free = shutil.disk_usage("/")
         free_mb = free / (1024 * 1024)
         if free_mb < required_mb:
             print_warn(
@@ -148,11 +148,8 @@ def check_disk_space(required_mb: int = MIN_DISK_SPACE_MB) -> bool:
 
 def check_playwright_installed() -> bool:
     """Check if Playwright is installed."""
-    try:
-        import playwright  # noqa: F401
-        return True
-    except ImportError:
-        return False
+    import importlib.util
+    return importlib.util.find_spec("playwright") is not None
 
 
 def check_internet_connection() -> bool:
@@ -239,26 +236,29 @@ def install_browser(
 
     # Run installation
     try:
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=600,  # 10 minute timeout
-        )
+        async def _exec() -> tuple[int, str, str]:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=600)
+            return proc.returncode or 0, stdout.decode(), stderr.decode()
 
+        returncode, stdout, stderr = asyncio.run(_exec())
         result.duration_s = time.time() - start
 
-        if proc.returncode == 0:
+        if returncode == 0:
             result.success = True
             result.message = f"{browser} installed successfully"
             print_ok(f"{browser} installed ({result.duration_s:.1f}s)")
         else:
-            result.error = proc.stderr.strip() or proc.stdout.strip()
+            result.error = stderr.strip() or stdout.strip()
             print_error(f"{browser} installation failed")
             if result.error:
                 print(f"    {result.error[:200]}")
 
-    except subprocess.TimeoutExpired:
+    except (TimeoutError, asyncio.TimeoutError):
         result.duration_s = time.time() - start
         result.error = "Installation timed out (600s)"
         print_error("Installation timed out")
@@ -292,20 +292,24 @@ def install_system_deps() -> bool:
     print_step("Installing system dependencies...")
 
     try:
-        proc = subprocess.run(
-            [sys.executable, "-m", "playwright", "install-deps"],
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
+        async def _exec_deps() -> tuple[int, str]:
+            proc = await asyncio.create_subprocess_exec(
+                sys.executable, "-m", "playwright", "install-deps",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            _stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
+            return proc.returncode or 0, stderr.decode()
 
-        if proc.returncode == 0:
+        returncode, stderr = asyncio.run(_exec_deps())
+
+        if returncode == 0:
             print_ok("System dependencies installed")
             return True
         else:
             print_error("Failed to install system dependencies")
-            if proc.stderr:
-                print(f"    {proc.stderr[:200]}")
+            if stderr:
+                print(f"    {stderr[:200]}")
             return False
 
     except Exception as e:
@@ -598,18 +602,16 @@ def main() -> None:
         return
 
     # Pre-flight checks
-    if not args.skip_checks:
-        if not run_preflight_checks():
-            print_error("\nPre-flight checks failed. Fix the issues above.")
-            sys.exit(1)
+    if not args.skip_checks and not run_preflight_checks():
+        print_error("\nPre-flight checks failed. Fix the issues above.")
+        sys.exit(1)
 
     # Determine browsers to install
     browsers_to_install = SUPPORTED_BROWSERS if args.all else [args.browser]
 
     # Install system deps if requested
-    if args.with_deps:
-        if not install_system_deps():
-            print_warn("System deps installation failed, continuing...")
+    if args.with_deps and not install_system_deps():
+        print_warn("System deps installation failed, continuing...")
 
     # Install browsers
     print_header(f"Installing Browsers: {', '.join(browsers_to_install)}")

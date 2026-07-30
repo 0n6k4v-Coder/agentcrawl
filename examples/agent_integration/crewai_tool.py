@@ -1,5 +1,5 @@
 """
-AgentCrawl × CrewAI Integration
+AgentCrawl x CrewAI Integration
 ==================================
 
 CrewAI tools powered by AgentCrawl for web scraping, searching,
@@ -48,11 +48,11 @@ from typing import Any
 
 try:
     from crewai.tools import BaseTool
-except ImportError:
+except ImportError as err:
     raise ImportError(
         "crewai is required for this integration. "
         "Install with: pip install crewai"
-    )
+    ) from err
 
 from pydantic import BaseModel, Field
 
@@ -376,7 +376,7 @@ class AgentCrawlExtractTool(BaseTool):
             from pydantic import create_model
 
             field_definitions: dict[str, Any] = dict.fromkeys(field_names, (str, ""))
-            DynamicModel = create_model("ExtractedData", **field_definitions)
+            dynamic_model = create_model("ExtractedData", **field_definitions)
 
             # Scrape and extract
             config = CrawlerConfig(
@@ -387,7 +387,7 @@ class AgentCrawlExtractTool(BaseTool):
             async with CrawlEngine.default() as engine:
                 result = await engine.extract(
                     url,
-                    schema=DynamicModel,
+                    schema=dynamic_model,
                     method="llm",
                     config=config,
                 )
@@ -533,7 +533,7 @@ def create_research_crew(topic: str) -> Any:
 if __name__ == "__main__":
     import sys
 
-    print("AgentCrawl × CrewAI Integration Example")
+    print("AgentCrawl x CrewAI Integration Example")
     print("=" * 50)
 
     # Example 1: Use tools directly

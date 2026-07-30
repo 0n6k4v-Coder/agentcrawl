@@ -1,5 +1,5 @@
 """
-AgentCrawl × LangChain Integration
+AgentCrawl x LangChain Integration
 ======================================
 
 LangChain tools, document loaders, and RAG components powered
@@ -46,19 +46,21 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Iterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 try:
     from langchain_core.documents import Document
     from langchain_core.tools import BaseTool
-except ImportError:
+except ImportError as err:
     raise ImportError(
         "langchain-core is required. "
         "Install with: pip install langchain-core"
-    )
+    ) from err
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # ══════════════════════════════════════════════════════════════
 # Document Loader
@@ -454,12 +456,12 @@ def build_rag_chain(
         from langchain.chains import RetrievalQA
         from langchain_community.vectorstores import FAISS
         from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "langchain, langchain-community, langchain-openai, and faiss "
             "are required. Install with: "
             "pip install langchain langchain-community langchain-openai faiss-cpu"
-        )
+        ) from err
 
     # Default LLM and embeddings
     if llm is None:
@@ -526,11 +528,11 @@ def create_web_agent(
         from langchain.agents import AgentExecutor, create_react_agent
         from langchain_core.prompts import PromptTemplate
         from langchain_openai import ChatOpenAI
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "langchain and langchain-openai are required. "
             "Install with: pip install langchain langchain-openai"
-        )
+        ) from err
 
     if llm is None:
         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -583,7 +585,7 @@ def example_rag_pipeline() -> None:
 
     Loads documentation, chunks it, embeds it, and answers questions.
     """
-    print("AgentCrawl × LangChain RAG Pipeline Example")
+    print("AgentCrawl x LangChain RAG Pipeline Example")
     print("=" * 50)
 
     # Step 1: Load documents
@@ -636,7 +638,7 @@ def example_agent() -> None:
     """
     Example: Create a web research agent with AgentCrawl tools.
     """
-    print("\nAgentCrawl × LangChain Agent Example")
+    print("\nAgentCrawl x LangChain Agent Example")
     print("=" * 50)
 
     try:
@@ -666,7 +668,7 @@ if __name__ == "__main__":
         example_agent()
     else:
         # Default: test the document loader
-        print("AgentCrawl × LangChain Document Loader Test")
+        print("AgentCrawl x LangChain Document Loader Test")
         print("=" * 50)
 
         loader = AgentCrawlLoader(

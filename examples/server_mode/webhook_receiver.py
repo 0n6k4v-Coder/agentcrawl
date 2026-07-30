@@ -34,6 +34,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -48,7 +49,7 @@ from pydantic import BaseModel
 # Configuration
 # ══════════════════════════════════════════════════════════════
 
-WEBHOOK_SECRET = "your-webhook-secret"  # Shared secret for HMAC verification
+WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "dev-webhook-secret-change-in-production")  # Shared secret for HMAC verification
 MAX_EVENTS_STORED = 1000
 PORT = 9000
 
@@ -320,8 +321,8 @@ async def receive_scrape_webhook(
     # Parse payload
     try:
         payload = json.loads(body)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
+    except json.JSONDecodeError as err:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from err
 
     # Create event
     event = WebhookEvent(
@@ -375,8 +376,8 @@ async def receive_crawl_webhook(
 
     try:
         payload = json.loads(body)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
+    except json.JSONDecodeError as err:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from err
 
     status = payload.get("status", "unknown")
     event_type = f"crawl.{status}"
@@ -429,8 +430,8 @@ async def receive_error_webhook(
 
     try:
         payload = json.loads(body)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
+    except json.JSONDecodeError as err:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from err
 
     event = WebhookEvent(
         id=str(uuid.uuid4()),
@@ -646,4 +647,4 @@ if __name__ == "__main__":
         print("    python examples/server_mode/webhook_receiver.py --test")
         print()
 
-        uvicorn.run(app, host="0.0.0.0", port=PORT)
+        uvicorn.run(app, host="127.0.0.1", port=PORT)
