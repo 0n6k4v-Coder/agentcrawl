@@ -230,7 +230,7 @@ asyncio.run(main())
 
 ### Run the Server
 
-Server Mode is an **application**, not a library — deploy from source or Docker:
+Server code is NOT in the pip package — it runs from source:
 
 **Option 1: Docker (recommended)**
 ```bash
@@ -559,7 +559,7 @@ docker compose up -d
 
 ---
 
-## 🧪 Testing
+## 🧪 Running Tests
 
 ```bash
 # Unit tests (no browser needed)
@@ -590,7 +590,7 @@ GitHub Actions runs tests on Python 3.11, 3.12, 3.13 with Playwright Chromium pr
 |--------|-----------|------------------------|----------|
 | Single page scrape (P50) | ~1.2s | ~2.1s | ~1.5s |
 | Single page scrape (P95) | ~2.8s | ~3.4s | ~3.1s |
-| Markdown conversion | Rust-accelerated | Go service | Python html2text |
+| Markdown conversion | markdownify | Go service | Python html2text |
 | Concurrent pages | 5 (configurable) | 1 per container | 5 (pool) |
 | Memory (idle) | ~150 MB | ~400 MB (5 containers) | ~200 MB |
 | Docker image size | ~600 MB | ~1.2 GB (all services) | ~800 MB |
