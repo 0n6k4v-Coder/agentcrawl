@@ -44,11 +44,47 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    DotEnvSettingsSource,
+    EnvSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 from agentcrawl.config.browser_config import BrowserSettings
 from agentcrawl.config.llm_config import LLMConfig
 from agentcrawl.config.proxy_config import ProxySettings
+
+
+class CustomEnvSettingsSource(EnvSettingsSource):
+    def decode_complex_value(self, field_name: str, field: Any, value: Any) -> Any:
+        try:
+            return super().decode_complex_value(field_name, field, value)
+        except Exception:
+            if isinstance(value, str):
+                if field_name == "browser":
+                    return {"browser_type": value}
+                if field_name == "proxy":
+                    return {"url": value}
+                if field_name == "llm":
+                    return {"provider": value}
+            raise
+
+
+class CustomDotEnvSettingsSource(DotEnvSettingsSource):
+    def decode_complex_value(self, field_name: str, field: Any, value: Any) -> Any:
+        try:
+            return super().decode_complex_value(field_name, field, value)
+        except Exception:
+            if isinstance(value, str):
+                if field_name == "browser":
+                    return {"browser_type": value}
+                if field_name == "proxy":
+                    return {"url": value}
+                if field_name == "llm":
+                    return {"provider": value}
+            raise
 
 
 # All-interfaces host constants (for S104 compliance)
@@ -128,6 +164,29 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        # Get env_file and env_file_encoding from settings_cls model_config
+        env_file = getattr(settings_cls.model_config, "get", lambda k, d=None: d)("env_file", ".env")
+        env_file_encoding = getattr(settings_cls.model_config, "get", lambda k, d=None: d)("env_file_encoding", "utf-8")
+        return (
+            init_settings,
+            CustomEnvSettingsSource(settings_cls),
+            CustomDotEnvSettingsSource(
+                settings_cls,
+                env_file=env_file,
+                env_file_encoding=env_file_encoding,
+            ),
+            file_secret_settings,
+        )
 
     # ── Application ───────────────────────────────────────────
     app_name: str = Field(
