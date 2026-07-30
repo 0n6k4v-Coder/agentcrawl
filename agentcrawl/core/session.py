@@ -51,6 +51,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import time
@@ -468,10 +469,8 @@ class CrawlSession:
             status_code = response.status if response else 0
 
             # Wait for content
-            try:
+            with contextlib.suppress(Exception):
                 await page.wait_for_load_state("domcontentloaded", timeout=10_000)
-            except Exception:
-                pass
 
             raw_html = await page.content()
 
@@ -517,9 +516,9 @@ class CrawlSession:
             if getattr(cfg, "include_links", True):
                 links = parser.get_links(base_url=url)
                 result.links = {
-                    "internal": [l.to_dict() for l in links["internal"]],
-                    "external": [l.to_dict() for l in links["external"]],
-                    "all": [l.to_dict() for l in links["all"]],
+                    "internal": [link.to_dict() for link in links["internal"]],
+                    "external": [link.to_dict() for link in links["external"]],
+                    "all": [link.to_dict() for link in links["all"]],
                 }
 
             return result

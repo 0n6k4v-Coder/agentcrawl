@@ -53,6 +53,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -396,10 +397,8 @@ class FetchStage(PipelineStage):
                 ctx.status_code = response.status
 
             # Wait for content
-            try:
+            with contextlib.suppress(Exception):
                 await page.wait_for_load_state("domcontentloaded", timeout=10_000)
-            except Exception:
-                pass
 
             # Get HTML
             ctx.raw_html = await page.content()
@@ -411,10 +410,8 @@ class FetchStage(PipelineStage):
     async def on_error(self, ctx: PipelineContext, error: Exception) -> bool:
         # Release page if still held
         if ctx.page and self._browser_manager:
-            try:
+            with contextlib.suppress(Exception):
                 await self._browser_manager.release_page(ctx.page)
-            except Exception:
-                pass
             ctx.page = None
         return False  # Abort pipeline on fetch failure
 
@@ -449,9 +446,9 @@ class ParseStage(PipelineStage):
         if include_links:
             links = parser.get_links(base_url=ctx.url)
             ctx.links = {
-                "internal": [l.to_dict() for l in links["internal"]],
-                "external": [l.to_dict() for l in links["external"]],
-                "all": [l.to_dict() for l in links["all"]],
+                "internal": [link.to_dict() for link in links["internal"]],
+                "external": [link.to_dict() for link in links["external"]],
+                "all": [link.to_dict() for link in links["all"]],
             }
 
         # Headings
