@@ -18,7 +18,7 @@ import time
 from typing import Any
 
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 logger = logging.getLogger("agentcrawl.server.scrape")
 
@@ -135,6 +135,8 @@ class ScrapeRequest(BaseModel):
 class ScrapeResponse(BaseModel):
     """Response body for POST /scrape."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     url: str
     success: bool
     status_code: int = 0
@@ -142,7 +144,11 @@ class ScrapeResponse(BaseModel):
     html: str = ""
     raw_html: str = ""
     text: str = ""
-    json: dict[str, Any] = Field(default_factory=dict)
+    json_data: dict[str, Any] = Field(
+        default_factory=dict,
+        validation_alias="json",
+        serialization_alias="json",
+    )
     metadata: dict[str, Any] = Field(default_factory=dict)
     links: dict[str, Any] = Field(default_factory=dict)
     citations: list[dict[str, Any]] = Field(default_factory=list)
