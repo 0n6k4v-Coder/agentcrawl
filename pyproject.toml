@@ -97,6 +97,9 @@ dependencies = [
 
     # Content hashing
     "xxhash>=3.4.0",
+
+    # XML security
+    "defusedxml>=0.7.0",
 ]
 
 # ──────────────────────────────────────────────────────────────

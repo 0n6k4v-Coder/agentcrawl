@@ -102,7 +102,7 @@ def load_settings(args: argparse.Namespace) -> Any:
 # ══════════════════════════════════════════════════════════════
 
 def run_server(
-    host: str = "0.0.0.0",
+    host: str = "127.0.0.1",
     port: int = 8000,
     workers: int = 1,
     reload: bool = False,
@@ -191,7 +191,7 @@ Examples:
 
     parser.add_argument(
         "--host",
-        default=os.environ.get("AGENTCRAWL_HOST", "0.0.0.0"),
+        default=os.environ.get("AGENTCRAWL_HOST", "127.0.0.1"),
         help="Bind host (default: 0.0.0.0)",
     )
     parser.add_argument(
