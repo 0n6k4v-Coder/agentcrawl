@@ -592,7 +592,7 @@ class AgentCrawlToolkit:
         self,
         url: str,
         full_page: bool = True,
-        format: str = "png",
+        format_: str = "png",
         quality: int = 80,
         viewport_width: int = 1280,
         viewport_height: int = 720,
@@ -605,7 +605,7 @@ class AgentCrawlToolkit:
         config = CrawlerConfig(
             screenshot=True,
             screenshot_full_page=full_page,
-            screenshot_format=format,
+            screenshot_format=format_,
             screenshot_quality=quality,
             viewport_width=viewport_width,
             viewport_height=viewport_height,

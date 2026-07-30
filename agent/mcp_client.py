@@ -29,15 +29,18 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import uuid
-from collections.abc import AsyncIterator, Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Callable, Coroutine
 
 logger = logging.getLogger("agentcrawl.mcp")
 
@@ -175,21 +178,21 @@ class _JsonRpc:
         }
 
     @staticmethod
-    def response(id: str, result: Any) -> dict[str, Any]:
+    def response(request_id: str, result: Any) -> dict[str, Any]:
         return {
             "jsonrpc": "2.0",
-            "id": id,
+            "id": request_id,
             "result": result,
         }
 
     @staticmethod
-    def error_response(id: str, code: int, message: str, data: Any = None) -> dict[str, Any]:
+    def error_response(request_id: str, code: int, message: str, data: Any = None) -> dict[str, Any]:
         error: dict[str, Any] = {"code": code, "message": message}
         if data is not None:
             error["data"] = data
         return {
             "jsonrpc": "2.0",
-            "id": id,
+            "id": request_id,
             "error": error,
         }
 
@@ -329,10 +332,10 @@ class _WebSocketTransport(_BaseTransport):
             )
             self._connected = True
             logger.info("WebSocket transport connected to %s", self._url)
-        except ImportError:
+        except ImportError as err:
             raise MCPConnectionError(
                 "websockets package required. Install with: pip install websockets"
-            )
+            ) from err
         except Exception as e:
             raise MCPConnectionError(f"Failed to connect to WebSocket: {e}") from e
 
@@ -405,10 +408,10 @@ class _StdioTransport(_BaseTransport):
                 self._command,
                 " ".join(self._args),
             )
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             raise MCPConnectionError(
                 f"Command not found: {self._command}"
-            )
+            ) from err
         except Exception as e:
             raise MCPConnectionError(f"Failed to start process: {e}") from e
 
@@ -586,10 +589,8 @@ class MCPClient:
 
         if self._listener_task and not self._listener_task.done():
             self._listener_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._listener_task
-            except asyncio.CancelledError:
-                pass
 
         # Cancel all pending requests
         for future in self._pending.values():
@@ -684,16 +685,16 @@ class MCPClient:
                 ),
                 timeout=effective_timeout,
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as err:
             raise MCPTimeoutError(
                 f"Tool call '{name}' timed out after {effective_timeout}s"
-            )
+            ) from err
 
         tool_result = MCPToolResult.from_dict(result)
 
         if tool_result.is_error:
             error_text = tool_result.text or "Unknown tool error"
-            raise MCPToolError(f"Tool '{name}' returned error: {error_text}")
+            raise MCPToolError(f"Tool '{name}' returned error: {error_text}") from None
 
         return tool_result
 
