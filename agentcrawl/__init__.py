@@ -273,73 +273,73 @@ async def map_site(
 # ══════════════════════════════════════════════════════════════
 
 __all__ = [
-    # Version
-    "__version__",
-    # Core (always imported)
-    "CrawlEngine",
-    "CrawlResult",
-    "CrawlJobResult",
-    "CrawlerConfig",
-    "Settings",
-    # Convenience functions
-    "scrape",
-    "crawl",
-    "search",
-    "map_site",
+    "AdaptiveCrawler",
+    # Crawling
+    "BFSCrawler",
+    "BM25ContentFilter",
+    "BestFirstCrawler",
     # Lazy imports (available on access)
     # Config
     "BrowserConfig",
-    "LLMConfig",
-    "CacheConfig",
-    "QueueConfig",
-    "ProxyConfig",
-    # Core
-    "Pipeline",
-    "PipelineContext",
-    "CrawlSession",
     # Browser
     "BrowserManager",
+    "CacheConfig",
+    # Cache
+    "CacheManager",
+    "CitationExtractor",
+    "CosineExtractor",
+    # Core (always imported)
+    "CrawlEngine",
+    "CrawlJobResult",
+    "CrawlResult",
+    "CrawlSession",
+    "CrawlerConfig",
+    "DFSCrawler",
+    "DomainMapper",
+    "FitMarkdownExtractor",
     # Content
     "HTMLParser",
     "HTMLToMarkdown",
-    "html_to_markdown",
-    "TopicChunker",
-    "SentenceChunker",
-    "PruningContentFilter",
-    "BM25ContentFilter",
-    "CitationExtractor",
-    # Extraction
-    "LLMExtractor",
-    "JsonCssExtractor",
-    "JsonXPathExtractor",
-    "CosineExtractor",
-    "RegexExtractor",
-    "FitMarkdownExtractor",
-    "TableExtractor",
-    "SchemaBuilder",
-    "create_extractor",
-    # Crawling
-    "BFSCrawler",
-    "DFSCrawler",
-    "BestFirstCrawler",
-    "AdaptiveCrawler",
-    "SinglePageCrawler",
-    "DomainMapper",
-    "SitemapParser",
-    "URLFilter",
-    "URLScorer",
-    # Search
-    "SearchEngine",
-    # Cache
-    "CacheManager",
+    "HookEvent",
     # Hooks
     "HookExecutor",
     "HookRegistry",
-    "HookEvent",
-    "hook",
+    "HtmlOutputFormatter",
+    "JsonCssExtractor",
     # Output
     "JsonOutputFormatter",
+    "JsonXPathExtractor",
+    "LLMConfig",
+    # Extraction
+    "LLMExtractor",
     "MarkdownOutputFormatter",
-    "HtmlOutputFormatter",
+    # Core
+    "Pipeline",
+    "PipelineContext",
+    "ProxyConfig",
+    "PruningContentFilter",
+    "QueueConfig",
+    "RegexExtractor",
+    "SchemaBuilder",
     "ScreenshotHandler",
+    # Search
+    "SearchEngine",
+    "SentenceChunker",
+    "Settings",
+    "SinglePageCrawler",
+    "SitemapParser",
+    "TableExtractor",
+    "TopicChunker",
+    "URLFilter",
+    "URLScorer",
+    # Version
+    "__version__",
+    "crawl",
+    "create_extractor",
+    "hook",
+    "html_to_markdown",
+    "map_site",
+    # Convenience functions
+    "scrape",
+    "search",
 ]
