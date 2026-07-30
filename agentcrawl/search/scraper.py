@@ -41,8 +41,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import random
 import re
+import secrets
 import time
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -90,7 +90,7 @@ class SearchScraper:
         ...     print(f"{r.title}: {r.url}")
     """
 
-    SUPPORTED_ENGINES: set[str] = {"google", "bing", "duckduckgo"}
+    SUPPORTED_ENGINES: frozenset[str] = frozenset({"google", "bing", "duckduckgo"})
 
     def __init__(
         self,
@@ -314,7 +314,7 @@ class SearchScraper:
 
     def _build_headers(self) -> dict[str, str]:
         """Build request headers."""
-        ua = random.choice(USER_AGENTS) if self._rotate_user_agent else USER_AGENTS[0]
+        ua = secrets.choice(USER_AGENTS) if self._rotate_user_agent else USER_AGENTS[0]
 
         return {
             "User-Agent": ua,
@@ -523,7 +523,7 @@ class SearchScraper:
         seen_urls: set[str] = set()
 
         # DuckDuckGo HTML version uses specific class names
-        result_pattern = re.compile(
+        _result_pattern = re.compile(
             r'<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>\s*</div>',
             re.DOTALL,
         )
@@ -557,7 +557,7 @@ class SearchScraper:
                     if "uddg" in params:
                         url = params["uddg"][0]
                 except Exception:
-                    pass
+                    logger.debug("Error extracting uddg param from URL")
 
             if not url or url.startswith("#"):
                 continue
@@ -590,7 +590,7 @@ class SearchScraper:
         elapsed = time.time() - self._last_request_time
         if elapsed < self._rate_limit_delay:
             # Add jitter to avoid detection
-            jitter = random.uniform(0, self._rate_limit_delay * 0.3)
+            jitter = secrets.SystemRandom().uniform(0, self._rate_limit_delay * 0.3)
             await asyncio.sleep(self._rate_limit_delay - elapsed + jitter)
         self._last_request_time = time.time()
 

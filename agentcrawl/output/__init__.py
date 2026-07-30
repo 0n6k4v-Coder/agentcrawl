@@ -78,8 +78,8 @@ __all__ = [
     "JsonOutputFormatter",
     # Markdown
     "MarkdownOutputFormatter",
+    "ScreenshotDiff",
     # Screenshot
     "ScreenshotHandler",
     "ScreenshotInfo",
-    "ScreenshotDiff",
 ]

@@ -46,9 +46,11 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Callable
 from datetime import date, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger("agentcrawl.output.json")
 
@@ -84,7 +86,7 @@ class JsonOutputFormatter:
     """
 
     # Default fields to include in output
-    DEFAULT_FIELDS: list[str] = [
+    DEFAULT_FIELDS: tuple[str, ...] = (
         "url",
         "success",
         "status_code",
@@ -104,7 +106,7 @@ class JsonOutputFormatter:
         "token_count",
         "cached",
         "request_id",
-    ]
+    )
 
     def __init__(
         self,
@@ -417,7 +419,7 @@ class JsonOutputFormatter:
         self,
         results: list[Any],
         filepath: str,
-        format: str = "json",
+        format_: str = "json",
     ) -> None:
         """
         Save results in the specified format.
@@ -427,7 +429,7 @@ class JsonOutputFormatter:
             filepath: Output file path.
             format: Output format ('json' or 'jsonl').
         """
-        if format == "jsonl":
+        if format_ == "jsonl":
             self.save_jsonl(results, filepath)
         else:
             # Save as JSON array

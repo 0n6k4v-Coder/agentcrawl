@@ -55,15 +55,17 @@ from __future__ import annotations
 import importlib
 import logging
 import pkgutil
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from agentcrawl.hooks.executor import (
     HookContext,
     HookEvent,
     HookExecutor,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger("agentcrawl.hooks.registry")
 
@@ -571,7 +573,7 @@ class HookRegistry:
             if not hasattr(package, "__path__"):
                 return 0
 
-            for importer, modname, ispkg in pkgutil.walk_packages(
+            for _importer, modname, _ispkg in pkgutil.walk_packages(
                 package.__path__,
                 prefix=package.__name__ + ".",
             ):

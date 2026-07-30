@@ -90,19 +90,19 @@ from agentcrawl.search.searxng import SearXNGProvider
 # ──────────────────────────────────────────────────────────────
 
 __all__ = [
+    "PROVIDERS",
+    "BraveProvider",
+    # Providers
+    "DuckDuckGoProvider",
+    "ExaProvider",
+    "GoogleSearchProvider",
+    "SearXNGProvider",
     # Engine
     "SearchEngine",
     "SearchProvider",
-    "SearchResult",
     "SearchResponse",
-    "PROVIDERS",
-    # Providers
-    "DuckDuckGoProvider",
-    "GoogleSearchProvider",
-    "BraveProvider",
-    "TavilyProvider",
-    "ExaProvider",
-    "SearXNGProvider",
+    "SearchResult",
     # Scraper
     "SearchScraper",
+    "TavilyProvider",
 ]

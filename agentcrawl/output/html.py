@@ -73,14 +73,14 @@ class HtmlSanitizer:
     """
 
     # Tags to always remove
-    REMOVE_TAGS: set[str] = {
+    REMOVE_TAGS: frozenset[str] = frozenset({
         "script", "noscript", "iframe", "embed", "object",
         "applet", "form", "input", "button", "select",
         "textarea", "link", "meta", "base",
-    }
+    })
 
     # Event handler attributes to remove
-    EVENT_ATTRS: set[str] = {
+    EVENT_ATTRS: frozenset[str] = frozenset({
         "onclick", "ondblclick", "onmousedown", "onmouseup",
         "onmouseover", "onmousemove", "onmouseout", "onmouseenter",
         "onmouseleave", "onkeydown", "onkeypress", "onkeyup",
@@ -91,17 +91,17 @@ class HtmlSanitizer:
         "ondragover", "ondragstart", "ondrop", "oncontextmenu",
         "onwheel", "ontouchstart", "ontouchmove", "ontouchend",
         "onanimationstart", "onanimationend", "ontransitionend",
-    }
+    })
 
     # Safe attributes
-    SAFE_ATTRS: set[str] = {
+    SAFE_ATTRS: frozenset[str] = frozenset({
         "href", "src", "alt", "title", "class", "id", "name",
         "width", "height", "colspan", "rowspan", "align",
         "valign", "border", "cellpadding", "cellspacing",
         "target", "rel", "type", "value", "placeholder",
         "datetime", "cite", "lang", "dir", "role",
         "aria-label", "aria-hidden", "aria-describedby",
-    }
+    })
 
     def __init__(
         self,
@@ -486,19 +486,24 @@ class HtmlOutputFormatter:
             ImportError: If weasyprint is not installed.
         """
         try:
-            from weasyprint import HTML as WeasyprintHTML
-        except ImportError:
+            from weasyprint import HTML
+        except ImportError as err:
             raise ImportError(
                 "weasyprint is required for PDF conversion. "
                 "Install with: pip install weasyprint"
-            )
+            ) from err
 
         html = self.format(result)
-        pdf_bytes = WeasyprintHTML(string=html).write_pdf()
+        pdf_bytes = HTML(string=html).write_pdf()
 
         if output_path:
-            with open(output_path, "wb") as f:
-                f.write(pdf_bytes)
+            import asyncio
+
+            def _write_bytes_sync(path: str, data: bytes) -> None:
+                with open(path, "wb") as f:
+                    f.write(data)
+
+            await asyncio.to_thread(_write_bytes_sync, output_path, pdf_bytes)
 
         return pdf_bytes
 

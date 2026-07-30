@@ -42,6 +42,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 from dataclasses import dataclass, field
@@ -80,11 +81,9 @@ class SearchResult:
 
     def __post_init__(self) -> None:
         if not self.domain and self.url:
-            try:
-                from urllib.parse import urlparse
+            from urllib.parse import urlparse
+            with contextlib.suppress(Exception):
                 self.domain = urlparse(self.url).netloc.replace("www.", "")
-            except Exception:
-                pass
 
     def to_dict(self) -> dict[str, Any]:
         return {

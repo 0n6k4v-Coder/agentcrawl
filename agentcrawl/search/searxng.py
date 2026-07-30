@@ -49,6 +49,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 from typing import Any
@@ -94,14 +95,14 @@ class SearXNGProvider(SearchProvider):
     name = "searxng"
 
     # Available search categories
-    CATEGORIES: list[str] = [
+    CATEGORIES: tuple[str, ...] = (
         "general", "images", "news", "videos",
         "it", "science", "files", "music",
         "map", "social media",
-    ]
+    )
 
     # Available time ranges
-    TIME_RANGES: list[str] = ["day", "week", "month", "year"]
+    TIME_RANGES: tuple[str, ...] = ("day", "week", "month", "year")
 
     def __init__(
         self,
@@ -329,11 +330,9 @@ class SearXNGProvider(SearchProvider):
 
             # Extract domain
             domain = ""
-            try:
-                from urllib.parse import urlparse
+            from urllib.parse import urlparse
+            with contextlib.suppress(Exception):
                 domain = urlparse(url).netloc.replace("www.", "")
-            except Exception:
-                pass
 
             results.append(SearchResult(
                 url=url,

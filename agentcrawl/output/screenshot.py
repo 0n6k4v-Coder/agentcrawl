@@ -76,7 +76,7 @@ class ScreenshotInfo:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "format": self.format,
+            "format": self.format_resolved,
             "width": self.width,
             "height": self.height,
             "size_bytes": self.size_bytes,
@@ -135,7 +135,7 @@ class ScreenshotHandler:
     """
 
     # Supported formats
-    SUPPORTED_FORMATS: set[str] = {"png", "jpeg", "jpg", "webp"}
+    SUPPORTED_FORMATS: tuple[str, ...] = ("png", "jpeg", "jpg", "webp")
 
     def __init__(
         self,
@@ -187,13 +187,13 @@ class ScreenshotHandler:
         return base64.b64decode(base64_str)
 
     @staticmethod
-    def to_data_uri(base64_str: str, format: str = "png") -> str:
+    def to_data_uri(base64_str: str, format_: str = "png") -> str:
         """
         Convert base64 to a data URI.
 
         Args:
             base64_str: Base64 encoded string.
-            format: Image format.
+            format_: Image format.
 
         Returns:
             Data URI string.
@@ -204,7 +204,7 @@ class ScreenshotHandler:
             "jpg": "image/jpeg",
             "webp": "image/webp",
         }
-        mime = mime_map.get(format, "image/png")
+        mime = mime_map.get(format_, "image/png")
         return f"data:{mime};base64,{base64_str}"
 
     # ──────────────────────────────────────────────────────────
@@ -215,7 +215,7 @@ class ScreenshotHandler:
         self,
         result: Any,
         filepath: str | None = None,
-        format: str | None = None,
+        format_: str | None = None,
     ) -> str:
         """
         Save a screenshot from a CrawlResult to a file.
@@ -223,7 +223,7 @@ class ScreenshotHandler:
         Args:
             result: CrawlResult with screenshot data.
             filepath: Output file path (auto-generated if None).
-            format: Image format (inferred from filepath if None).
+            format_: Image format (inferred from filepath if None).
 
         Returns:
             Path to the saved file.
@@ -233,11 +233,10 @@ class ScreenshotHandler:
             raise ValueError("No screenshot data in result")
 
         # Determine format
-        if format is None and filepath:
+        if format_ is None and filepath:
             ext = os.path.splitext(filepath)[1].lower().lstrip(".")
-            format = ext if ext in self.SUPPORTED_FORMATS else self._default_format
-        format = format or self._default_format
-
+            format_ = ext if ext in self.SUPPORTED_FORMATS else self._default_format
+        format_resolved = format_ or self._default_format
         # Generate filepath if not provided
         if filepath is None:
             url = getattr(result, "url", "screenshot")
@@ -245,7 +244,7 @@ class ScreenshotHandler:
             os.makedirs(self._output_dir, exist_ok=True)
             filepath = os.path.join(
                 self._output_dir,
-                f"{slug}.{format}",
+                f"{slug}.{format_resolved}",
             )
 
         # Ensure directory exists
@@ -289,7 +288,7 @@ class ScreenshotHandler:
         self,
         results: list[Any],
         directory: str | None = None,
-        format: str = "png",
+        format_: str = "png",
         filename_template: str = "{index:04d}_{url_slug}.{format}",
     ) -> list[str]:
         """
@@ -298,7 +297,7 @@ class ScreenshotHandler:
         Args:
             results: List of CrawlResult instances.
             directory: Output directory.
-            format: Image format.
+            format_: Image format.
             filename_template: Filename template.
 
         Returns:
@@ -319,7 +318,7 @@ class ScreenshotHandler:
             filename = filename_template.format(
                 index=i,
                 url_slug=slug,
-                format=format,
+                format=format_,
             )
             filepath = os.path.join(directory, filename)
 
@@ -409,7 +408,7 @@ class ScreenshotHandler:
                     return width, height
 
         except Exception:
-            pass
+            logger.debug("Error parsing WebP dimensions")
 
         return 0, 0
 
@@ -427,11 +426,10 @@ class ScreenshotHandler:
             marker = data[i + 1]
 
             # SOF markers (Start of Frame)
-            if marker in (0xC0, 0xC1, 0xC2, 0xC3):
-                if i + 9 < len(data):
-                    height = struct.unpack(">H", data[i + 5:i + 7])[0]
-                    width = struct.unpack(">H", data[i + 7:i + 9])[0]
-                    return width, height
+            if marker in (0xC0, 0xC1, 0xC2, 0xC3) and i + 9 < len(data):
+                height = struct.unpack(">H", data[i + 5:i + 7])[0]
+                width = struct.unpack(">H", data[i + 7:i + 9])[0]
+                return width, height
 
             # Skip to next marker
             if marker in (0xD8, 0xD9):  # SOI, EOI
@@ -505,9 +503,9 @@ class ScreenshotHandler:
             diff_count = 0
             diff_pixels: list[tuple[int, int, int]] = []
 
-            for pa, pb in zip(pixels_a, pixels_b):
+            for pa, pb in zip(pixels_a, pixels_b, strict=True):
                 # Calculate per-pixel difference
-                diff = sum(abs(a - b) for a, b in zip(pa, pb))
+                diff = sum(abs(a - b) for a, b in zip(pa, pb, strict=True))
                 if diff > 30:  # Threshold for "different"
                     diff_count += 1
                     diff_pixels.append((255, 0, 0))  # Red for diff
@@ -547,7 +545,7 @@ class ScreenshotHandler:
         base64_str: str,
         max_width: int = 200,
         max_height: int = 200,
-        format: str = "png",
+        format_: str = "png",
     ) -> str:
         """
         Generate a thumbnail from a screenshot.
@@ -556,7 +554,7 @@ class ScreenshotHandler:
             base64_str: Base64 encoded screenshot.
             max_width: Maximum thumbnail width.
             max_height: Maximum thumbnail height.
-            format: Output format.
+            format_: Output format.
 
         Returns:
             Base64 encoded thumbnail.
@@ -576,7 +574,7 @@ class ScreenshotHandler:
 
             # Save to buffer
             buffer = io.BytesIO()
-            save_format = "PNG" if format == "png" else "JPEG"
+            save_format = "PNG" if format_ == "png" else "JPEG"
             img.save(buffer, format=save_format)
 
             return self.encode(buffer.getvalue())
@@ -616,7 +614,7 @@ class ScreenshotHandler:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "default_format": self._default_format,
+            "default_format": self._default_format_resolved,
             "default_quality": self._default_quality,
             "output_dir": self._output_dir,
         }

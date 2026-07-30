@@ -264,45 +264,45 @@ DEFAULT_GROUPS: list[str] = [
 # ══════════════════════════════════════════════════════════════
 
 __all__ = [
-    # Re-exports
-    "HookEvent",
-    "HookContext",
-    "HookExecutor",
-    "HookRegistration",
-    "HookStats",
-    "HookMetadata",
-    "HookRegistry",
-    "hook",
-    # Type aliases
-    "AsyncHookCallback",
-    "SyncHookCallback",
-    "HookCallback",
-    "HookCondition",
-    "HookDecorator",
-    "AsyncHookTransform",
-    "SyncHookTransform",
-    "HookTransform",
-    "EventName",
-    "GroupName",
-    "HookName",
-    # TypedDicts
-    "HookConfigDict",
-    "HookInfoDict",
-    "HookStatsDict",
-    "RegistryConfigDict",
-    # Protocols
-    "Hookable",
-    "HookRegistrable",
-    "HookGroupable",
-    "HookDiscoverable",
-    # Type guards
-    "is_hook_context",
-    "is_hook_executor",
-    "is_hook_registry",
-    "is_hook_event",
-    "is_async_hook",
-    "is_valid_event_name",
     # Constants
     "ALL_HOOK_EVENTS",
     "DEFAULT_GROUPS",
+    # Type aliases
+    "AsyncHookCallback",
+    "AsyncHookTransform",
+    "EventName",
+    "GroupName",
+    "HookCallback",
+    "HookCondition",
+    # TypedDicts
+    "HookConfigDict",
+    "HookContext",
+    "HookDecorator",
+    "HookDiscoverable",
+    # Re-exports
+    "HookEvent",
+    "HookExecutor",
+    "HookGroupable",
+    "HookInfoDict",
+    "HookMetadata",
+    "HookName",
+    "HookRegistrable",
+    "HookRegistration",
+    "HookRegistry",
+    "HookStats",
+    "HookStatsDict",
+    "HookTransform",
+    # Protocols
+    "Hookable",
+    "RegistryConfigDict",
+    "SyncHookCallback",
+    "SyncHookTransform",
+    "hook",
+    "is_async_hook",
+    # Type guards
+    "is_hook_context",
+    "is_hook_event",
+    "is_hook_executor",
+    "is_hook_registry",
+    "is_valid_event_name",
 ]
