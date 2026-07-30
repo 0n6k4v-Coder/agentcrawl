@@ -224,9 +224,9 @@ agentcrawl = "agentcrawl.cli.main:cli"
 [project.urls]
 Homepage = "https://agentcrawl.dev"
 Documentation = "https://docs.agentcrawl.dev"
-Repository = "https://github.com/your-org/agentcrawl"
-Issues = "https://github.com/your-org/agentcrawl/issues"
-Changelog = "https://github.com/your-org/agentcrawl/blob/main/CHANGELOG.md"
+Repository = "https://github.com/0n6k4v-Coder/agentcrawl"
+Issues = "https://github.com/0n6k4v-Coder/agentcrawl/issues"
+Changelog = "https://github.com/0n6k4v-Coder/agentcrawl/blob/main/CHANGELOG.md"
 
 # ──────────────────────────────────────────────────────────────
 # Hatch Build Configuration
