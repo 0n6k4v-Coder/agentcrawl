@@ -43,13 +43,26 @@ def mock_playwright() -> MagicMock:
 
     # Mock context
     context = AsyncMock()
-    page = AsyncMock()
-    page.url = "about:blank"
-    page.title = AsyncMock(return_value="Test Page")
-
-    context.new_page = AsyncMock(return_value=page)
     context.close = AsyncMock()
     context.pages = []
+
+    # Create a factory function that returns a new page for each call
+    def create_mock_page():
+        page = AsyncMock()
+        page.url = "about:blank"
+        page.title = AsyncMock(return_value="Test Page")
+        # is_closed is a sync method in Playwright
+        page.is_closed = MagicMock(return_value=False)
+        page.set_default_timeout = MagicMock()
+        page.set_default_navigation_timeout = MagicMock()
+        return page
+
+    # new_page should return a new page each time it's called (async method)
+    context.new_page = AsyncMock(side_effect=create_mock_page)
+
+    # Mock set_default_timeout and set_default_navigation_timeout as sync methods
+    context.set_default_timeout = MagicMock()
+    context.set_default_navigation_timeout = MagicMock()
 
     browser.new_context = AsyncMock(return_value=context)
     browser.close = AsyncMock()
@@ -507,7 +520,7 @@ class TestStatsProperties:
 
             await manager.start()
 
-            initial_pages = manager.stats["pages_created"]
+            manager.stats["pages_created"]
 
             page = await manager.acquire_page()
             await manager.release_page(page)

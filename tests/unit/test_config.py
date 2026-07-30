@@ -92,14 +92,14 @@ class TestSettings:
         from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(browser=BrowserSettings(browser_type="invalid_browser"))
 
     def test_settings_invalid_log_level(self) -> None:
         """Invalid log level raises validation error."""
         from agentcrawl.config.settings import Settings
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(log_level="invalid_level")
 
     def test_settings_negative_timeout(self) -> None:
@@ -107,7 +107,7 @@ class TestSettings:
         from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(browser=BrowserSettings(timeout=-1))
 
     def test_settings_zero_max_concurrent(self) -> None:
@@ -115,7 +115,7 @@ class TestSettings:
         from agentcrawl.config.browser_config import BrowserSettings
         from agentcrawl.config.settings import Settings
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(browser=BrowserSettings(max_concurrent=0))
 
     def test_settings_port_default(self) -> None:
@@ -126,11 +126,11 @@ class TestSettings:
         assert settings.server_port == 8000
 
     def test_settings_host_default(self) -> None:
-        """Default host is 0.0.0.0."""
+        """Default host is 127.0.0.1."""
         from agentcrawl.config.settings import Settings
 
         settings = Settings()
-        assert settings.server_host == "0.0.0.0"
+        assert settings.server_host == "127.0.0.1"
 
     def test_settings_workers_default(self) -> None:
         """Default workers is 1."""
@@ -416,7 +416,7 @@ class TestQueueSettings:
         """Invalid backend raises error."""
         from agentcrawl.config.settings import Settings
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(queue_backend="invalid_backend")
 
 

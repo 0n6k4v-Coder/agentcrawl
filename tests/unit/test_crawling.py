@@ -157,16 +157,12 @@ class TestBFSCrawler:
 
         async def mock_fetch(url: str, depth: int) -> tuple[str, list[str]]:
             visited.append(url)
-            if url == "https://example.com":
-                return "<html></html>", [
-                    "https://example.com/a",
-                    "https://example.com/b",
-                ]
-            elif url == "https://example.com/a":
-                return "<html></html>", ["https://example.com/a/1"]
-            elif url == "https://example.com/b":
-                return "<html></html>", ["https://example.com/b/1"]
-            return "<html></html>", []
+            responses = {
+                "https://example.com": ("<html></html>", ["https://example.com/a", "https://example.com/b"]),
+                "https://example.com/a": ("<html></html>", ["https://example.com/a/1"]),
+                "https://example.com/b": ("<html></html>", ["https://example.com/b/1"]),
+            }
+            return responses.get(url, ("<html></html>", []))
 
         # BFS should visit root, then a and b, then a/1 and b/1
         # (level by level)
@@ -439,7 +435,7 @@ class TestSitemapParser:
 
         parser = SitemapParser()
         # Use _parse_xml directly to test XML parsing
-        entries, child_urls, is_index = parser._parse_xml(xml, "https://example.com/sitemap.xml")
+        entries, _child_urls, _is_index = parser._parse_xml(xml, "https://example.com/sitemap.xml")
 
         assert len(entries) == 3
         assert "https://example.com/page1" in [e.url for e in entries]
@@ -455,7 +451,7 @@ class TestSitemapParser:
         </sitemapindex>"""
 
         parser = SitemapParser()
-        entries, child_urls, is_index = parser._parse_xml(xml, 'https://example.com/sitemap.xml')
+        _entries, child_urls, is_index = parser._parse_xml(xml, 'https://example.com/sitemap.xml')
 
         # For sitemap index, entries should be empty but child_urls should have the sitemap URLs
         assert len(child_urls) == 2
@@ -503,7 +499,7 @@ class TestSitemapParser:
         </urlset>"""
 
         parser = SitemapParser(max_urls=3)
-        entries, child_urls, is_index = parser._parse_xml(xml, 'https://example.com/sitemap.xml')
+        entries, _child_urls, _is_index = parser._parse_xml(xml, 'https://example.com/sitemap.xml')
 
         assert len(entries) == 3
         assert len(entries) <= 3

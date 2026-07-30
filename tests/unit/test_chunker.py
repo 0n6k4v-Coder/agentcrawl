@@ -288,7 +288,7 @@ class TestFixedChunker:
         chunker = FixedChunker(max_chunk_size=100)
         result = chunker.chunk(SAMPLE_MD)
 
-        chunk_sum = sum(c.token_count for c in result.chunks)
+        sum(c.token_count for c in result.chunks)
         # With overlap, sum may exceed total
         assert result.total_tokens > 0
 

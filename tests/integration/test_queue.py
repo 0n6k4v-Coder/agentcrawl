@@ -22,14 +22,15 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import AsyncGenerator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 import pytest_asyncio
-
 from server.queue.base import JobPriority, JobStatus, QueueItem
 from server.queue.memory import MemoryQueueBackend
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 # ══════════════════════════════════════════════════════════════
 # Fixtures

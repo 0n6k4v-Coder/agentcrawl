@@ -121,12 +121,15 @@ class TestEngineLifecycle:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             await engine.startup()
             assert engine.is_started is True
+            await engine.shutdown()
 
     @pytest.mark.asyncio
     async def test_shutdown(self, settings: Any) -> None:
@@ -135,7 +138,8 @@ class TestEngineLifecycle:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
             mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
@@ -152,12 +156,15 @@ class TestEngineLifecycle:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             await engine.startup()
             await engine.startup()  # Should not raise
+            await engine.shutdown()
 
     @pytest.mark.asyncio
     async def test_shutdown_without_startup(self, settings: Any) -> None:
@@ -174,7 +181,8 @@ class TestEngineLifecycle:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
             mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
@@ -215,7 +223,8 @@ class TestEngineScrape:
         mock_result.markdown = "# Test"
         mock_result.word_count = 10
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
             mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
@@ -228,6 +237,7 @@ class TestEngineScrape:
 
                 assert result.success is True
                 assert result.url == "https://example.com"
+                await engine.shutdown()
 
     @pytest.mark.asyncio
     async def test_scrape_empty_url(self, settings: Any, config: Any) -> None:
@@ -236,15 +246,17 @@ class TestEngineScrape:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             # Manually set started state to avoid real startup
             engine._is_started = True
             engine._browser_manager = mock_bm
 
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError):
                 await engine.scrape("", config)
 
     @pytest.mark.asyncio
@@ -257,8 +269,10 @@ class TestEngineScrape:
         mock_result = MagicMock()
         mock_result.success = True
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             with patch.object(engine, "_fetch_and_process", new_callable=AsyncMock) as mock_scrape:
@@ -268,6 +282,7 @@ class TestEngineScrape:
                 result = await engine.scrape("https://example.com")
 
                 assert result is not None
+                await engine.shutdown()
 
 
 # ══════════════════════════════════════════════════════════════
@@ -288,8 +303,10 @@ class TestEngineBatchScrape:
         mock_result.success = True
         mock_result.url = "https://example.com"
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             with patch.object(engine, "scrape", new_callable=AsyncMock) as mock_scrape:
@@ -310,14 +327,17 @@ class TestEngineBatchScrape:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             await engine.startup()
             results = await engine.batch_scrape([], config)
 
             assert len(results) == 0
+            await engine.shutdown()
 
     @pytest.mark.asyncio
     async def test_batch_scrape_concurrency(self, settings: Any, config: Any) -> None:
@@ -329,8 +349,10 @@ class TestEngineBatchScrape:
         mock_result = MagicMock()
         mock_result.success = True
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             with patch.object(engine, "scrape", new_callable=AsyncMock) as mock_scrape:
@@ -344,6 +366,7 @@ class TestEngineBatchScrape:
                 )
 
                 assert len(results) == 10
+                await engine.shutdown()
 
 
 # ══════════════════════════════════════════════════════════════
@@ -370,8 +393,10 @@ class TestEngineCrawl:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             # Manually set started state to avoid real startup
@@ -405,22 +430,25 @@ class TestEngineMap:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
-            with patch("agentcrawl.crawling.bfs.BFSCrawler") as MockCrawler:
+            with patch("agentcrawl.crawling.bfs.BFSCrawler") as mock_crawler:
                 mock_instance = MagicMock()
                 mock_instance.discover = AsyncMock(return_value=[
                     "https://example.com/page1",
                     "https://example.com/page2",
                 ])
-                MockCrawler.return_value = mock_instance
+                mock_crawler.return_value = mock_instance
 
                 await engine.startup()
                 urls = await engine.map_site("https://example.com")
 
                 assert len(urls) == 2
+                await engine.shutdown()
 
 
 # ══════════════════════════════════════════════════════════════
@@ -441,10 +469,10 @@ class TestEngineSearch:
             {"title": "Result 1", "url": "https://example.com/1"},
         ]
 
-        with patch("agentcrawl.search.engine.SearchEngine") as MockSearch:
+        with patch("agentcrawl.search.engine.SearchEngine") as mock_search:
             mock_instance = MagicMock()
             mock_instance.search = AsyncMock(return_value=mock_results)
-            MockSearch.return_value = mock_instance
+            mock_search.return_value = mock_instance
 
             # Manually set started state to avoid real startup
             engine._is_started = True
@@ -482,8 +510,10 @@ class TestEngineExtract:
         mock_result.success = True
         mock_result.extracted_data = {"title": "Test", "price": "$10"}
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             # Manually set started state to avoid real startup
@@ -531,8 +561,10 @@ class TestEngineState:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             await engine.startup()
@@ -545,7 +577,8 @@ class TestEngineState:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
             mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
@@ -570,8 +603,10 @@ class TestEngineErrors:
 
         engine = CrawlEngine.from_settings(settings)
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             with patch.object(engine, "_fetch_and_process", new_callable=AsyncMock) as mock_scrape:
@@ -601,8 +636,10 @@ class TestEngineErrors:
         fail_result.url = "https://example.com/2"
         fail_result.error = "Timeout"
 
-        with patch.object(engine, "_browser_manager") as mock_bm:
+        with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
+            mock_bm = mock_bm_cls.return_value
             mock_bm.start = AsyncMock()
+            mock_bm.stop = AsyncMock()
             mock_bm.is_started = True
 
             with patch.object(engine, "scrape", new_callable=AsyncMock) as mock_scrape:
@@ -617,3 +654,4 @@ class TestEngineErrors:
                 assert len(results) == 2
                 assert results[0].success is True
                 assert results[1].success is False
+                await engine.shutdown()

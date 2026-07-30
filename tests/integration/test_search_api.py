@@ -20,12 +20,14 @@ Run:
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 # ══════════════════════════════════════════════════════════════
 # Fixtures
@@ -34,8 +36,9 @@ from httpx import ASGITransport, AsyncClient
 @pytest_asyncio.fixture
 async def app() -> AsyncGenerator[Any, None]:
     """Create a test FastAPI app."""
-    from agentcrawl.config.settings import Settings
     from server.app import create_app
+
+    from agentcrawl.config.settings import Settings
 
     settings = Settings(
         log_level="WARNING",

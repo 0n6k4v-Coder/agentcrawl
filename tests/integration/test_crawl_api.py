@@ -32,8 +32,9 @@ from fastapi.testclient import TestClient
 @ pytest.fixture
 def app(require_playwright) -> Any:
     """Create a test FastAPI app."""
-    from agentcrawl.config.settings import Settings
     from server.app import create_app
+
+    from agentcrawl.config.settings import Settings
 
     settings = Settings(
         log_level="WARNING",
@@ -46,7 +47,7 @@ def app(require_playwright) -> Any:
     application = create_app(settings)
 
     # Use TestClient which properly handles lifespan
-    with TestClient(application) as test_client:
+    with TestClient(application):
         yield application
 
 
@@ -356,7 +357,7 @@ class TestConcurrentCrawls:
         job_ids = []
 
         # Start 3 jobs
-        for i in range(3):
+        for _i in range(3):
             resp = client.post("/crawl", json={
                 "url": "https://example.com",
                 "max_pages": 1,
