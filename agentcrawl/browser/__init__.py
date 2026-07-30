@@ -54,17 +54,7 @@ Quick Start:
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-logger = logging.getLogger("agentcrawl.browser")
-
-# ──────────────────────────────────────────────────────────────
-# Configuration (always available)
-# ──────────────────────────────────────────────────────────────
-
-# ──────────────────────────────────────────────────────────────
-# Actions (always available — no Playwright import needed)
-# ──────────────────────────────────────────────────────────────
 from agentcrawl.browser.actions import (
     Action,
     ActionExecutionError,
@@ -88,10 +78,6 @@ from agentcrawl.browser.config import (
     SessionConfig,
     ViewportConfig,
 )
-
-# ──────────────────────────────────────────────────────────────
-# Manager & Pool (require Playwright at runtime, not import time)
-# ──────────────────────────────────────────────────────────────
 from agentcrawl.browser.manager import (
     BrowserLaunchError,
     BrowserManager,
@@ -108,71 +94,111 @@ from agentcrawl.browser.pool import (
     PoolEventType,
     PoolStats,
 )
-
-# ──────────────────────────────────────────────────────────────
-# Proxy (always available)
-# ──────────────────────────────────────────────────────────────
 from agentcrawl.browser.proxy import (
     ProxyManager,
     ProxyProtocol,
     ProxyServer,
     ProxyStatus,
 )
-
-# ──────────────────────────────────────────────────────────────
-# Stealth (always available)
-# ──────────────────────────────────────────────────────────────
 from agentcrawl.browser.stealth import (
     BrowserFingerprint,
     StealthAdapter,
 )
+
+logger = logging.getLogger("agentcrawl.browser")
 
 # ──────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────
 
 __all__ = [
-    # Config
-    "BrowserConfig",
-    "BrowserPoolConfig",
-    "BrowserType",
-    "GeolocationConfig",
-    "ProxyConfig",
-    "ProxyRotationStrategy",
-    "RecordingConfig",
-    "ScreenshotFormat",
-    "SessionConfig",
-    "ViewportConfig",
-    # Manager
-    "BrowserManager",
-    "BrowserManagerError",
-    "BrowserLaunchError",
-    "BrowserNotStartedError",
-    "PageAcquisitionError",
-    "PoolExhaustedError",
     # Pool
     "AcquirePriority",
-    "BrowserPool",
-    "PageState",
-    "PoolEventType",
-    "PoolStats",
-    "PooledPage",
-    # Proxy
-    "ProxyManager",
-    "ProxyProtocol",
-    "ProxyServer",
-    "ProxyStatus",
-    # Stealth
-    "BrowserFingerprint",
-    "StealthAdapter",
     # Actions
     "Action",
+    "ActionExecutionError",
     "ActionResult",
     "ActionStatus",
     "ActionType",
-    "ActionExecutionError",
+    # Config
+    "BrowserConfig",
+    # Stealth
+    "BrowserFingerprint",
+    # Manager
+    "BrowserLaunchError",
+    "BrowserManager",
+    "BrowserManagerError",
+    "BrowserNotStartedError",
+    "BrowserPool",
+    "BrowserPoolConfig",
+    "BrowserType",
+    "GeolocationConfig",
+    "PageAcquisitionError",
     "PageActions",
     "PageActionsBuilder",
+    "PageState",
+    "PoolEventType",
+    "PoolExhaustedError",
+    "PoolStats",
+    "PooledPage",
+    "ProxyConfig",
+    # Proxy
+    "ProxyManager",
+    "ProxyProtocol",
+    "ProxyRotationStrategy",
+    "ProxyServer",
+    "ProxyStatus",
+    "RecordingConfig",
+    "ScreenshotFormat",
     "ScrollDirection",
+    "SessionConfig",
+    "StealthAdapter",
+    "ViewportConfig",
+    "WaitCondition",
+]
+
+__all__ = [
+    # Pool
+    "AcquirePriority",
+    # Actions
+    "Action",
+    "ActionExecutionError",
+    "ActionResult",
+    "ActionStatus",
+    "ActionType",
+    # Config
+    "BrowserConfig",
+    # Stealth
+    "BrowserFingerprint",
+    "BrowserLaunchError",
+    # Manager
+    "BrowserManager",
+    "BrowserManagerError",
+    "BrowserNotStartedError",
+    "BrowserPool",
+    "BrowserPoolConfig",
+    "BrowserType",
+    "GeolocationConfig",
+    "PageAcquisitionError",
+    "PageActions",
+    "PageActionsBuilder",
+    "PageState",
+    "PoolEventType",
+    "PoolExhaustedError",
+    "PoolStats",
+    "PooledPage",
+    "ProxyConfig",
+    # Proxy
+    "ProxyManager",
+    "ProxyProtocol",
+    "ProxyRotationStrategy",
+    "ProxyServer",
+    "ProxyStatus",
+    "RecordingConfig",
+    "ScreenshotFormat",
+    "ScrollDirection",
+    "SessionConfig",
+    "StealthAdapter",
+    "ViewportConfig",
     "WaitCondition",
 ]

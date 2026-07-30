@@ -55,7 +55,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import random
+import secrets
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -757,7 +757,6 @@ class ProxyManager:
         proxy.status = ProxyStatus.CHECKING
 
         try:
-            proxy_dict = proxy.to_playwright_dict()
             proxy_url = proxy.url
 
             async with httpx.AsyncClient(
@@ -894,7 +893,7 @@ class ProxyManager:
 
     def _select_random(self, candidates: list[ProxyServer]) -> ProxyServer:
         """Select a random proxy."""
-        return random.choice(candidates)
+        return secrets.choice(candidates)
 
     def _select_least_used(self, candidates: list[ProxyServer]) -> ProxyServer:
         """Select the proxy with the fewest total requests."""
@@ -905,11 +904,11 @@ class ProxyManager:
         weights = [p.weight for p in candidates]
         total = sum(weights)
         if total <= 0:
-            return random.choice(candidates)
+            return secrets.choice(candidates)
 
-        r = random.uniform(0, total)
+        r = secrets.SystemRandom().uniform(0, total)
         cumulative = 0.0
-        for proxy, weight in zip(candidates, weights):
+        for proxy, weight in zip(candidates, weights, strict=True):
             cumulative += weight
             if r <= cumulative:
                 return proxy
@@ -923,7 +922,7 @@ class ProxyManager:
         if with_latency:
             return min(with_latency, key=lambda p: p.latency_ms)
         # Fall back to random if no latency data
-        return random.choice(candidates)
+        return secrets.choice(candidates)
 
     # ──────────────────────────────────────────────────────────
     # Config Loading

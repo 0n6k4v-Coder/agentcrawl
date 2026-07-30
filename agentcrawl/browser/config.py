@@ -42,7 +42,13 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pydantic import SecretStr
+
+# Mask value for sensitive data
+MASK_VALUE = "********"
 
 # ══════════════════════════════════════════════════════════════
 # Enums
@@ -174,7 +180,7 @@ class ProxyConfig:
     """
     server: str | None = None
     username: str | None = None
-    password: str | None = None
+    password: SecretStr | None = None
     bypass: str | None = None
     rotation: ProxyRotationStrategy = ProxyRotationStrategy.NONE
     proxy_list: list[str] = field(default_factory=list)
@@ -192,7 +198,7 @@ class ProxyConfig:
         if self.username:
             result["username"] = self.username
         if self.password:
-            result["password"] = self.password
+            result["password"] = self.password.get_secret_value()
         if self.bypass:
             result["bypass"] = self.bypass
         return result
@@ -237,7 +243,7 @@ class ProxyConfig:
         if self.username:
             result["username"] = self.username
         if self.password:
-            result["password"] = "********"
+            result["password"] = MASK_VALUE
         if self.bypass:
             result["bypass"] = self.bypass
         result["rotation"] = self.rotation.value
@@ -516,11 +522,11 @@ class BrowserConfig:
         if isinstance(self.browser_type, str):
             try:
                 self.browser_type = BrowserType(self.browser_type.lower())
-            except ValueError:
+            except ValueError as err:
                 raise ValueError(
                     f"Unsupported browser type: '{self.browser_type}'. "
                     f"Available: {', '.join(b.value for b in BrowserType)}"
-                )
+                ) from err
 
         # Normalize viewport
         if isinstance(self.viewport, dict):

@@ -50,6 +50,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 import uuid
@@ -342,6 +343,9 @@ class BrowserPool:
         self._recycler_task: asyncio.Task | None = None
         self._pre_warm_task: asyncio.Task | None = None
 
+        # Drain notification event
+        self._drain_event = asyncio.Event()
+
     # ──────────────────────────────────────────────────────────
     # Properties
     # ──────────────────────────────────────────────────────────
@@ -453,13 +457,11 @@ class BrowserPool:
                 )
                 deadline = time.time() + drain_timeout
                 while self._active_pages and time.time() < deadline:
-                    await asyncio.sleep(0.5)
-
-                if self._active_pages:
-                    logger.warning(
-                        "Force-closing %d page(s) after drain timeout",
-                        len(self._active_pages),
-                    )
+                    with contextlib.suppress(asyncio.TimeoutError):
+                        await asyncio.wait_for(self._drain_event.wait(), timeout=0.5)
+                    if not self._active_pages:
+                        break
+                self._drain_event.clear()
 
             # Cancel waiting requests
             async with self._waiting_lock:
@@ -607,7 +609,7 @@ class BrowserPool:
                 "from": "wait",
             })
             return pooled
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as err:
             self._stats.acquire_timeouts += 1
             await self._emit_event(PoolEventType.POOL_EXHAUSTED, {
                 "timeout": timeout,
@@ -619,7 +621,7 @@ class BrowserPool:
                 f"Could not acquire page within {timeout}s. "
                 f"Pool: {self.active_pages}/{self.max_pages} active, "
                 f"{len(self._waiting_requests)} waiting."
-            )
+            ) from err
         finally:
             async with self._waiting_lock:
                 self._waiting_requests = [
@@ -651,6 +653,10 @@ class BrowserPool:
 
         # Remove from active set
         self._active_pages.pop(pooled.page_id, None)
+
+        # Notify drain waiters if active pages is now empty
+        if not self._active_pages:
+            self._drain_event.set()
 
         # Check if page should be recycled
         if self._should_recycle(pooled):
@@ -764,10 +770,8 @@ class BrowserPool:
                 self._semaphore.release()
         elif diff < 0:
             for _ in range(-diff):
-                try:
+                with contextlib.suppress(Exception):
                     self._semaphore._value = max(0, self._semaphore._value - 1)  # type: ignore[attr-defined]
-                except Exception:
-                    pass
 
         # Close excess idle pages if shrinking
         if max_pages < old_max:
@@ -806,7 +810,11 @@ class BrowserPool:
         if self._active_pages:
             deadline = time.time() + timeout
             while self._active_pages and time.time() < deadline:
-                await asyncio.sleep(0.5)
+                with contextlib.suppress(asyncio.TimeoutError):
+                    await asyncio.wait_for(self._drain_event.wait(), timeout=0.5)
+                if not self._active_pages:
+                    break
+            self._drain_event.clear()
 
         logger.info(
             "Pool drained. Active: %d, Total: %d",
@@ -888,26 +896,20 @@ class BrowserPool:
             raise RuntimeError("Page is closed")
 
         # Navigate to blank
-        try:
+        with contextlib.suppress(Exception):
             await page.goto("about:blank", timeout=5000)
-        except Exception:
-            pass
 
         # Clear storage
-        try:
+        with contextlib.suppress(Exception):
             await page.evaluate("""() => {
                 try { localStorage.clear(); } catch(e) {}
                 try { sessionStorage.clear(); } catch(e) {}
             }""")
-        except Exception:
-            pass
 
         # Clear cookies if not session-bound
         if not pooled.session_id and pooled.context:
-            try:
+            with contextlib.suppress(Exception):
                 await pooled.context.clear_cookies()
-            except Exception:
-                pass
 
     def _should_recycle(self, pooled: PooledPage) -> bool:
         """Determine if a page should be recycled after release."""
@@ -924,10 +926,7 @@ class BrowserPool:
             return True
 
         # Too many errors
-        if pooled.error_count >= 5:
-            return True
-
-        return False
+        return pooled.error_count >= 5
 
     def _get_recycle_reason(self, pooled: PooledPage) -> str:
         """Get a human-readable reason for recycling."""
@@ -1040,10 +1039,8 @@ class BrowserPool:
         for task in (self._health_check_task, self._recycler_task, self._pre_warm_task):
             if task and not task.done():
                 task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
 
         self._health_check_task = None
         self._recycler_task = None
@@ -1138,7 +1135,9 @@ class BrowserPool:
                 return pooled
             else:
                 # Unhealthy — schedule recycling (fire and forget)
-                asyncio.create_task(self._recycle_page(pooled))
+                task = asyncio.create_task(self._recycle_page(pooled))
+                self._background_tasks.add(task)
+                task.add_done_callback(self._background_tasks.discard)
 
         return None
 

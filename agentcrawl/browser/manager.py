@@ -49,6 +49,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -61,6 +62,49 @@ from agentcrawl.browser.config import (
     BrowserConfig,
     BrowserType,
 )
+
+
+# Helper functions for async file I/O using asyncio.to_thread
+async def _async_path_exists(path: str) -> bool:
+    """Check if path exists using asyncio.to_thread."""
+    return await asyncio.to_thread(os.path.exists, path)
+
+async def _async_path_join(*args: str) -> str:
+    """Join paths using asyncio.to_thread."""
+    return await asyncio.to_thread(os.path.join, *args)
+
+async def _async_makedirs(path: str, exist_ok: bool = True) -> None:
+    """Create directories using asyncio.to_thread."""
+    await asyncio.to_thread(os.makedirs, path, exist_ok=exist_ok)
+
+async def _async_remove(path: str) -> None:
+    """Remove file using asyncio.to_thread."""
+    await asyncio.to_thread(os.remove, path)
+
+async def _async_listdir(path: str) -> list[str]:
+    """List directory using asyncio.to_thread."""
+    return await asyncio.to_thread(os.listdir, path)
+
+async def _async_write_file(path: str, content: str, encoding: str = "utf-8") -> None:
+    """Write file using asyncio.to_thread."""
+    def _write():
+        with open(path, "w", encoding=encoding) as f:
+            f.write(content)
+    await asyncio.to_thread(_write)
+
+async def _async_read_json(path: str) -> Any:
+    """Read and parse JSON file using asyncio.to_thread."""
+    def _read():
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    return await asyncio.to_thread(_read)
+
+async def _async_write_json(path: str, data: Any, encoding: str = "utf-8") -> None:
+    """Write JSON file using asyncio.to_thread."""
+    def _write():
+        with open(path, "w", encoding=encoding) as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    await asyncio.to_thread(_write)
 
 logger = logging.getLogger("agentcrawl.browser.manager")
 
@@ -448,12 +492,12 @@ class BrowserManager:
                     return tracked.page
                 else:
                     await self._recycle_page(tracked)
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as err:
                 raise PoolExhaustedError(
                     f"No pages available (max={self._config.pool.max_pages}, "
                     f"active={self.active_page_count}). "
                     f"Consider increasing pool.max_pages or request timeout."
-                )
+                ) from err
 
         # Create a new page
         try:
@@ -571,8 +615,8 @@ class BrowserManager:
 
         # Session persistence — load storage state
         if session_id and self._config.session.persist:
-            storage_path = self._get_session_path(session_id)
-            if os.path.exists(storage_path):
+            storage_path = await self._get_session_path(session_id)
+            if await _async_path_exists(storage_path):
                 context_opts["storageState"] = storage_path
                 logger.debug("Restored session state from %s", storage_path)
 
@@ -620,7 +664,7 @@ class BrowserManager:
                 if not tracked_page.page.is_closed():
                     await tracked_page.page.close()
             except Exception:
-                pass
+                logger.debug("Ignored exception", exc_info=True)
             self._pages.pop(tracked_page.page_id, None)
 
         # Persist session if needed
@@ -714,7 +758,7 @@ class BrowserManager:
         try:
             await page.goto("about:blank", timeout=5000)
         except Exception:
-            pass
+            logger.debug("Ignored exception", exc_info=True)
 
         # Clear cookies if not session-bound
         if not tracked.session_id:
@@ -722,7 +766,7 @@ class BrowserManager:
                 context = tracked.context
                 await context.clear_cookies()
             except Exception:
-                pass
+                logger.debug("Ignored exception", exc_info=True)
 
         # Clear localStorage and sessionStorage
         try:
@@ -731,7 +775,7 @@ class BrowserManager:
                 try { sessionStorage.clear(); } catch(e) {}
             }""")
         except Exception:
-            pass
+            logger.debug("Ignored exception", exc_info=True)
 
     def _is_page_healthy(self, tracked: _TrackedPage) -> bool:
         """Check if a page is still usable."""
@@ -739,10 +783,7 @@ class BrowserManager:
             return False
 
         # Check TTL
-        if tracked.age_seconds > self._config.pool.page_ttl:
-            return False
-
-        return True
+        return not tracked.age_seconds > self._config.pool.page_ttl
 
     def _should_recycle(self, tracked: _TrackedPage) -> bool:
         """Determine if a page should be recycled after release."""
@@ -755,10 +796,7 @@ class BrowserManager:
             return True
 
         # Page is closed
-        if tracked.page.is_closed():
-            return True
-
-        return False
+        return bool(tracked.page.is_closed())
 
     # ──────────────────────────────────────────────────────────
     # Pool Management
@@ -864,8 +902,8 @@ class BrowserManager:
             return {"server": proxy_url}
 
         if strategy.value == "random":
-            import random
-            proxy_url = random.choice(proxy_config.proxy_list)
+            import secrets
+            proxy_url = secrets.choice(proxy_config.proxy_list)
             return {"server": proxy_url}
 
         if strategy.value == "least_used":
@@ -882,22 +920,21 @@ class BrowserManager:
     # Session Persistence
     # ──────────────────────────────────────────────────────────
 
-    def _get_session_path(self, session_id: str) -> str:
+    async def _get_session_path(self, session_id: str) -> str:
         """Get the file path for a session's storage state."""
         storage_dir = self._config.session.storage_dir
-        os.makedirs(storage_dir, exist_ok=True)
-        return os.path.join(storage_dir, f"{session_id}.json")
+        # Note: we don't create dir here as it's sync; caller should ensure it exists
+        return await _async_path_join(storage_dir, f"{session_id}.json")
 
     async def _save_session(self, tracked_ctx: _TrackedContext) -> None:
         """Save a context's storage state to disk."""
         if not tracked_ctx.session_id:
             return
 
-        path = self._get_session_path(tracked_ctx.session_id)
+        path = await self._get_session_path(tracked_ctx.session_id)
         try:
             storage_state = await tracked_ctx.context.storage_state()
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(storage_state, f, ensure_ascii=False, indent=2)
+            await _async_write_json(path, storage_state)
             logger.debug("Saved session state: %s", path)
         except Exception as e:
             logger.warning("Failed to save session %s: %s", tracked_ctx.session_id, e)
@@ -913,9 +950,9 @@ class BrowserManager:
 
     async def clear_session(self, session_id: str) -> None:
         """Delete a persisted session."""
-        path = self._get_session_path(session_id)
-        if os.path.exists(path):
-            os.remove(path)
+        path = await self._get_session_path(session_id)
+        if await _async_path_exists(path):
+            await _async_remove(path)
             logger.info("Cleared session: %s", session_id)
 
         # Close active context for this session
@@ -926,11 +963,12 @@ class BrowserManager:
     async def list_sessions(self) -> list[str]:
         """List all persisted session IDs."""
         storage_dir = self._config.session.storage_dir
-        if not os.path.exists(storage_dir):
+        if not await _async_path_exists(storage_dir):
             return []
+        files = await _async_listdir(storage_dir)
         return [
             f.replace(".json", "")
-            for f in os.listdir(storage_dir)
+            for f in files
             if f.endswith(".json")
         ]
 
@@ -954,10 +992,8 @@ class BrowserManager:
         for task in (self._health_check_task, self._cleanup_task):
             if task and not task.done():
                 task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
         self._health_check_task = None
         self._cleanup_task = None
 
@@ -1008,10 +1044,8 @@ class BrowserManager:
                 # Clean up empty contexts
                 for tracked_ctx in list(self._contexts.values()):
                     if not tracked_ctx.pages:
-                        try:
+                        with contextlib.suppress(Exception):
                             await tracked_ctx.context.close()
-                        except Exception:
-                            pass
                         self._contexts.pop(tracked_ctx.context_id, None)
                         cleaned += 1
 

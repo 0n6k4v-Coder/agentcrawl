@@ -46,7 +46,10 @@ import json
 import logging
 import random
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from playwright.async_api import Browser, BrowserContext, Page
 
 from agentcrawl.browser.config import BrowserConfig
 
@@ -166,7 +169,7 @@ class BrowserFingerprint:
         Returns:
             BrowserFingerprint with randomized values.
         """
-        rng = random.Random(seed)
+        rng = random.Random(seed)  # noqa: S311 - deterministic seed for fingerprint, not crypto
 
         # OS selection
         if os_name is None:
