@@ -145,14 +145,11 @@ async def verify_api_key(
     expected_key = settings.api_key
 
     # Check Authorization header
-    if authorization:
-        if authorization.startswith("Bearer "):
-            token = authorization[7:]
-            if token == expected_key:
-                return token
+    if authorization and authorization.startswith("Bearer ") and authorization[7:] == expected_key:
+        return authorization[7:]
 
     # Check X-API-Key header
-    if x_api_key and x_api_key == expected_key:
+    if x_api_key == expected_key:
         return x_api_key
 
     # Check query parameter
@@ -252,7 +249,7 @@ async def rate_limiter(
     client_id = api_key or request.client.host if request.client else "unknown"
 
     # Check rate limit
-    allowed, remaining, reset_seconds = _rate_store.check(client_id)
+    allowed, _remaining, reset_seconds = _rate_store.check(client_id)
 
     if not allowed:
         raise HTTPException(
@@ -410,8 +407,8 @@ def get_engine_optional() -> Any | None:
         if engine and engine.is_started:
             return engine
     except Exception:
-        pass
-    return None
+        logger.debug("Error getting engine")
+        return None
 
 
 OptionalEngineDep = Annotated[Any | None, Depends(get_engine_optional)]

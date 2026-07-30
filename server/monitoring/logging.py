@@ -37,11 +37,14 @@ import sys
 import time
 import uuid
 from contextvars import ContextVar
-from typing import Any
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.requests import Request
-from starlette.responses import Response
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
+    from starlette.responses import Response
 
 logger = logging.getLogger("agentcrawl.server")
 
@@ -188,13 +191,13 @@ class ServerColoredFormatter(logging.Formatter):
         10:30:00 INFO  [server] Message [req_abc123]
     """
 
-    COLORS: dict[str, str] = {
+    COLORS: MappingProxyType[str, str] = MappingProxyType({
         "DEBUG": "\033[36m",
         "INFO": "\033[32m",
         "WARNING": "\033[33m",
         "ERROR": "\033[31m",
         "CRITICAL": "\033[35m",
-    }
+    })
     RESET = "\033[0m"
     DIM = "\033[2m"
 
@@ -345,7 +348,7 @@ class SensitiveDataFilter(logging.Filter):
 
     import re
 
-    PATTERNS: list[tuple[Any, str]] = [
+    PATTERNS: tuple[tuple[Any, str], ...] = (
         # API keys
         (re.compile(r"(sk-)[a-zA-Z0-9]{20,}"), r"\1***MASKED***"),
         (re.compile(r"(agc_live_)[a-zA-Z0-9_-]{20,}"), r"\1***MASKED***"),
@@ -356,7 +359,7 @@ class SensitiveDataFilter(logging.Filter):
         (re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+"), "***EMAIL***"),
         # Passwords in URLs
         (re.compile(r"(://[^:]+:)[^@]+(@)"), r"\1***\2"),
-    ]
+    )
 
     def filter(self, record: logging.LogRecord) -> bool:
         if isinstance(record.msg, str):

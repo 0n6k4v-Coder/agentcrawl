@@ -297,14 +297,12 @@ def _filter_urls(
 
     for url in urls:
         # Include check
-        if include_patterns:
-            if not any(url_matches_pattern(url, p) for p in include_patterns):
-                continue
+        if include_patterns and not any(url_matches_pattern(url, p) for p in include_patterns):
+            continue
 
         # Exclude check
-        if exclude_patterns:
-            if any(url_matches_pattern(url, p) for p in exclude_patterns):
-                continue
+        if exclude_patterns and any(url_matches_pattern(url, p) for p in exclude_patterns):
+            continue
 
         result.append(url)
 
