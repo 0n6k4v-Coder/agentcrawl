@@ -48,16 +48,19 @@ import logging
 import logging.handlers
 import sys
 import time
-from collections.abc import Callable
 from contextvars import ContextVar
-from typing import Any
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # ══════════════════════════════════════════════════════════════
 # Context Variables
 # ══════════════════════════════════════════════════════════════
 
 # Thread/task-local context for structured logging
-_log_context: ContextVar[dict[str, Any]] = ContextVar("_log_context", default={})
+_log_context: ContextVar[dict[str, Any] | None] = ContextVar("_log_context", default=None)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -180,13 +183,13 @@ class ColoredFormatter(logging.Formatter):
     """
 
     # ANSI color codes
-    COLORS: dict[str, str] = {
+    COLORS: MappingProxyType[str, str] = MappingProxyType({
         "DEBUG": "\033[36m",     # Cyan
         "INFO": "\033[32m",      # Green
         "WARNING": "\033[33m",   # Yellow
         "ERROR": "\033[31m",     # Red
         "CRITICAL": "\033[35m",  # Magenta
-    }
+    })
     RESET = "\033[0m"
     BOLD = "\033[1m"
     DIM = "\033[2m"

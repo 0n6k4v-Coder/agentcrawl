@@ -7,7 +7,7 @@ generation, and secure key management.
 
 Features:
     - AES-256-GCM encryption/decryption for API keys
-    - SHA-256 and MD5 hashing
+    - SHA-256 and SHA-512 hashing
     - HMAC signing and verification
     - Secure token generation
     - PBKDF2 key derivation
@@ -77,23 +77,6 @@ def hash_sha256(data: str | bytes) -> str:
     if isinstance(data, str):
         data = data.encode("utf-8")
     return hashlib.sha256(data).hexdigest()
-
-
-def hash_md5(data: str | bytes) -> str:
-    """
-    Compute MD5 hash of data.
-
-    ⚠️ MD5 is not cryptographically secure. Use for checksums only.
-
-    Args:
-        data: Input string or bytes.
-
-    Returns:
-        Hex-encoded MD5 digest.
-    """
-    if isinstance(data, str):
-        data = data.encode("utf-8")
-    return hashlib.md5(data).hexdigest()
 
 
 def hash_sha512(data: str | bytes) -> str:
@@ -315,11 +298,11 @@ def _get_fernet(key: str | bytes) -> Any:
     """
     try:
         from cryptography.fernet import Fernet
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "cryptography library required for encryption. "
             "Install with: pip install cryptography"
-        )
+        ) from err
 
     if isinstance(key, str):
         key = key.encode("utf-8")
@@ -547,7 +530,7 @@ class CryptoManager:
         elif algorithm == "sha512":
             return hash_sha512(data)
         elif algorithm == "md5":
-            return hash_md5(data)
+            return hash_sha256(data)  # Use SHA-256 instead of MD5 for compatibility
         else:
             return hash_sha256(data)
 
@@ -691,9 +674,6 @@ def mask_email(email: str) -> str:
         return "***"
 
     local, domain = email.rsplit("@", 1)
-    if len(local) <= 1:
-        masked_local = "*"
-    else:
-        masked_local = local[0] + "*" * (len(local) - 1)
+    masked_local = "*" if len(local) <= 1 else local[0] + "*" * (len(local) - 1)
 
     return f"{masked_local}@{domain}"

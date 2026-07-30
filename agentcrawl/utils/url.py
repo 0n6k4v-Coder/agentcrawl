@@ -48,6 +48,7 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import fnmatch
 import re
 from urllib.parse import (
@@ -189,10 +190,7 @@ def _normalize_query(
     if not params:
         return ""
 
-    if sort_params:
-        sorted_params = sorted(params.items())
-    else:
-        sorted_params = list(params.items())
+    sorted_params = sorted(params.items()) if sort_params else list(params.items())
 
     return urlencode(sorted_params, doseq=True)
 
@@ -241,10 +239,7 @@ def is_valid_url(url: str, require_http: bool = True) -> bool:
 
     # Hostname must have at least one dot (or be localhost)
     hostname = parsed.hostname
-    if "." not in hostname and hostname not in ("localhost", "127.0.0.1"):
-        return False
-
-    return True
+    return not ("." not in hostname and hostname not in ("localhost", "127.0.0.1"))
 
 
 def is_http_url(url: str) -> bool:
@@ -543,12 +538,10 @@ def url_matches_pattern(url: str, pattern: str) -> bool:
         return True
 
     # Try matching against path only
-    try:
+    with contextlib.suppress(Exception):
         path = urlparse(url).path
         if fnmatch.fnmatch(path, pattern):
             return True
-    except Exception:
-        pass
 
     return False
 
@@ -590,14 +583,12 @@ def filter_urls(
 
     for url in urls:
         # Include check
-        if include_patterns:
-            if not any(url_matches_pattern(url, p) for p in include_patterns):
+        if include_patterns and not any(url_matches_pattern(url, p) for p in include_patterns):
                 continue
 
         # Exclude check
-        if exclude_patterns:
-            if any(url_matches_pattern(url, p) for p in exclude_patterns):
-                continue
+        if exclude_patterns and any(url_matches_pattern(url, p) for p in exclude_patterns):
+            continue
 
         result.append(url)
 

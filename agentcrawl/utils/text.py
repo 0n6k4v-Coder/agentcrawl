@@ -58,6 +58,7 @@ import math
 import re
 import unicodedata
 from collections import Counter
+from dataclasses import dataclass
 from typing import Any
 
 # ══════════════════════════════════════════════════════════════
@@ -814,7 +815,7 @@ def analyze_text(text: str) -> TextStats:
     avg_sentence_length = word_count / max(sentence_count, 1)
 
     # Unique words
-    unique = set(w.lower().strip(".,!?;:") for w in words)
+    unique = {w.lower().strip(".,!?;:") for w in words}
     unique_words = len(unique)
 
     # Lexical diversity

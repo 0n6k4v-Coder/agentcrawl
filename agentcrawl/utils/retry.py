@@ -54,12 +54,14 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
-import random
+import secrets
 import time
-from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 logger = logging.getLogger("agentcrawl.utils.retry")
 
@@ -119,7 +121,7 @@ class RetryConfig:
         # Add jitter
         if self.jitter:
             jitter_amount = delay * self.jitter_range
-            delay += random.uniform(-jitter_amount, jitter_amount)
+            delay += secrets.SystemRandom().uniform(-jitter_amount, jitter_amount)
             delay = max(0, delay)
 
         return delay
@@ -135,9 +137,8 @@ class RetryConfig:
             True if the operation should be retried.
         """
         # Check retry_on types
-        if self.retry_on:
-            if not isinstance(exception, self.retry_on):
-                return False
+        if self.retry_on and not isinstance(exception, self.retry_on):
+            return False
 
         # Check custom condition
         if self.retry_if is not None:
