@@ -220,7 +220,7 @@ class AdvancedURLScorer(URLScorer):
     """
 
     # Content value keywords
-    CONTENT_KEYWORDS: list[str] = [
+    CONTENT_KEYWORDS: tuple[str, ...] = (
         "guide", "tutorial", "docs", "documentation", "reference",
         "api", "manual", "help", "faq", "wiki", "blog", "post",
         "article", "news", "learn", "how-to", "howto", "getting-started",
@@ -229,10 +229,10 @@ class AdvancedURLScorer(URLScorer):
         "demo", "walkthrough", "primer", "handbook", "spec",
         "specification", "changelog", "release", "migration",
         "troubleshooting", "debug", "best-practices", "patterns",
-    ]
+    )
 
     # Noise keywords
-    NOISE_KEYWORDS: list[str] = [
+    NOISE_KEYWORDS: tuple[str, ...] = (
         "login", "signin", "signup", "register", "auth", "oauth",
         "cart", "checkout", "payment", "billing", "pricing", "subscribe",
         "search", "filter", "sort", "tag", "category", "archive",
@@ -241,20 +241,20 @@ class AdvancedURLScorer(URLScorer):
         "careers", "jobs", "press", "media", "partners",
         "admin", "dashboard", "settings", "profile", "account",
         "wp-admin", "wp-login", "wp-content", "wp-includes",
-    ]
+    )
 
     # Valuable file extensions
-    CONTENT_EXTENSIONS: set[str] = {
+    CONTENT_EXTENSIONS: frozenset[str] = frozenset({
         ".html", ".htm", ".xhtml", ".md", ".rst",
-    }
+    })
 
     # Noise file extensions
-    NOISE_EXTENSIONS: set[str] = {
+    NOISE_EXTENSIONS: frozenset[str] = frozenset({
         ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
         ".ico", ".woff", ".woff2", ".ttf", ".eot", ".pdf",
         ".zip", ".tar", ".gz", ".mp3", ".mp4", ".avi",
         ".xml", ".json", ".csv", ".txt", ".rss",
-    }
+    })
 
     def __init__(
         self,

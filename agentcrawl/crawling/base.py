@@ -41,14 +41,17 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import fnmatch
 import logging
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger("agentcrawl.crawling")
 
@@ -245,12 +248,12 @@ class URLFilter:
         self._same_domain = same_domain
         self._base_domain = base_domain.replace("www.", "")
         self._max_depth = max_depth
-        self._exclude_extensions = set(
+        self._exclude_extensions = {
             ext.lower() for ext in (exclude_extensions or [])
-        )
-        self._include_extensions = set(
+        }
+        self._include_extensions = {
             ext.lower() for ext in (include_extensions or [])
-        )
+        }
         self._exclude_query_params = set(exclude_query_params or [])
         self._allow_fragments = allow_fragments
 
@@ -259,10 +262,8 @@ class URLFilter:
 
     def set_base_domain(self, url: str) -> None:
         """Set the base domain from a URL."""
-        try:
+        with contextlib.suppress(Exception):
             self._base_domain = urlparse(url).netloc.replace("www.", "")
-        except Exception:
-            pass
 
     def is_allowed(self, url: str, depth: int = 0) -> bool:
         """
@@ -305,8 +306,7 @@ class URLFilter:
                 if path_lower.endswith(ext):
                     return False
 
-        if self._include_extensions:
-            if not any(path_lower.endswith(ext) for ext in self._include_extensions):
+        if self._include_extensions and not any(path_lower.endswith(ext) for ext in self._include_extensions):
                 return False
 
         # Include patterns
@@ -421,22 +421,22 @@ class URLScorer:
         >>> print(f"Score: {score:.2f}")
     """
 
-    DEFAULT_CONTENT_KEYWORDS: list[str] = [
+    DEFAULT_CONTENT_KEYWORDS: tuple[str, ...] = (
         "guide", "tutorial", "docs", "documentation", "reference",
         "api", "manual", "help", "faq", "wiki", "blog", "post",
         "article", "news", "learn", "how-to", "howto", "getting-started",
         "quickstart", "overview", "introduction", "setup", "install",
         "configuration", "examples", "sample", "demo",
-    ]
+    )
 
-    DEFAULT_NOISE_KEYWORDS: list[str] = [
+    DEFAULT_NOISE_KEYWORDS: tuple[str, ...] = (
         "login", "signin", "signup", "register", "auth",
         "cart", "checkout", "payment", "billing", "pricing",
         "search", "filter", "sort", "tag", "category",
         "page", "feed", "rss", "atom", "sitemap",
         "about", "contact", "privacy", "terms", "legal",
         "careers", "jobs", "press", "media",
-    ]
+    )
 
     def __init__(
         self,
@@ -445,12 +445,12 @@ class URLScorer:
         depth_penalty: float = 0.05,
         link_text_weight: float = 0.2,
     ):
-        self._content_keywords = set(
+        self._content_keywords = {
             kw.lower() for kw in (content_keywords or self.DEFAULT_CONTENT_KEYWORDS)
-        )
-        self._noise_keywords = set(
+        }
+        self._noise_keywords = {
             kw.lower() for kw in (noise_keywords or self.DEFAULT_NOISE_KEYWORDS)
-        )
+        }
         self._depth_penalty = depth_penalty
         self._link_text_weight = link_text_weight
 
@@ -705,7 +705,7 @@ class CrawlStrategy(ABC):
             await self._check_robots(url, engine)
 
         # Run strategy-specific discovery
-        discovered = await self._discover_urls(url, engine)
+        await self._discover_urls(url, engine)
 
         # Update progress
         self._progress.pages_discovered = len(self._discovered)

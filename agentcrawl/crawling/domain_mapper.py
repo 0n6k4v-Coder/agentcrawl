@@ -48,11 +48,12 @@ import asyncio
 import logging
 import re
 import time
-import xml.etree.ElementTree as ET
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urljoin, urlparse
+
+import defusedxml.ElementTree as DefusedElementTree
 
 logger = logging.getLogger("agentcrawl.crawling.domain_mapper")
 
@@ -153,7 +154,7 @@ class DomainMapper:
     """
 
     # Common sitemap locations
-    SITEMAP_PATHS: list[str] = [
+    SITEMAP_PATHS: tuple[str, ...] = (
         "/sitemap.xml",
         "/sitemap_index.xml",
         "/sitemapindex.xml",
@@ -161,15 +162,15 @@ class DomainMapper:
         "/wp-sitemap.xml",
         "/post-sitemap.xml",
         "/page-sitemap.xml",
-    ]
+    )
 
     # File extensions to exclude by default
-    DEFAULT_EXCLUDE_EXTENSIONS: set[str] = {
+    DEFAULT_EXCLUDE_EXTENSIONS: frozenset[str] = frozenset({
         ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
         ".ico", ".woff", ".woff2", ".ttf", ".eot", ".pdf",
         ".zip", ".tar", ".gz", ".mp3", ".mp4", ".avi", ".mov",
         ".xml", ".json", ".txt", ".csv", ".rss", ".atom",
-    }
+    })
 
     def __init__(
         self,
@@ -194,9 +195,9 @@ class DomainMapper:
         self._crawl_max_pages = crawl_max_pages
         self._include_patterns = include_patterns or []
         self._exclude_patterns = exclude_patterns or []
-        self._exclude_extensions = set(
+        self._exclude_extensions = {
             ext.lower() for ext in (exclude_extensions or self.DEFAULT_EXCLUDE_EXTENSIONS)
-        )
+        }
         self._same_domain = same_domain
         self._max_concurrent = max_concurrent
         self._timeout = timeout
@@ -358,8 +359,8 @@ class DomainMapper:
                 r'<\?xml[^?]*\?>', '', xml_content
             ).strip()
 
-            root = ET.fromstring(xml_content)
-        except ET.ParseError as e:
+            root = DefusedElementTree.fromstring(xml_content)
+        except DefusedElementTree.ParseError as e:
             logger.debug("Sitemap XML parse error: %s", e)
             self._errors.append(f"Sitemap parse error: {e}")
             return
@@ -613,11 +614,7 @@ class DomainMapper:
 
         # Extension check
         path_lower = parsed.path.lower()
-        for ext in self._exclude_extensions:
-            if path_lower.endswith(ext):
-                return False
-
-        return True
+        return all(not path_lower.endswith(ext) for ext in self._exclude_extensions)
 
     def _filter_urls(self, urls: list[str]) -> list[str]:
         """Apply include/exclude patterns to a list of URLs."""
@@ -628,24 +625,23 @@ class DomainMapper:
         for url in urls:
             try:
                 path = urlparse(url).path
-            except Exception:
+            except Exception as e:
+                logger.debug("Failed to parse URL %s: %s", url, e)
                 continue
 
             # Include patterns
-            if self._include_patterns:
-                if not any(
-                    fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
-                    for p in self._include_patterns
-                ):
-                    continue
+            if self._include_patterns and not any(
+                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
+                for p in self._include_patterns
+            ):
+                continue
 
             # Exclude patterns
-            if self._exclude_patterns:
-                if any(
-                    fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
-                    for p in self._exclude_patterns
-                ):
-                    continue
+            if self._exclude_patterns and any(
+                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
+                for p in self._exclude_patterns
+            ):
+                continue
 
             filtered.append(url)
 

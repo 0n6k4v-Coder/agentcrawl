@@ -53,6 +53,7 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from dataclasses import dataclass
@@ -104,7 +105,7 @@ class URLNormalizer:
     """
 
     # Tracking parameters to remove by default
-    TRACKING_PARAMS: set[str] = {
+    TRACKING_PARAMS: frozenset[str] = frozenset({
         "utm_source", "utm_medium", "utm_campaign", "utm_term",
         "utm_content", "utm_id", "utm_cid", "utm_reader",
         "fbclid", "gclid", "gclsrc", "dclid", "msclkid",
@@ -112,7 +113,7 @@ class URLNormalizer:
         "ref", "referrer", "source",
         "_ga", "_gid", "_gl",
         "igshid", "s_kwcid",
-    }
+    })
 
     def __init__(
         self,
@@ -166,8 +167,7 @@ class URLNormalizer:
 
         # Port
         port = parsed.port
-        if self._remove_default_port:
-            if (scheme == "http" and port == 80) or (scheme == "https" and port == 443):
+        if self._remove_default_port and ((scheme == "http" and port == 80) or (scheme == "https" and port == 443)):
                 port = None
 
         # Reconstruct netloc
@@ -221,10 +221,7 @@ class URLNormalizer:
             return ""
 
         # Sort params
-        if self._sort_query_params:
-            sorted_params = sorted(params.items())
-        else:
-            sorted_params = list(params.items())
+        sorted_params = sorted(params.items()) if self._sort_query_params else list(params.items())
 
         return urlencode(sorted_params, doseq=True)
 
@@ -408,10 +405,8 @@ class RobotsTxtParser:
                     self._sitemaps.append(value)
 
             elif key == "crawl-delay" and in_matching_group:
-                try:
+                with contextlib.suppress(ValueError):
                     self._crawl_delay = float(value)
-                except ValueError:
-                    pass
 
         self._loaded = True
 
@@ -509,7 +504,7 @@ class URLValidator:
         False
     """
 
-    DEFAULT_BLOCKED_EXTENSIONS: set[str] = {
+    DEFAULT_BLOCKED_EXTENSIONS: frozenset[str] = frozenset({
         ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
         ".ico", ".woff", ".woff2", ".ttf", ".eot", ".otf",
         ".pdf", ".zip", ".tar", ".gz", ".bz2", ".7z", ".rar",
@@ -517,7 +512,7 @@ class URLValidator:
         ".exe", ".dmg", ".iso", ".bin", ".apk",
         ".xml", ".json", ".csv", ".txt", ".rss", ".atom",
         ".map", ".webmanifest",
-    }
+    })
 
     def __init__(
         self,
@@ -572,14 +567,12 @@ class URLValidator:
         hostname = parsed.hostname.lower()
 
         # Localhost
-        if not self._allow_localhost:
-            if hostname in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
+        if not self._allow_localhost and hostname in ("localhost", "127.0.0.1", "::1"):
                 return False, "Localhost not allowed"
 
         # IP addresses
-        if not self._allow_ip_addresses:
-            if self._ip_pattern.match(hostname):
-                return False, "IP address not allowed"
+        if not self._allow_ip_addresses and self._ip_pattern.match(hostname):
+            return False, "IP address not allowed"
 
         # Blocked domains
         if hostname in self._blocked_domains:
@@ -718,23 +711,19 @@ class AdvancedURLFilter(URLFilter):
             return False
 
         # Regex include
-        if self._include_regex:
-            if not any(p.search(url) for p in self._include_regex):
-                return False
+        if self._include_regex and not any(p.search(url) for p in self._include_regex):
+            return False
 
         # Regex exclude
-        if self._exclude_regex:
-            if any(p.search(url) for p in self._exclude_regex):
-                return False
+        if self._exclude_regex and any(p.search(url) for p in self._exclude_regex):
+            return False
 
         # Robots.txt
         if self._robots and self._robots.is_loaded:
-            try:
+            with contextlib.suppress(Exception):
                 path = urlparse(url).path
                 if not self._robots.is_allowed(path):
                     return False
-            except Exception:
-                pass
 
         return True
 

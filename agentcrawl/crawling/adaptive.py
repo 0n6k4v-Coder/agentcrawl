@@ -51,6 +51,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import re
 import time
@@ -194,7 +195,7 @@ class URLPatternAnalyzer:
     """
 
     # Patterns that indicate navigation / non-content
-    NAV_PATTERNS: list[re.Pattern[str]] = [
+    NAV_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.compile(r"/(tag|category|author|archive|page)/", re.I),
         re.compile(r"/(login|signup|register|signin|auth)/", re.I),
         re.compile(r"/(cart|checkout|payment|billing)/", re.I),
@@ -203,15 +204,15 @@ class URLPatternAnalyzer:
         re.compile(r"\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|ttf|pdf|zip)$", re.I),
         re.compile(r"[?&](page|p|pg|offset|start)=\d+", re.I),
         re.compile(r"/page/\d+", re.I),
-    ]
+    )
 
     # Patterns that indicate content
-    CONTENT_PATTERNS: list[re.Pattern[str]] = [
+    CONTENT_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.compile(r"/(blog|post|article|news|tutorial|guide|docs|documentation)/", re.I),
         re.compile(r"/(api|reference|manual|help|faq|wiki)/", re.I),
         re.compile(r"/\d{4}/\d{2}/", re.I),  # /2024/01/ date-based
         re.compile(r"/[a-z0-9-]{10,}/?$", re.I),  # /long-slug-title/
-    ]
+    )
 
     def analyze(self, urls: list[str], base_url: str = "") -> list[URLPattern]:
         """
@@ -227,12 +228,9 @@ class URLPatternAnalyzer:
         if not urls:
             return []
 
-        base_domain = ""
         if base_url:
-            try:
-                base_domain = urlparse(base_url).netloc
-            except Exception:
-                pass
+            with contextlib.suppress(Exception):
+                _ = urlparse(base_url).netloc  # Validate URL
 
         # Group URLs by path template
         template_groups: dict[str, list[str]] = defaultdict(list)
@@ -387,10 +385,7 @@ class URLPatternAnalyzer:
 
     def _is_content(self, template: str, urls: list[str]) -> bool:
         """Check if a pattern looks like content."""
-        for pattern in self.CONTENT_PATTERNS:
-            if pattern.search(template):
-                return True
-        return False
+        return any(pattern.search(template) for pattern in self.CONTENT_PATTERNS)
 
     @staticmethod
     def _score_pattern(
@@ -870,7 +865,7 @@ class AdaptiveCrawler:
         pattern_map: dict[str, URLPattern] = {}
         for p in self._patterns:
             try:
-                regex = re.compile(p.pattern, re.I)
+                re.compile(p.pattern, re.I)
                 pattern_map[p.pattern] = p
             except re.error:
                 continue
@@ -881,8 +876,7 @@ class AdaptiveCrawler:
 
             for p in self._patterns:
                 try:
-                    if re.search(p.pattern, candidate.url, re.I):
-                        if p.score > best_score:
+                    if re.search(p.pattern, candidate.url, re.I) and p.score > best_score:
                             best_score = p.score
                             best_pattern = p.template
                 except re.error:

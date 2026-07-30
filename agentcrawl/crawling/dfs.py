@@ -259,7 +259,7 @@ class DFSCrawler(CrawlStrategy):
 
                 # Track deepest path
                 if len(entry.parent_path) + 1 > len(self._deepest_path):
-                    self._deepest_path = entry.parent_path + [entry.url]
+                    self._deepest_path = [*entry.parent_path, entry.url]
 
             # Rate limiting
             if self._config.delay_between_requests > 0:
@@ -330,7 +330,7 @@ class DFSCrawler(CrawlStrategy):
                             score=score,
                             source_url=url,
                             link_text=disc_url.link_text,
-                            parent_path=entry.parent_path + [url],
+                            parent_path=[*entry.parent_path, url],
                         )
             else:
                 # Leaf node — backtrack
@@ -411,7 +411,7 @@ class DFSCrawler(CrawlStrategy):
 
     def _update_path(self, entry: _DFSEntry) -> None:
         """Update the current exploration path."""
-        self._current_path = entry.parent_path + [entry.url]
+        self._current_path = [*entry.parent_path, entry.url]
 
     # ──────────────────────────────────────────────────────────
     # Reset

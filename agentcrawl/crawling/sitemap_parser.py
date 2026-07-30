@@ -38,14 +38,16 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import gzip
 import logging
 import re
 import time
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlparse
+
+import defusedxml.ElementTree as DefusedElementTree
 
 logger = logging.getLogger("agentcrawl.crawling.sitemap")
 
@@ -193,7 +195,7 @@ class SitemapParser:
     """
 
     # Common sitemap locations to try during auto-discovery
-    COMMON_PATHS: list[str] = [
+    COMMON_PATHS: tuple[str, ...] = (
         "/sitemap.xml",
         "/sitemap_index.xml",
         "/sitemapindex.xml",
@@ -209,7 +211,7 @@ class SitemapParser:
         "/image-sitemap.xml",
         "/sitemap1.xml",
         "/sitemap.xml.gz",
-    ]
+    )
 
     # XML namespaces
     NS_SITEMAP = "http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -393,18 +395,17 @@ class SitemapParser:
                 return
 
             try:
-                async with semaphore:
-                    async with httpx.AsyncClient(
-                        timeout=self._timeout,
-                        follow_redirects=True,
-                    ) as client:
+                async with semaphore, httpx.AsyncClient(
+                    timeout=self._timeout,
+                    follow_redirects=True,
+                ) as client:
                         resp = await client.head(url)
                         if resp.status_code == 200:
                             content_type = resp.headers.get("content-type", "")
                             if "xml" in content_type or "gzip" in content_type or path.endswith(".xml") or path.endswith(".xml.gz"):
                                 await self._parse_sitemap_url(url, depth=0)
             except Exception:
-                pass
+                logger.debug("Error checking sitemap path")
 
         tasks = [_try_path(path) for path in self.COMMON_PATHS]
         await asyncio.gather(*tasks, return_exceptions=True)
@@ -508,20 +509,16 @@ class SitemapParser:
 
                 # Check for gzip
                 content_encoding = resp.headers.get("content-encoding", "")
-                content_type = resp.headers.get("content-type", "")
+                resp.headers.get("content-type", "")
 
                 if "gzip" in content_encoding or url.endswith(".gz"):
-                    try:
+                    with contextlib.suppress(Exception):
                         content = gzip.decompress(content)
-                    except Exception:
-                        pass
 
                 # Also try gzip decompression if content starts with gzip magic
                 if content[:2] == b"\x1f\x8b":
-                    try:
+                    with contextlib.suppress(Exception):
                         content = gzip.decompress(content)
-                    except Exception:
-                        pass
 
                 return content.decode("utf-8", errors="replace")
 
@@ -550,9 +547,9 @@ class SitemapParser:
         xml_content = xml_content.lstrip("\ufeff")
 
         try:
-            root = ET.fromstring(xml_content)
-        except ET.ParseError as e:
-            raise ValueError(f"XML parse error: {e}")
+            root = DefusedElementTree.fromstring(xml_content)
+        except DefusedElementTree.ParseError as e:
+            raise ValueError(f"XML parse error: {e}") from e
 
         # Detect namespace
         ns = ""
@@ -597,10 +594,8 @@ class SitemapParser:
             priority = 0.5
             priority_el = url_tag.find(f"{ns}priority")
             if priority_el is not None and priority_el.text:
-                try:
+                with contextlib.suppress(ValueError):
                     priority = float(priority_el.text.strip())
-                except ValueError:
-                    pass
 
             # Extract images (Google image sitemap extension)
             images: list[str] = []
