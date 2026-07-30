@@ -151,12 +151,12 @@ class RedisCacheBackend(CacheBackend):
         """Initialize Redis connection pool and verify connectivity."""
         try:
             import redis.asyncio as aioredis
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "redis package required. Install with: "
                 "pip install 'redis[hiredis]>=5.0.0' "
                 "or pip install 'agentcrawl[redis]'"
-            )
+            ) from err
 
         # Build connection pool
         self._pool = aioredis.ConnectionPool.from_url(
@@ -450,7 +450,7 @@ class RedisCacheBackend(CacheBackend):
             return {}
 
         results: dict[str, Any] = {}
-        for key, raw in zip(keys, raw_values):
+        for key, raw in zip(keys, raw_values, strict=True):
             if raw is not None:
                 try:
                     decompressed = self._maybe_decompress(raw)
@@ -588,7 +588,7 @@ class RedisCacheBackend(CacheBackend):
                 return 0
 
             # Delete all member keys + the tag set itself
-            keys_to_delete = list(members) + [tag_redis_key.encode("utf-8")]
+            keys_to_delete = [*list(members), tag_redis_key.encode("utf-8")]
             result = await self._redis.delete(*keys_to_delete)
 
             # Subtract 1 for the tag key itself
@@ -727,13 +727,12 @@ class RedisCacheBackend(CacheBackend):
             pipe.ttl(full_key)
             pipe.memory_usage(full_key)
             pipe.type(full_key)
-            ttl_val, memory, key_type = await pipe.execute()
+            ttl_val, memory, _key_type = await pipe.execute()
         except Exception:
             # MEMORY USAGE may not be available on all Redis versions
             try:
                 ttl_val = await self._redis.ttl(full_key)
                 memory = 0
-                key_type = b"string"
             except Exception:
                 return None
 

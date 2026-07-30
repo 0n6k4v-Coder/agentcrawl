@@ -42,7 +42,6 @@ import asyncio
 import hashlib
 import json
 import logging
-import pickle
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -61,7 +60,6 @@ T = TypeVar("T")
 class SerializationFormat(str, Enum):
     """Supported serialization formats for cache values."""
     JSON = "json"
-    PICKLE = "pickle"
     RAW = "raw"
 
 
@@ -109,11 +107,11 @@ class CacheConfig:
         if isinstance(self.backend, str):
             try:
                 self.backend = CacheBackendType(self.backend)
-            except ValueError:
+            except ValueError as err:
                 raise ValueError(
                     f"Unknown cache backend: '{self.backend}'. "
                     f"Available: {', '.join(b.value for b in CacheBackendType)}"
-                )
+                ) from err
         if isinstance(self.serialization, str):
             try:
                 self.serialization = SerializationFormat(self.serialization)
@@ -328,18 +326,16 @@ class CacheSerializer:
     """
     Handles serialization and deserialization of cache values.
 
-    Supports JSON (safe, portable) and pickle (full Python objects).
+    Supports JSON (safe, portable).
     """
 
-    def __init__(self, format: SerializationFormat = SerializationFormat.JSON):
-        self._format = format
+    def __init__(self, format_: SerializationFormat = SerializationFormat.JSON):
+        self._format = format_
 
     def serialize(self, value: Any) -> bytes:
         """Serialize a value to bytes."""
         if self._format == SerializationFormat.JSON:
             return json.dumps(value, ensure_ascii=False, default=str).encode("utf-8")
-        elif self._format == SerializationFormat.PICKLE:
-            return pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL)
         elif self._format == SerializationFormat.RAW:
             if isinstance(value, bytes):
                 return value
@@ -353,8 +349,6 @@ class CacheSerializer:
         """Deserialize bytes back to a value."""
         if self._format == SerializationFormat.JSON:
             return json.loads(data.decode("utf-8"))
-        elif self._format == SerializationFormat.PICKLE:
-            return pickle.loads(data)
         elif self._format == SerializationFormat.RAW:
             try:
                 return json.loads(data.decode("utf-8"))
@@ -974,8 +968,9 @@ class CacheBackend(ABC):
 
     async def _start_impl(self) -> None:
         """Backend-specific initialization. Override if needed."""
-        pass
+        return None
 
+    @abstractmethod
     async def _stop_impl(self) -> None:
         """Backend-specific cleanup. Override if needed."""
         pass

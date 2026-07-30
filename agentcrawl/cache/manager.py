@@ -429,9 +429,7 @@ class CacheManager:
 
         if self._l1 and await self._l1.exists(key):
             return True
-        if self._l2 and await self._l2.exists(key):
-            return True
-        return False
+        return bool(self._l2 and await self._l2.exists(key))
 
     async def get_or_set(
         self,

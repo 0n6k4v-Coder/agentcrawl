@@ -40,6 +40,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import fnmatch
 import hashlib
 import json
@@ -274,10 +275,8 @@ class DiskCacheBackend(CacheBackend):
             os.replace(tmp_path, str(path))
         except Exception:
             os.close(fd) if not os.get_inheritable(fd) else None
-            try:
+            with contextlib.suppress(OSError):
                 os.unlink(tmp_path)
-            except OSError:
-                pass
             raise
 
     def _delete_file_sync(self, path: Path) -> bool:
@@ -582,7 +581,7 @@ class DiskCacheBackend(CacheBackend):
 
     async def _increment_raw(self, key: str, amount: int) -> int:
         """Increment a numeric value on disk."""
-        data_path, meta_path = self._key_to_paths(key)
+        _data_path, _meta_path = self._key_to_paths(key)
 
         # Read current value
         raw = await self._get_raw(key)

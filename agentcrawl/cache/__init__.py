@@ -50,13 +50,6 @@ Quick Start:
 from __future__ import annotations
 
 import logging
-from typing import Any
-
-logger = logging.getLogger("agentcrawl.cache")
-
-# ──────────────────────────────────────────────────────────────
-# Base (always available)
-# ──────────────────────────────────────────────────────────────
 
 from agentcrawl.cache.base import (
     CacheBackend,
@@ -102,6 +95,8 @@ from agentcrawl.cache.manager import (
     create_cache_manager,
 )
 
+logger = logging.getLogger("agentcrawl.cache")
+
 # ──────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────
@@ -113,22 +108,22 @@ __all__ = [
     "CacheConfig",
     "CacheEntry",
     "CacheKeyGenerator",
-    "CacheSerializer",
-    "CacheStats",
-    "NullCacheBackend",
-    "SerializationFormat",
-    # Backends
-    "MemoryCacheBackend",
-    "DiskCacheBackend",
-    "RedisCacheBackend",
     # Manager
     "CacheManager",
+    "CacheSerializer",
+    "CacheStats",
+    "DiskCacheBackend",
+    # Backends
+    "MemoryCacheBackend",
+    "NullCacheBackend",
+    "RedisCacheBackend",
+    "SerializationFormat",
     "TTLPolicy",
-    "create_cache_manager",
     "create_cache_from_env",
+    "create_cache_manager",
+    "get_available_backends",
     # Feature detection
     "has_redis",
-    "get_available_backends",
 ]
 
 

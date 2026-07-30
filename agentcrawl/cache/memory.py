@@ -38,6 +38,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import fnmatch
 import logging
 import sys
@@ -199,10 +200,8 @@ class MemoryCacheBackend(CacheBackend):
         """Cancel the background cleanup task and clear storage."""
         if self._cleanup_task and not self._cleanup_task.done():
             self._cleanup_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
             self._cleanup_task = None
 
         self._store.clear()
