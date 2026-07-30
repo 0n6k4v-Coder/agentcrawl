@@ -578,7 +578,7 @@ class CrawlEngine:
                     error=str(result),
                 ))
             elif not isinstance(result, Exception):
-                processed.append(cast(CrawlResult, result))
+                processed.append(cast("CrawlResult", result))
 
         return processed
 

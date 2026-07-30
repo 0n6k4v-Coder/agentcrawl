@@ -1,4 +1,4 @@
 """Enable: python -m server"""
-from server.main import run_server
+from server.main import main
 
-run_server()
+main()

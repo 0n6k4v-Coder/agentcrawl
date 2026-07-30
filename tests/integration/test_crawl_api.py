@@ -29,7 +29,7 @@ from fastapi.testclient import TestClient
 # Fixtures
 # ══════════════════════════════════════════════════════════════
 
-@ pytest.fixture
+@pytest.fixture
 def app(require_playwright) -> Any:
     """Create a test FastAPI app."""
     from server.app import create_app
@@ -44,14 +44,10 @@ def app(require_playwright) -> Any:
         auth_enabled=False,
     )
 
-    application = create_app(settings)
-
-    # Use TestClient which properly handles lifespan
-    with TestClient(application):
-        yield application
+    return create_app(settings)
 
 
-@ pytest.fixture
+@pytest.fixture
 def client(app: Any) -> Any:
     """Create a test client using TestClient."""
     with TestClient(app) as test_client:
