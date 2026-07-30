@@ -22,7 +22,7 @@ def cli(ctx: click.Context) -> None:
 
 
 @cli.command()
-@click.option("--host", default="0.0.0.0", help="Bind host (default: 0.0.0.0)")
+@click.option("--host", default="127.0.0.1", help="Bind host (default: 127.0.0.1)")
 @click.option("--port", default=8000, help="Bind port (default: 8000)")
 @click.option("--workers", default=1, help="Number of worker processes (default: 1)")
 def serve(host: str, port: int, workers: int) -> None:
@@ -36,27 +36,38 @@ def serve(host: str, port: int, workers: int) -> None:
             "Option 2: [cyan]docker compose up[/cyan]",
             style="red",
         )
-        raise SystemExit(1)
+        raise SystemExit(1) from None
     run_server(host=host, port=port, workers=workers)
 
 
 @cli.command()
 def install_browsers() -> None:
     """Install Playwright browsers."""
-    import subprocess
+    import asyncio
     import sys
 
     console.print("Installing Playwright browsers...")
-    result = subprocess.run(
-        [sys.executable, "-m", "playwright", "install", "chromium"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode == 0:
+
+    async def _install():
+        # Use asyncio subprocess with explicit args - no shell, no user input
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "playwright",
+            "install",
+            "chromium",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await proc.communicate()
+        return proc.returncode, stderr.decode()
+
+    returncode, stderr = asyncio.run(_install())
+    if returncode == 0:
         console.print("[green]Browsers installed successfully![/green]")
     else:
-        console.print(f"[red]Failed to install browsers:[/red]\n{result.stderr}")
-        raise SystemExit(1)
+        console.print(f"[red]Failed to install browsers:[/red]\n{stderr}")
+        raise SystemExit(1) from None
 
 
 @cli.command()

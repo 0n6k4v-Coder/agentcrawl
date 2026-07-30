@@ -40,8 +40,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Mask value for sensitive data
+MASK_VALUE = "********"
 
 # ══════════════════════════════════════════════════════════════
 # Browser Settings (Pydantic)
@@ -204,7 +207,7 @@ class BrowserSettings(BaseSettings):
         default=None,
         description="Proxy authentication username",
     )
-    proxy_password: str | None = Field(
+    proxy_password: SecretStr | None = Field(
         default=None,
         description="Proxy authentication password",
     )
@@ -380,7 +383,7 @@ class BrowserSettings(BaseSettings):
             proxy = ProxyConfig(
                 server=self.proxy_url,
                 username=self.proxy_username,
-                password=self.proxy_password,
+                password=self.proxy_password.get_secret_value() if self.proxy_password else None,
                 bypass=self.proxy_bypass,
                 rotation=ProxyRotationStrategy(self.proxy_rotation),
                 proxy_list=proxy_list,
@@ -530,7 +533,7 @@ class BrowserSettings(BaseSettings):
         data = self.to_dict(exclude_none=True)
         # Mask sensitive fields
         if "proxy_password" in data:
-            data["proxy_password"] = "********"
+            data["proxy_password"] = MASK_VALUE
 
         with open(filepath, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)
@@ -545,10 +548,7 @@ class BrowserSettings(BaseSettings):
         lines = []
         for key, value in self.to_dict(exclude_none=True).items():
             env_key = f"AGENTCRAWL_{key.upper()}"
-            if isinstance(value, bool):
-                env_value = str(value).lower()
-            else:
-                env_value = str(value)
+            env_value = str(value).lower() if isinstance(value, bool) else str(value)
             lines.append(f"{env_key}={env_value}")
         return "\n".join(lines)
 

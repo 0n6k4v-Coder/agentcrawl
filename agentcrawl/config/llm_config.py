@@ -40,11 +40,14 @@ Usage:
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger("agentcrawl.config.llm_config")
 
 # ══════════════════════════════════════════════════════════════
 # Provider Registry
@@ -459,11 +462,11 @@ class LLMConfig(BaseSettings):
         """
         try:
             import litellm
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "litellm required for LLM operations. "
                 "Install with: pip install 'agentcrawl[llm]'"
-            )
+            ) from err
 
         if self.requires_api_key and not self.has_api_key:
             raise RuntimeError(
@@ -535,7 +538,7 @@ class LLMConfig(BaseSettings):
         if text.startswith("```"):
             lines = text.split("\n")
             # Remove first and last lines (``` markers)
-            lines = [l for l in lines if not l.strip().startswith("```")]
+            lines = [line for line in lines if not line.strip().startswith("```")]
             text = "\n".join(lines)
 
         return json.loads(text)
@@ -562,7 +565,7 @@ class LLMConfig(BaseSettings):
                 encoding = tiktoken.encoding_for_model(self.model_name)
                 return len(encoding.encode(text))
             except Exception:
-                pass
+                logger.debug("tiktoken not available, using heuristic")
 
         # Heuristic: ~4 chars per token for English
         return len(text) // 4

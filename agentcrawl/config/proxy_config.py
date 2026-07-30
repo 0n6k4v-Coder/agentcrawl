@@ -42,10 +42,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger("agentcrawl.config.proxy")
+
+# Mask value for sensitive data
+MASK_VALUE = "********"
 
 
 # ══════════════════════════════════════════════════════════════
@@ -99,7 +102,7 @@ class ProxySettings(BaseSettings):
         default=None,
         description="Proxy authentication username",
     )
-    password: str | None = Field(
+    password: SecretStr | None = Field(
         default=None,
         description="Proxy authentication password",
     )
@@ -683,7 +686,7 @@ class ProxySettings(BaseSettings):
         data = self.model_dump(exclude_none=exclude_none)
 
         if mask_password and "password" in data and data["password"]:
-            data["password"] = "********"
+            data["password"] = MASK_VALUE
 
         # Add computed fields
         data["proxy_count"] = self.proxy_count
@@ -705,10 +708,7 @@ class ProxySettings(BaseSettings):
         lines = []
         for key, value in self.to_dict(exclude_none=True, mask_password=False).items():
             env_key = f"AGENTCRAWL_PROXY_{key.upper()}"
-            if isinstance(value, bool):
-                env_value = str(value).lower()
-            else:
-                env_value = str(value)
+            env_value = str(value).lower() if isinstance(value, bool) else str(value)
             lines.append(f"{env_key}={env_value}")
         return "\n".join(lines)
 
