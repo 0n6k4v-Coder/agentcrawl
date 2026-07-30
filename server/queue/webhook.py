@@ -63,6 +63,7 @@ logger = logging.getLogger("agentcrawl.server.queue.webhook")
 # Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class WebhookConfig:
     """
@@ -78,6 +79,7 @@ class WebhookConfig:
         retry_delay: Base retry delay in seconds.
         headers: Additional HTTP headers.
     """
+
     url: str
     secret: str = ""
     events: list[str] = field(default_factory=list)
@@ -100,6 +102,7 @@ class WebhookConfig:
 # Event Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class WebhookEvent:
     """
@@ -112,6 +115,7 @@ class WebhookEvent:
         payload: Event payload data.
         source: Event source identifier.
     """
+
     event_id: str = field(default_factory=lambda: f"evt_{uuid.uuid4().hex[:12]}")
     event_type: str = ""
     timestamp: str = field(
@@ -147,6 +151,7 @@ class DeliveryResult:
         duration_ms: Total delivery time.
         error: Error message (if failed).
     """
+
     event_id: str
     url: str
     success: bool = False
@@ -170,6 +175,7 @@ class DeliveryResult:
 # ══════════════════════════════════════════════════════════════
 # Dispatcher
 # ══════════════════════════════════════════════════════════════
+
 
 class WebhookDispatcher:
     """
@@ -299,10 +305,7 @@ class WebhookDispatcher:
             return []
 
         # Deliver concurrently
-        tasks = [
-            self._deliver_with_semaphore(config, event)
-            for config in targets
-        ]
+        tasks = [self._deliver_with_semaphore(config, event) for config in targets]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -311,11 +314,13 @@ class WebhookDispatcher:
         for result in results:
             if isinstance(result, Exception):
                 logger.error("Webhook delivery exception: %s", result)
-                delivery_results.append(DeliveryResult(
-                    event_id=event.event_id,
-                    url="unknown",
-                    error=str(result),
-                ))
+                delivery_results.append(
+                    DeliveryResult(
+                        event_id=event.event_id,
+                        url="unknown",
+                        error=str(result),
+                    )
+                )
             else:
                 delivery_results.append(result)
 
@@ -329,7 +334,7 @@ class WebhookDispatcher:
         # Log
         self._delivery_log.extend(delivery_results)
         if len(self._delivery_log) > self._log_max:
-            self._delivery_log = self._delivery_log[-self._log_max:]
+            self._delivery_log = self._delivery_log[-self._log_max :]
 
         return delivery_results
 
@@ -603,7 +608,7 @@ class WebhookDispatcher:
         self._dead_letter.append(entry)
 
         if len(self._dead_letter) > self._dead_letter_max:
-            self._dead_letter = self._dead_letter[-self._dead_letter_max:]
+            self._dead_letter = self._dead_letter[-self._dead_letter_max :]
 
     async def get_dead_letter(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get dead letter entries."""
@@ -655,9 +660,7 @@ class WebhookDispatcher:
             "total_dispatched": self._total_dispatched,
             "total_delivered": self._total_delivered,
             "total_failed": self._total_failed,
-            "delivery_rate": round(
-                self._total_delivered / max(self._total_dispatched, 1), 4
-            ),
+            "delivery_rate": round(self._total_delivered / max(self._total_dispatched, 1), 4),
             "dead_letter_count": len(self._dead_letter),
             "recent_deliveries": len(self._delivery_log),
         }

@@ -75,6 +75,7 @@ logger = logging.getLogger("agentcrawl.crawling.url_filter")
 # URL Normalizer
 # ══════════════════════════════════════════════════════════════
 
+
 class URLNormalizer:
     """
     Normalizes URLs to a canonical form for deduplication.
@@ -105,15 +106,35 @@ class URLNormalizer:
     """
 
     # Tracking parameters to remove by default
-    TRACKING_PARAMS: frozenset[str] = frozenset({
-        "utm_source", "utm_medium", "utm_campaign", "utm_term",
-        "utm_content", "utm_id", "utm_cid", "utm_reader",
-        "fbclid", "gclid", "gclsrc", "dclid", "msclkid",
-        "mc_cid", "mc_eid", "yclid", "twclid",
-        "ref", "referrer", "source",
-        "_ga", "_gid", "_gl",
-        "igshid", "s_kwcid",
-    })
+    TRACKING_PARAMS: frozenset[str] = frozenset(
+        {
+            "utm_source",
+            "utm_medium",
+            "utm_campaign",
+            "utm_term",
+            "utm_content",
+            "utm_id",
+            "utm_cid",
+            "utm_reader",
+            "fbclid",
+            "gclid",
+            "gclsrc",
+            "dclid",
+            "msclkid",
+            "mc_cid",
+            "mc_eid",
+            "yclid",
+            "twclid",
+            "ref",
+            "referrer",
+            "source",
+            "_ga",
+            "_gid",
+            "_gl",
+            "igshid",
+            "s_kwcid",
+        }
+    )
 
     def __init__(
         self,
@@ -167,8 +188,10 @@ class URLNormalizer:
 
         # Port
         port = parsed.port
-        if self._remove_default_port and ((scheme == "http" and port == 80) or (scheme == "https" and port == 443)):
-                port = None
+        if self._remove_default_port and (
+            (scheme == "http" and port == 80) or (scheme == "https" and port == 443)
+        ):
+            port = None
 
         # Reconstruct netloc
         netloc = host
@@ -212,7 +235,8 @@ class URLNormalizer:
         if self._remove_tracking_params or self._custom_remove_params:
             remove_set = self.TRACKING_PARAMS | self._custom_remove_params
             params = {
-                k: v for k, v in params.items()
+                k: v
+                for k, v in params.items()
                 if k.lower() not in remove_set
                 and not any(k.lower().startswith(p) for p in ("utm_", "_ga", "fb"))
             }
@@ -251,9 +275,11 @@ class URLNormalizer:
 # Robots.txt Parser
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class RobotsRule:
     """A single robots.txt rule."""
+
     path: str
     allowed: bool
     pattern: re.Pattern[str] | None = None
@@ -373,7 +399,8 @@ class RobotsTxtParser:
                     # New group
                     current_agents = [agent]
                     in_matching_group = (
-                        agent == "*" or agent == self._user_agent
+                        agent == "*"
+                        or agent == self._user_agent
                         or self._user_agent.startswith(agent)
                     )
                 else:
@@ -384,21 +411,25 @@ class RobotsTxtParser:
             elif key == "disallow" and in_matching_group:
                 if value:
                     pattern = self._path_to_regex(value)
-                    self._rules.append(RobotsRule(
-                        path=value,
-                        allowed=False,
-                        pattern=pattern,
-                    ))
+                    self._rules.append(
+                        RobotsRule(
+                            path=value,
+                            allowed=False,
+                            pattern=pattern,
+                        )
+                    )
                 # Empty Disallow = allow all (no rule added)
 
             elif key == "allow" and in_matching_group:
                 if value:
                     pattern = self._path_to_regex(value)
-                    self._rules.append(RobotsRule(
-                        path=value,
-                        allowed=True,
-                        pattern=pattern,
-                    ))
+                    self._rules.append(
+                        RobotsRule(
+                            path=value,
+                            allowed=True,
+                            pattern=pattern,
+                        )
+                    )
 
             elif key == "sitemap":
                 if value:
@@ -436,9 +467,7 @@ class RobotsTxtParser:
         for rule in self._rules:
             if rule.matches(path):
                 rule_length = len(rule.path)
-                if rule_length > best_length or (
-                    rule_length == best_length and rule.allowed
-                ):
+                if rule_length > best_length or (rule_length == best_length and rule.allowed):
                     best_match = rule
                     best_length = rule_length
 
@@ -480,6 +509,7 @@ class RobotsTxtParser:
 # URL Validator
 # ══════════════════════════════════════════════════════════════
 
+
 class URLValidator:
     """
     Validates URLs for crawlability.
@@ -504,15 +534,50 @@ class URLValidator:
         False
     """
 
-    DEFAULT_BLOCKED_EXTENSIONS: frozenset[str] = frozenset({
-        ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
-        ".ico", ".woff", ".woff2", ".ttf", ".eot", ".otf",
-        ".pdf", ".zip", ".tar", ".gz", ".bz2", ".7z", ".rar",
-        ".mp3", ".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm",
-        ".exe", ".dmg", ".iso", ".bin", ".apk",
-        ".xml", ".json", ".csv", ".txt", ".rss", ".atom",
-        ".map", ".webmanifest",
-    })
+    DEFAULT_BLOCKED_EXTENSIONS: frozenset[str] = frozenset(
+        {
+            ".css",
+            ".js",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".ico",
+            ".woff",
+            ".woff2",
+            ".ttf",
+            ".eot",
+            ".otf",
+            ".pdf",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".bz2",
+            ".7z",
+            ".rar",
+            ".mp3",
+            ".mp4",
+            ".avi",
+            ".mov",
+            ".wmv",
+            ".flv",
+            ".webm",
+            ".exe",
+            ".dmg",
+            ".iso",
+            ".bin",
+            ".apk",
+            ".xml",
+            ".json",
+            ".csv",
+            ".txt",
+            ".rss",
+            ".atom",
+            ".map",
+            ".webmanifest",
+        }
+    )
 
     def __init__(
         self,
@@ -531,9 +596,7 @@ class URLValidator:
         self._allow_ip_addresses = allow_ip_addresses
 
         # IP address pattern
-        self._ip_pattern = re.compile(
-            r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
-        )
+        self._ip_pattern = re.compile(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
 
     def is_valid(self, url: str) -> tuple[bool, str]:
         """
@@ -568,7 +631,7 @@ class URLValidator:
 
         # Localhost
         if not self._allow_localhost and hostname in ("localhost", "127.0.0.1", "::1"):
-                return False, "Localhost not allowed"
+            return False, "Localhost not allowed"
 
         # IP addresses
         if not self._allow_ip_addresses and self._ip_pattern.match(hostname):
@@ -609,6 +672,7 @@ class URLValidator:
 # ══════════════════════════════════════════════════════════════
 # Advanced URL Filter
 # ══════════════════════════════════════════════════════════════
+
 
 class AdvancedURLFilter(URLFilter):
     r"""
@@ -652,13 +716,13 @@ class AdvancedURLFilter(URLFilter):
         self._include_regex: list[re.Pattern[str]] = []
         self._exclude_regex: list[re.Pattern[str]] = []
 
-        for pattern in (include_regex or []):
+        for pattern in include_regex or []:
             try:
                 self._include_regex.append(re.compile(pattern, re.I))
             except re.error as e:
                 logger.warning("Invalid include regex '%s': %s", pattern, e)
 
-        for pattern in (exclude_regex or []):
+        for pattern in exclude_regex or []:
             try:
                 self._exclude_regex.append(re.compile(pattern, re.I))
             except re.error as e:
@@ -745,12 +809,14 @@ class AdvancedURLFilter(URLFilter):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "include_regex": [p.pattern for p in self._include_regex],
-            "exclude_regex": [p.pattern for p in self._exclude_regex],
-            "respect_robots": self._respect_robots,
-            "robots_loaded": self._robots.is_loaded if self._robots else False,
-        })
+        d.update(
+            {
+                "include_regex": [p.pattern for p in self._include_regex],
+                "exclude_regex": [p.pattern for p in self._exclude_regex],
+                "respect_robots": self._respect_robots,
+                "robots_loaded": self._robots.is_loaded if self._robots else False,
+            }
+        )
         return d
 
     def __repr__(self) -> str:
@@ -764,6 +830,7 @@ class AdvancedURLFilter(URLFilter):
 # ══════════════════════════════════════════════════════════════
 # Filter Presets
 # ══════════════════════════════════════════════════════════════
+
 
 class FilterPreset:
     """
@@ -779,7 +846,14 @@ class FilterPreset:
     def docs(cls, **kwargs: Any) -> AdvancedURLFilter:
         """Filter for documentation sites."""
         return AdvancedURLFilter(
-            include_patterns=["/docs/*", "/documentation/*", "/guide/*", "/manual/*", "/reference/*", "/wiki/*"],
+            include_patterns=[
+                "/docs/*",
+                "/documentation/*",
+                "/guide/*",
+                "/manual/*",
+                "/reference/*",
+                "/wiki/*",
+            ],
             exclude_patterns=["/blog/*", "/news/*", "/careers/*", "/about/*"],
             exclude_extensions=[".pdf", ".zip", ".mp4"],
             **kwargs,
@@ -817,14 +891,35 @@ class FilterPreset:
         """Strict filter — minimal content, no noise."""
         return AdvancedURLFilter(
             exclude_patterns=[
-                "/tag/*", "/category/*", "/author/*", "/archive/*",
-                "/page/*", "/search/*", "/feed/*", "/rss/*",
-                "/login/*", "/signup/*", "/cart/*", "/checkout/*",
-                "/admin/*", "/wp-admin/*", "/wp-content/*",
+                "/tag/*",
+                "/category/*",
+                "/author/*",
+                "/archive/*",
+                "/page/*",
+                "/search/*",
+                "/feed/*",
+                "/rss/*",
+                "/login/*",
+                "/signup/*",
+                "/cart/*",
+                "/checkout/*",
+                "/admin/*",
+                "/wp-admin/*",
+                "/wp-content/*",
             ],
             exclude_extensions=[
-                ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
-                ".ico", ".pdf", ".zip", ".mp3", ".mp4",
+                ".css",
+                ".js",
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".gif",
+                ".svg",
+                ".ico",
+                ".pdf",
+                ".zip",
+                ".mp3",
+                ".mp4",
             ],
             **kwargs,
         )

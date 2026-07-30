@@ -121,6 +121,7 @@ DEFAULT_MODELS: dict[str, str] = {
 # LLM Settings (Pydantic)
 # ══════════════════════════════════════════════════════════════
 
+
 class LLMConfig(BaseSettings):
     """
     Configuration for LLM providers used in extraction and processing.
@@ -464,8 +465,7 @@ class LLMConfig(BaseSettings):
             import litellm
         except ImportError as err:
             raise ImportError(
-                "litellm required for LLM operations. "
-                "Install with: pip install 'agentcrawl[llm]'"
+                "litellm required for LLM operations. Install with: pip install 'agentcrawl[llm]'"
             ) from err
 
         if self.requires_api_key and not self.has_api_key:
@@ -503,10 +503,12 @@ class LLMConfig(BaseSettings):
         """
         messages = []
         if system or self.system_prompt:
-            messages.append({
-                "role": "system",
-                "content": system or self.system_prompt or "",
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": system or self.system_prompt or "",
+                }
+            )
         messages.append({"role": "user", "content": prompt})
 
         response = await self.complete(messages, **kwargs)
@@ -562,6 +564,7 @@ class LLMConfig(BaseSettings):
         if self.provider_name in ("openai", "azure"):
             try:
                 import tiktoken
+
                 encoding = tiktoken.encoding_for_model(self.model_name)
                 return len(encoding.encode(text))
             except Exception:
@@ -741,6 +744,7 @@ class LLMConfig(BaseSettings):
     def to_json(self, mask_key: bool = True) -> str:
         """Serialize to JSON string."""
         import json
+
         return json.dumps(self.to_dict(mask_key=mask_key), ensure_ascii=False, default=str)
 
     # ──────────────────────────────────────────────────────────
@@ -782,9 +786,7 @@ class LLMConfig(BaseSettings):
         if self.requires_api_key and not self.has_api_key:
             env_vars = API_KEY_ENV_VARS.get(self.provider_name, [])
             env_hint = f" Set via: {', '.join(env_vars)}" if env_vars else ""
-            warnings.append(
-                f"API key not configured for {self.provider_display_name}.{env_hint}"
-            )
+            warnings.append(f"API key not configured for {self.provider_display_name}.{env_hint}")
 
         if self.temperature > 1.0:
             warnings.append("Temperature > 1.0 may produce inconsistent extraction results")

@@ -50,6 +50,7 @@ MASK_VALUE = "********"
 # Browser Settings (Pydantic)
 # ══════════════════════════════════════════════════════════════
 
+
 class BrowserSettings(BaseSettings):
     """
     Pydantic-based browser configuration with env var support.
@@ -376,9 +377,7 @@ class BrowserSettings(BaseSettings):
         if self.proxy_url:
             proxy_list = []
             if self.proxy_list:
-                proxy_list = [
-                    p.strip() for p in self.proxy_list.split(",") if p.strip()
-                ]
+                proxy_list = [p.strip() for p in self.proxy_list.split(",") if p.strip()]
 
             proxy = ProxyConfig(
                 server=self.proxy_url,
@@ -407,9 +406,7 @@ class BrowserSettings(BaseSettings):
         # Extra args
         extra_args = []
         if self.extra_args:
-            extra_args = [
-                a.strip() for a in self.extra_args.split(",") if a.strip()
-            ]
+            extra_args = [a.strip() for a in self.extra_args.split(",") if a.strip()]
 
         return BrowserConfig(
             browser_type=self.browser_type,

@@ -28,6 +28,7 @@ from agentcrawl.config.proxy_config import ProxySettings
 # Settings
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSettings:
     """Tests for global Settings."""
 
@@ -167,6 +168,7 @@ class TestSettings:
 # ══════════════════════════════════════════════════════════════
 # CrawlerConfig
 # ══════════════════════════════════════════════════════════════
+
 
 class TestCrawlerConfig:
     """Tests for CrawlerConfig."""
@@ -309,6 +311,7 @@ class TestCrawlerConfig:
 # LLMConfig
 # ══════════════════════════════════════════════════════════════
 
+
 class TestLLMConfig:
     """Tests for LLMConfig."""
 
@@ -372,6 +375,7 @@ class TestLLMConfig:
 # Queue Configuration (part of Settings)
 # ══════════════════════════════════════════════════════════════
 
+
 class TestQueueSettings:
     """Tests for queue settings in global Settings."""
 
@@ -423,6 +427,7 @@ class TestQueueSettings:
 # ══════════════════════════════════════════════════════════════
 # Config Presets
 # ══════════════════════════════════════════════════════════════
+
 
 class TestConfigPresets:
     """Tests for configuration presets."""
@@ -486,6 +491,7 @@ class TestConfigPresets:
 # Config Merging
 # ══════════════════════════════════════════════════════════════
 
+
 class TestConfigMerging:
     """Tests for config merging/override behavior."""
 
@@ -523,4 +529,3 @@ class TestConfigMerging:
         monkeypatch.setenv("AGENTCRAWL_BROWSER", "firefox")
         settings = Settings()
         assert settings.browser.browser_type == "firefox"
-

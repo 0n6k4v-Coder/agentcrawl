@@ -69,6 +69,7 @@ logger = logging.getLogger("agentcrawl.content.regex_chunker")
 # Pre-built Patterns
 # ══════════════════════════════════════════════════════════════
 
+
 class PrebuiltPatterns:
     """
     Pre-built regex patterns for common document structures.
@@ -121,88 +122,90 @@ class PrebuiltPatterns:
     FAQ: str = r"(?=^(?:Q:|Q\.|Question:|\*\*Q)|^#{1,3}\s*(?:Q:|Question))"
 
     # Preset registry
-    _PRESETS: MappingProxyType[str, dict[str, Any]] = MappingProxyType({
-        "markdown_sections": {
-            "patterns": [MARKDOWN_SECTIONS],
-            "description": "Split at Markdown headings (h1-h3)",
-            "flags": re.MULTILINE,
-        },
-        "markdown_all": {
-            "patterns": [MARKDOWN_ALL_HEADINGS],
-            "description": "Split at any Markdown heading (h1-h6)",
-            "flags": re.MULTILINE,
-        },
-        "markdown_paragraphs": {
-            "patterns": [MARKDOWN_PARAGRAPHS],
-            "description": "Split at paragraph breaks",
-            "flags": 0,
-        },
-        "markdown_code": {
-            "patterns": [MARKDOWN_CODE_BLOCKS],
-            "description": "Split at code block boundaries",
-            "flags": re.MULTILINE,
-        },
-        "html_sections": {
-            "patterns": [HTML_SECTIONS],
-            "description": "Split at HTML section/article/div tags",
-            "flags": re.IGNORECASE,
-        },
-        "html_paragraphs": {
-            "patterns": [HTML_PARAGRAPHS],
-            "description": "Split at <p> tag boundaries",
-            "flags": re.IGNORECASE,
-        },
-        "code_functions": {
-            "patterns": [CODE_FUNCTIONS_GENERIC],
-            "description": "Split at function/method/class definitions",
-            "flags": re.MULTILINE,
-        },
-        "code_functions_python": {
-            "patterns": [CODE_FUNCTIONS_PYTHON],
-            "description": "Split at Python def/class definitions",
-            "flags": re.MULTILINE,
-        },
-        "code_functions_js": {
-            "patterns": [CODE_FUNCTIONS_JS],
-            "description": "Split at JavaScript function/class definitions",
-            "flags": re.MULTILINE,
-        },
-        "text_paragraphs": {
-            "patterns": [TEXT_PARAGRAPHS],
-            "description": "Split at double newlines",
-            "flags": 0,
-        },
-        "text_sentences": {
-            "patterns": [TEXT_SENTENCES],
-            "description": "Split at sentence boundaries",
-            "flags": 0,
-        },
-        "text_pages": {
-            "patterns": [TEXT_PAGES],
-            "description": "Split at page breaks",
-            "flags": re.MULTILINE,
-        },
-        "csv_rows": {
-            "patterns": [CSV_ROWS],
-            "description": "Split at CSV row boundaries",
-            "flags": 0,
-        },
-        "json_objects": {
-            "patterns": [JSON_OBJECTS],
-            "description": "Split at top-level JSON objects",
-            "flags": 0,
-        },
-        "log_entries": {
-            "patterns": [LOG_ENTRIES, LOG_ENTRIES_SYSLOG],
-            "description": "Split at log entry timestamps",
-            "flags": re.MULTILINE,
-        },
-        "faq": {
-            "patterns": [FAQ],
-            "description": "Split at Q&A boundaries",
-            "flags": re.MULTILINE | re.IGNORECASE,
-        },
-    })
+    _PRESETS: MappingProxyType[str, dict[str, Any]] = MappingProxyType(
+        {
+            "markdown_sections": {
+                "patterns": [MARKDOWN_SECTIONS],
+                "description": "Split at Markdown headings (h1-h3)",
+                "flags": re.MULTILINE,
+            },
+            "markdown_all": {
+                "patterns": [MARKDOWN_ALL_HEADINGS],
+                "description": "Split at any Markdown heading (h1-h6)",
+                "flags": re.MULTILINE,
+            },
+            "markdown_paragraphs": {
+                "patterns": [MARKDOWN_PARAGRAPHS],
+                "description": "Split at paragraph breaks",
+                "flags": 0,
+            },
+            "markdown_code": {
+                "patterns": [MARKDOWN_CODE_BLOCKS],
+                "description": "Split at code block boundaries",
+                "flags": re.MULTILINE,
+            },
+            "html_sections": {
+                "patterns": [HTML_SECTIONS],
+                "description": "Split at HTML section/article/div tags",
+                "flags": re.IGNORECASE,
+            },
+            "html_paragraphs": {
+                "patterns": [HTML_PARAGRAPHS],
+                "description": "Split at <p> tag boundaries",
+                "flags": re.IGNORECASE,
+            },
+            "code_functions": {
+                "patterns": [CODE_FUNCTIONS_GENERIC],
+                "description": "Split at function/method/class definitions",
+                "flags": re.MULTILINE,
+            },
+            "code_functions_python": {
+                "patterns": [CODE_FUNCTIONS_PYTHON],
+                "description": "Split at Python def/class definitions",
+                "flags": re.MULTILINE,
+            },
+            "code_functions_js": {
+                "patterns": [CODE_FUNCTIONS_JS],
+                "description": "Split at JavaScript function/class definitions",
+                "flags": re.MULTILINE,
+            },
+            "text_paragraphs": {
+                "patterns": [TEXT_PARAGRAPHS],
+                "description": "Split at double newlines",
+                "flags": 0,
+            },
+            "text_sentences": {
+                "patterns": [TEXT_SENTENCES],
+                "description": "Split at sentence boundaries",
+                "flags": 0,
+            },
+            "text_pages": {
+                "patterns": [TEXT_PAGES],
+                "description": "Split at page breaks",
+                "flags": re.MULTILINE,
+            },
+            "csv_rows": {
+                "patterns": [CSV_ROWS],
+                "description": "Split at CSV row boundaries",
+                "flags": 0,
+            },
+            "json_objects": {
+                "patterns": [JSON_OBJECTS],
+                "description": "Split at top-level JSON objects",
+                "flags": 0,
+            },
+            "log_entries": {
+                "patterns": [LOG_ENTRIES, LOG_ENTRIES_SYSLOG],
+                "description": "Split at log entry timestamps",
+                "flags": re.MULTILINE,
+            },
+            "faq": {
+                "patterns": [FAQ],
+                "description": "Split at Q&A boundaries",
+                "flags": re.MULTILINE | re.IGNORECASE,
+            },
+        }
+    )
 
     @classmethod
     def get_preset(cls, name: str) -> dict[str, Any]:
@@ -221,9 +224,7 @@ class PrebuiltPatterns:
         preset = cls._PRESETS.get(name.lower().strip())
         if preset is None:
             available = ", ".join(sorted(cls._PRESETS.keys()))
-            raise ValueError(
-                f"Unknown pattern preset: '{name}'. Available: {available}"
-            )
+            raise ValueError(f"Unknown pattern preset: '{name}'. Available: {available}")
         return dict(preset)
 
     @classmethod
@@ -243,6 +244,7 @@ class PrebuiltPatterns:
 # ══════════════════════════════════════════════════════════════
 # Pattern Validation
 # ══════════════════════════════════════════════════════════════
+
 
 def validate_pattern(pattern: str, flags: int = 0) -> tuple[bool, str | None]:
     """
@@ -312,13 +314,15 @@ def test_pattern(
         ctx_end = min(len(text), end + 30)
         context = text[ctx_start:ctx_end].replace("\n", "\\n")
 
-        matches.append({
-            "index": i,
-            "start": start,
-            "end": end,
-            "matched": match.group()[:100],
-            "context": context,
-        })
+        matches.append(
+            {
+                "index": i,
+                "start": start,
+                "end": end,
+                "matched": match.group()[:100],
+                "context": context,
+            }
+        )
 
     return matches
 
@@ -326,6 +330,7 @@ def test_pattern(
 # ══════════════════════════════════════════════════════════════
 # Advanced Regex Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class AdvancedRegexChunker(Chunker):
     """
@@ -408,9 +413,7 @@ class AdvancedRegexChunker(Chunker):
             return self._compiled_patterns[0]
 
         # Combine with alternation
-        combined = "|".join(
-            f"(?:{p.pattern})" for p in self._compiled_patterns
-        )
+        combined = "|".join(f"(?:{p.pattern})" for p in self._compiled_patterns)
         return re.compile(combined, self._flags)
 
     # ──────────────────────────────────────────────────────────
@@ -471,13 +474,15 @@ class AdvancedRegexChunker(Chunker):
         if not split_points:
             # No splits — entire text is one segment
             heading, level = self._find_nearest_heading(text, 0)
-            return [{
-                "text": text.strip(),
-                "start": 0,
-                "end": len(text),
-                "heading": heading,
-                "heading_level": level,
-            }]
+            return [
+                {
+                    "text": text.strip(),
+                    "start": 0,
+                    "end": len(text),
+                    "heading": heading,
+                    "heading_level": level,
+                }
+            ]
 
         # Build segments between split points
         prev_end = 0
@@ -493,13 +498,15 @@ class AdvancedRegexChunker(Chunker):
 
                 if segment_text.strip():
                     heading, level = self._find_nearest_heading(text, prev_end)
-                    segments.append({
-                        "text": segment_text.strip(),
-                        "start": prev_end,
-                        "end": split_start,
-                        "heading": heading,
-                        "heading_level": level,
-                    })
+                    segments.append(
+                        {
+                            "text": segment_text.strip(),
+                            "start": prev_end,
+                            "end": split_start,
+                            "heading": heading,
+                            "heading_level": level,
+                        }
+                    )
 
             # Handle delimiter
             if self._keep_delimiter:
@@ -518,13 +525,15 @@ class AdvancedRegexChunker(Chunker):
                         next_text = delimiter_text + "\n" + text[next_start:next_end]
                         if next_text.strip():
                             heading, level = self._find_nearest_heading(text, split_start)
-                            segments.append({
-                                "text": next_text.strip(),
-                                "start": split_start,
-                                "end": next_end,
-                                "heading": heading,
-                                "heading_level": level,
-                            })
+                            segments.append(
+                                {
+                                    "text": next_text.strip(),
+                                    "start": split_start,
+                                    "end": next_end,
+                                    "heading": heading,
+                                    "heading_level": level,
+                                }
+                            )
                         # Skip the next iteration's segment creation
                         prev_end = next_end
                         continue
@@ -536,13 +545,15 @@ class AdvancedRegexChunker(Chunker):
             remaining = text[prev_end:]
             if remaining.strip():
                 heading, level = self._find_nearest_heading(text, prev_end)
-                segments.append({
-                    "text": remaining.strip(),
-                    "start": prev_end,
-                    "end": len(text),
-                    "heading": heading,
-                    "heading_level": level,
-                })
+                segments.append(
+                    {
+                        "text": remaining.strip(),
+                        "start": prev_end,
+                        "end": len(text),
+                        "heading": heading,
+                        "heading_level": level,
+                    }
+                )
 
         return segments
 
@@ -630,9 +641,7 @@ class AdvancedRegexChunker(Chunker):
         """
         results: dict[str, list[dict[str, Any]]] = {}
         for pattern_str in self._pattern_strings:
-            results[pattern_str] = test_pattern(
-                pattern_str, text, self._flags, max_matches
-            )
+            results[pattern_str] = test_pattern(pattern_str, text, self._flags, max_matches)
         return results
 
     # ──────────────────────────────────────────────────────────
@@ -641,13 +650,15 @@ class AdvancedRegexChunker(Chunker):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "patterns": self._pattern_strings,
-            "flags": self._flags,
-            "keep_delimiter": self._keep_delimiter,
-            "delimiter_position": self._delimiter_position,
-            "track_headings": self._track_headings,
-        })
+        d.update(
+            {
+                "patterns": self._pattern_strings,
+                "flags": self._flags,
+                "keep_delimiter": self._keep_delimiter,
+                "delimiter_position": self._delimiter_position,
+                "track_headings": self._track_headings,
+            }
+        )
         return d
 
     @classmethod
@@ -675,6 +686,7 @@ class AdvancedRegexChunker(Chunker):
 # ══════════════════════════════════════════════════════════════
 # Convenience Functions
 # ══════════════════════════════════════════════════════════════
+
 
 def chunk_by_regex(
     text: str,

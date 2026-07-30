@@ -45,6 +45,7 @@ api_v1_router = APIRouter(
 # Dependencies
 # ══════════════════════════════════════════════════════════════
 
+
 def _get_engine(request: Request) -> Any:
     """Get the CrawlEngine from app state."""
     from server.app import get_state
@@ -66,6 +67,7 @@ def _increment_stat(request: Request, stat: str) -> None:
 # System Endpoints
 # ══════════════════════════════════════════════════════════════
 
+
 @api_v1_router.get("/health", tags=["System"])
 async def health_check() -> JSONResponse:
     """
@@ -79,17 +81,19 @@ async def health_check() -> JSONResponse:
     state = get_state()
     engine = state.engine
 
-    return JSONResponse(content={
-        "status": "healthy",
-        "version": _get_version(),
-        "uptime_seconds": round(state.uptime_seconds, 1),
-        "browser_connected": engine.is_started if engine else False,
-        "cache_backend": state.settings.cache_backend if state.settings else "none",
-        "active_crawls": state.active_crawls,
-        "total_requests": state.total_requests,
-        "total_scrapes": state.total_scrapes,
-        "total_crawls": state.total_crawls,
-    })
+    return JSONResponse(
+        content={
+            "status": "healthy",
+            "version": _get_version(),
+            "uptime_seconds": round(state.uptime_seconds, 1),
+            "browser_connected": engine.is_started if engine else False,
+            "cache_backend": state.settings.cache_backend if state.settings else "none",
+            "active_crawls": state.active_crawls,
+            "total_requests": state.total_requests,
+            "total_scrapes": state.total_scrapes,
+            "total_crawls": state.total_crawls,
+        }
+    )
 
 
 @api_v1_router.get("/", tags=["System"])
@@ -99,36 +103,39 @@ async def api_info() -> JSONResponse:
 
     Returns API name, version, and available endpoints.
     """
-    return JSONResponse(content={
-        "name": "AgentCrawl API",
-        "version": _get_version(),
-        "api_version": "v1",
-        "description": "Web Crawling & Scraping Framework for AI Agents",
-        "docs": "/docs",
-        "endpoints": {
-            "scraping": ["POST /api/v1/scrape", "POST /api/v1/batch/scrape"],
-            "crawling": [
-                "POST /api/v1/crawl",
-                "GET /api/v1/crawl/{job_id}",
-                "DELETE /api/v1/crawl/{job_id}",
-            ],
-            "discovery": ["POST /api/v1/map"],
-            "search": ["POST /api/v1/search"],
-            "extraction": ["POST /api/v1/extract"],
-            "interaction": [
-                "POST /api/v1/interact",
-                "POST /api/v1/interact/session",
-                "GET /api/v1/interact/session/{session_id}",
-                "DELETE /api/v1/interact/session/{session_id}",
-            ],
-            "system": ["GET /api/v1/health", "GET /api/v1/"],
-        },
-    })
+    return JSONResponse(
+        content={
+            "name": "AgentCrawl API",
+            "version": _get_version(),
+            "api_version": "v1",
+            "description": "Web Crawling & Scraping Framework for AI Agents",
+            "docs": "/docs",
+            "endpoints": {
+                "scraping": ["POST /api/v1/scrape", "POST /api/v1/batch/scrape"],
+                "crawling": [
+                    "POST /api/v1/crawl",
+                    "GET /api/v1/crawl/{job_id}",
+                    "DELETE /api/v1/crawl/{job_id}",
+                ],
+                "discovery": ["POST /api/v1/map"],
+                "search": ["POST /api/v1/search"],
+                "extraction": ["POST /api/v1/extract"],
+                "interaction": [
+                    "POST /api/v1/interact",
+                    "POST /api/v1/interact/session",
+                    "GET /api/v1/interact/session/{session_id}",
+                    "DELETE /api/v1/interact/session/{session_id}",
+                ],
+                "system": ["GET /api/v1/health", "GET /api/v1/"],
+            },
+        }
+    )
 
 
 # ══════════════════════════════════════════════════════════════
 # Scraping Endpoints
 # ══════════════════════════════════════════════════════════════
+
 
 @api_v1_router.post("/scrape", tags=["Scraping"])
 async def scrape_page(request: Request) -> JSONResponse:
@@ -166,6 +173,7 @@ async def batch_scrape(request: Request) -> JSONResponse:
 # Crawling Endpoints
 # ══════════════════════════════════════════════════════════════
 
+
 @api_v1_router.post("/crawl", tags=["Crawling"], status_code=202)
 async def start_crawl(request: Request) -> JSONResponse:
     """
@@ -180,6 +188,7 @@ async def start_crawl(request: Request) -> JSONResponse:
     _increment_stat(request, "total_crawls")
 
     from server.app import get_state
+
     get_state().active_crawls += 1
 
     engine = _get_engine(request)
@@ -207,6 +216,7 @@ async def cancel_crawl(job_id: str) -> JSONResponse:
     """
     from server.api.v1.crawl import handle_cancel_crawl
     from server.app import get_state
+
     get_state().active_crawls = max(0, get_state().active_crawls - 1)
 
     return await handle_cancel_crawl(job_id)
@@ -215,6 +225,7 @@ async def cancel_crawl(job_id: str) -> JSONResponse:
 # ══════════════════════════════════════════════════════════════
 # Discovery Endpoints
 # ══════════════════════════════════════════════════════════════
+
 
 @api_v1_router.post("/map", tags=["Discovery"])
 async def map_site(request: Request) -> JSONResponse:
@@ -235,6 +246,7 @@ async def map_site(request: Request) -> JSONResponse:
 # Search Endpoints
 # ══════════════════════════════════════════════════════════════
 
+
 @api_v1_router.post("/search", tags=["Search"])
 async def search_web(request: Request) -> JSONResponse:
     """
@@ -252,6 +264,7 @@ async def search_web(request: Request) -> JSONResponse:
 # ══════════════════════════════════════════════════════════════
 # Extraction Endpoints
 # ══════════════════════════════════════════════════════════════
+
 
 @api_v1_router.post("/extract", tags=["Extraction"])
 async def extract_data(request: Request) -> JSONResponse:
@@ -271,6 +284,7 @@ async def extract_data(request: Request) -> JSONResponse:
 # ══════════════════════════════════════════════════════════════
 # Interaction Endpoints
 # ══════════════════════════════════════════════════════════════
+
 
 @api_v1_router.post("/interact", tags=["Interaction"])
 async def interact(request: Request) -> JSONResponse:
@@ -330,10 +344,12 @@ async def destroy_session(session_id: str) -> JSONResponse:
 # Utilities
 # ══════════════════════════════════════════════════════════════
 
+
 def _get_version() -> str:
     """Get the AgentCrawl version."""
     try:
         import agentcrawl
+
         return agentcrawl.__version__
     except Exception:
         return "1.0.0"

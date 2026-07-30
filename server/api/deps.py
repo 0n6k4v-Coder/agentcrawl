@@ -38,6 +38,7 @@ logger = logging.getLogger("agentcrawl.server.deps")
 # Engine & State
 # ══════════════════════════════════════════════════════════════
 
+
 def get_state() -> Any:
     """
     Get the global application state.
@@ -107,6 +108,7 @@ StateDep = Annotated[Any, Depends(get_state)]
 # Authentication
 # ══════════════════════════════════════════════════════════════
 
+
 async def verify_api_key(
     request: Request,
     authorization: str = Header(default=""),
@@ -162,8 +164,8 @@ async def verify_api_key(
         detail={
             "code": "UNAUTHORIZED",
             "message": "Invalid or missing API key. "
-                       "Provide via Authorization: Bearer <key>, "
-                       "X-API-Key header, or ?api_key=<key>.",
+            "Provide via Authorization: Bearer <key>, "
+            "X-API-Key header, or ?api_key=<key>.",
         },
     )
 
@@ -175,6 +177,7 @@ ApiKeyDep = Annotated[str | None, Depends(verify_api_key)]
 # ══════════════════════════════════════════════════════════════
 # Rate Limiting
 # ══════════════════════════════════════════════════════════════
+
 
 class _RateLimitStore:
     """Simple in-memory rate limit tracker."""
@@ -203,9 +206,7 @@ class _RateLimitStore:
         cutoff = now - self._window_seconds
 
         # Clean old entries
-        self._requests[client_id] = [
-            t for t in self._requests[client_id] if t > cutoff
-        ]
+        self._requests[client_id] = [t for t in self._requests[client_id] if t > cutoff]
 
         current_count = len(self._requests[client_id])
         remaining = max(0, self._max_requests - current_count)
@@ -275,6 +276,7 @@ RateLimitDep = Annotated[None, Depends(rate_limiter)]
 # ══════════════════════════════════════════════════════════════
 # Validation
 # ══════════════════════════════════════════════════════════════
+
 
 def validate_url(url: str) -> str:
     """
@@ -357,6 +359,7 @@ def validate_urls(urls: list[str], max_count: int = 100) -> list[str]:
 # Pagination
 # ══════════════════════════════════════════════════════════════
 
+
 class PaginationParams:
     """
     Pagination query parameters.
@@ -393,6 +396,7 @@ PaginationDep = Annotated[PaginationParams, Depends(PaginationParams)]
 # ══════════════════════════════════════════════════════════════
 # Optional Engine (for endpoints that can work without engine)
 # ══════════════════════════════════════════════════════════════
+
 
 def get_engine_optional() -> Any | None:
     """

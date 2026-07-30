@@ -67,6 +67,7 @@ logger = logging.getLogger("agentcrawl.content.filter")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ContentBlock:
     """
@@ -86,6 +87,7 @@ class ContentBlock:
         kept: Whether this block passed the filter.
         tags: HTML tags associated with this block (if available).
     """
+
     text: str
     block_type: str = "paragraph"
     level: int = 0
@@ -117,9 +119,7 @@ class ContentBlock:
     def is_noise(self) -> bool:
         """Heuristic: whether this block looks like noise."""
         return (
-            self.link_density > 0.5
-            or self.word_count < 5
-            or self.block_type in ("nav", "footer")
+            self.link_density > 0.5 or self.word_count < 5 or self.block_type in ("nav", "footer")
         )
 
 
@@ -141,6 +141,7 @@ class ContentFilterResult:
         reduction_ratio: Fraction of content removed (0.0 - 1.0).
         noise_blocks_removed: Number of noise blocks removed.
     """
+
     filtered_text: str = ""
     original_text: str = ""
     blocks: list[ContentBlock] = field(default_factory=list)
@@ -176,6 +177,7 @@ class ContentFilterResult:
 # ══════════════════════════════════════════════════════════════
 # Abstract Base Filter
 # ══════════════════════════════════════════════════════════════
+
 
 class ContentFilter(ABC):
     """
@@ -275,16 +277,17 @@ class ContentFilter(ABC):
                 if block_text:
                     # Calculate link text length
                     link_text_len = sum(
-                        len(m.group(1))
-                        for m in re.finditer(r"\[([^\]]*)\]\([^)]+\)", block_text)
+                        len(m.group(1)) for m in re.finditer(r"\[([^\]]*)\]\([^)]+\)", block_text)
                     )
-                    blocks.append(ContentBlock(
-                        text=block_text,
-                        block_type=current_type,
-                        level=current_level,
-                        index=index,
-                        link_text_length=link_text_len,
-                    ))
+                    blocks.append(
+                        ContentBlock(
+                            text=block_text,
+                            block_type=current_type,
+                            level=current_level,
+                            index=index,
+                            link_text_length=link_text_len,
+                        )
+                    )
                     index += 1
                 current_lines = []
                 current_type = "paragraph"
@@ -328,46 +331,64 @@ class ContentFilter(ABC):
             if heading_match:
                 _flush()
                 level = len(heading_match.group(1))
-                blocks.append(ContentBlock(
-                    text=stripped,
-                    block_type="heading",
-                    level=level,
-                    index=index,
-                ))
+                blocks.append(
+                    ContentBlock(
+                        text=stripped,
+                        block_type="heading",
+                        level=level,
+                        index=index,
+                    )
+                )
                 index += 1
                 continue
 
             # Navigation indicators
             nav_keywords = [
-                "navigation", "menu", "sidebar", "breadcrumb",
-                "skip to", "toggle navigation", "hamburger",
-                "cookie notice", "cookie banner",
+                "navigation",
+                "menu",
+                "sidebar",
+                "breadcrumb",
+                "skip to",
+                "toggle navigation",
+                "hamburger",
+                "cookie notice",
+                "cookie banner",
                 "cookie consent",
             ]
             if any(kw in stripped.lower() for kw in nav_keywords):
                 _flush()
-                blocks.append(ContentBlock(
-                    text=stripped,
-                    block_type="nav",
-                    index=index,
-                ))
+                blocks.append(
+                    ContentBlock(
+                        text=stripped,
+                        block_type="nav",
+                        index=index,
+                    )
+                )
                 index += 1
                 continue
 
             # Footer indicators
             footer_keywords = [
-                "copyright", "all rights reserved", "privacy policy",
-                "terms of service", "terms of use", "cookie policy",
-                "cookie notice", "cookie consent",
-                "powered by", "built with",
+                "copyright",
+                "all rights reserved",
+                "privacy policy",
+                "terms of service",
+                "terms of use",
+                "cookie policy",
+                "cookie notice",
+                "cookie consent",
+                "powered by",
+                "built with",
             ]
             if any(kw in stripped.lower() for kw in footer_keywords):
                 _flush()
-                blocks.append(ContentBlock(
-                    text=stripped,
-                    block_type="footer",
-                    index=index,
-                ))
+                blocks.append(
+                    ContentBlock(
+                        text=stripped,
+                        block_type="footer",
+                        index=index,
+                    )
+                )
                 index += 1
                 continue
 
@@ -423,6 +444,7 @@ class ContentFilter(ABC):
 # ══════════════════════════════════════════════════════════════
 # Pruning Content Filter
 # ══════════════════════════════════════════════════════════════
+
 
 class PruningContentFilter(ContentFilter):
     """
@@ -584,10 +606,7 @@ class PruningContentFilter(ContentFilter):
                 continue
 
             # Remove high link density
-            if (
-                self._remove_high_link_density
-                and block.link_density > self._max_link_density
-            ):
+            if self._remove_high_link_density and block.link_density > self._max_link_density:
                 block.kept = False
                 noise_removed += 1
                 continue
@@ -680,17 +699,19 @@ class PruningContentFilter(ContentFilter):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "remove_nav": self._remove_nav,
-            "remove_footer": self._remove_footer,
-            "remove_high_link_density": self._remove_high_link_density,
-            "max_link_density": self._max_link_density,
-            "keep_headings": self._keep_headings,
-            "keep_code": self._keep_code,
-            "keep_tables": self._keep_tables,
-            "keep_first_n": self._keep_first_n,
-            "keep_last_n": self._keep_last_n,
-        })
+        d.update(
+            {
+                "remove_nav": self._remove_nav,
+                "remove_footer": self._remove_footer,
+                "remove_high_link_density": self._remove_high_link_density,
+                "max_link_density": self._max_link_density,
+                "keep_headings": self._keep_headings,
+                "keep_code": self._keep_code,
+                "keep_tables": self._keep_tables,
+                "keep_first_n": self._keep_first_n,
+                "keep_last_n": self._keep_last_n,
+            }
+        )
         return d
 
     @classmethod
@@ -720,6 +741,7 @@ class PruningContentFilter(ContentFilter):
 # ══════════════════════════════════════════════════════════════
 # Factory
 # ══════════════════════════════════════════════════════════════
+
 
 def create_content_filter(
     filter_type: str = "pruning",
@@ -752,12 +774,10 @@ def create_content_filter(
 
     if filter_lower == "bm25":
         from agentcrawl.content.bm25_filter import BM25ContentFilter
+
         return BM25ContentFilter(**kwargs)
 
-    raise ValueError(
-        f"Unknown content filter: '{filter_type}'. "
-        f"Available: none, pruning, bm25"
-    )
+    raise ValueError(f"Unknown content filter: '{filter_type}'. Available: none, pruning, bm25")
 
 
 def create_content_filter_from_config(config: Any) -> ContentFilter | None:
@@ -798,6 +818,7 @@ def create_content_filter_from_config(config: Any) -> ContentFilter | None:
 # ══════════════════════════════════════════════════════════════
 # No-Op Filter
 # ══════════════════════════════════════════════════════════════
+
 
 class _NoOpFilter(ContentFilter):
     """A filter that passes all content through unchanged."""

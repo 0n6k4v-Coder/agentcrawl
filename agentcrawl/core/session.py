@@ -67,6 +67,7 @@ logger = logging.getLogger("agentcrawl.core.session")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class PageVisit:
     """
@@ -82,6 +83,7 @@ class PageVisit:
         action_count: Number of actions performed.
         error: Error message (if failed).
     """
+
     url: str
     timestamp: float = field(default_factory=time.time)
     status_code: int = 0
@@ -122,6 +124,7 @@ class SessionState:
         user_agent: Session-level User-Agent override.
         headers: Session-level header overrides.
     """
+
     session_id: str = ""
     created_at: float = field(default_factory=time.time)
     last_active_at: float = field(default_factory=time.time)
@@ -166,19 +169,23 @@ class SessionState:
         }
 
     def to_json(self) -> str:
-        return json.dumps({
-            "session_id": self.session_id,
-            "created_at": self.created_at,
-            "last_active_at": self.last_active_at,
-            "expires_at": self.expires_at,
-            "cookies": self.cookies,
-            "local_storage": self.local_storage,
-            "history": self.history,
-            "metadata": self.metadata,
-            "page_count": self.page_count,
-            "user_agent": self.user_agent,
-            "headers": self.headers,
-        }, ensure_ascii=False, default=str)
+        return json.dumps(
+            {
+                "session_id": self.session_id,
+                "created_at": self.created_at,
+                "last_active_at": self.last_active_at,
+                "expires_at": self.expires_at,
+                "cookies": self.cookies,
+                "local_storage": self.local_storage,
+                "history": self.history,
+                "metadata": self.metadata,
+                "page_count": self.page_count,
+                "user_agent": self.user_agent,
+                "headers": self.headers,
+            },
+            ensure_ascii=False,
+            default=str,
+        )
 
     @classmethod
     def from_json(cls, raw: str) -> SessionState:
@@ -201,6 +208,7 @@ class SessionState:
 # ══════════════════════════════════════════════════════════════
 # Crawl Session
 # ══════════════════════════════════════════════════════════════
+
 
 class CrawlSession:
     """
@@ -341,9 +349,7 @@ class CrawlSession:
                 return
 
             if self._state.is_expired:
-                raise RuntimeError(
-                    f"Session {self._state.session_id} has expired"
-                )
+                raise RuntimeError(f"Session {self._state.session_id} has expired")
 
             # Try to restore from disk
             if self._persist:
@@ -500,6 +506,7 @@ class CrawlSession:
 
             # Build result
             from agentcrawl.core.engine import CrawlResult
+
             result = CrawlResult(
                 url=url,
                 success=True,
@@ -528,6 +535,7 @@ class CrawlSession:
             self._record_visit(url=url, success=False, error=str(e), duration_ms=duration)
 
             from agentcrawl.core.engine import CrawlResult
+
             return CrawlResult(
                 url=url,
                 success=False,
@@ -716,10 +724,7 @@ class CrawlSession:
                 "origins": [
                     {
                         "origin": origin,
-                        "localStorage": [
-                            {"name": k, "value": v}
-                            for k, v in items.items()
-                        ],
+                        "localStorage": [{"name": k, "value": v} for k, v in items.items()],
                     }
                     for origin, items in self._state.local_storage.items()
                 ],
@@ -762,9 +767,7 @@ class CrawlSession:
         path = Path(storage_dir)
         if not path.exists():
             return []
-        return [
-            f.stem for f in path.glob("*.json")
-        ]
+        return [f.stem for f in path.glob("*.json")]
 
     # ──────────────────────────────────────────────────────────
     # Internal Helpers
@@ -796,15 +799,12 @@ class CrawlSession:
 
     def _ensure_started(self) -> None:
         if not self._started:
-            raise RuntimeError(
-                "Session not started. Call start() or use 'async with' first."
-            )
+            raise RuntimeError("Session not started. Call start() or use 'async with' first.")
 
     def _check_expired(self) -> None:
         if self._state.is_expired:
             raise RuntimeError(
-                f"Session {self._state.session_id} has expired "
-                f"(age={self._state.age_seconds:.0f}s)"
+                f"Session {self._state.session_id} has expired (age={self._state.age_seconds:.0f}s)"
             )
 
     @staticmethod

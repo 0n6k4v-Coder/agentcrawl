@@ -53,8 +53,10 @@ MASK_VALUE = "********"
 # Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class BrowserType(str, Enum):
     """Supported browser engines."""
+
     CHROMIUM = "chromium"
     FIREFOX = "firefox"
     WEBKIT = "webkit"
@@ -62,6 +64,7 @@ class BrowserType(str, Enum):
 
 class ProxyRotationStrategy(str, Enum):
     """Proxy rotation strategies."""
+
     NONE = "none"
     ROUND_ROBIN = "round_robin"
     RANDOM = "random"
@@ -70,6 +73,7 @@ class ProxyRotationStrategy(str, Enum):
 
 class ScreenshotFormat(str, Enum):
     """Screenshot output formats."""
+
     PNG = "png"
     JPEG = "jpeg"
 
@@ -77,6 +81,7 @@ class ScreenshotFormat(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Sub-Configuration Models
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ViewportConfig:
@@ -91,6 +96,7 @@ class ViewportConfig:
         has_touch: Whether to enable touch events.
         is_landscape: Whether the viewport is in landscape orientation.
     """
+
     width: int = 1280
     height: int = 720
     device_scale_factor: float = 1.0
@@ -149,18 +155,23 @@ class ViewportConfig:
     def mobile(cls) -> ViewportConfig:
         """375x812 mobile viewport (iPhone-like)."""
         return cls(
-            width=375, height=812,
+            width=375,
+            height=812,
             device_scale_factor=3.0,
-            is_mobile=True, has_touch=True, is_landscape=False,
+            is_mobile=True,
+            has_touch=True,
+            is_landscape=False,
         )
 
     @classmethod
     def mobile_landscape(cls) -> ViewportConfig:
         """812x375 mobile viewport (landscape)."""
         return cls(
-            width=812, height=375,
+            width=812,
+            height=375,
             device_scale_factor=3.0,
-            is_mobile=True, has_touch=True,
+            is_mobile=True,
+            has_touch=True,
         )
 
 
@@ -177,6 +188,7 @@ class ProxyConfig:
         rotation: Proxy rotation strategy.
         proxy_list: List of proxy servers for rotation.
     """
+
     server: str | None = None
     username: str | None = None
     password: SecretStr | None = None
@@ -265,6 +277,7 @@ class BrowserPoolConfig:
         recycle_after: Recycle page after this many navigations.
         health_check_interval: Seconds between pool health checks.
     """
+
     max_pages: int = 5
     pre_warm: int = 1
     max_contexts: int = 3
@@ -310,6 +323,7 @@ class SessionConfig:
         local_storage: Initial localStorage key-value pairs.
         restore_on_start: Restore previous session state on startup.
     """
+
     persist: bool = False
     storage_dir: str = ".agentcrawl/sessions"
     session_id: str | None = None
@@ -354,6 +368,7 @@ class RecordingConfig:
         har_path: Path for HAR file.
         screenshot_on_error: Capture screenshot on page errors.
     """
+
     video_enabled: bool = False
     video_dir: str = ".agentcrawl/videos"
     video_size: tuple[int, int] = (1280, 720)
@@ -402,6 +417,7 @@ class GeolocationConfig:
         longitude: Longitude coordinate.
         accuracy: Accuracy in meters.
     """
+
     latitude: float = 0.0
     longitude: float = 0.0
     accuracy: float = 100.0
@@ -425,6 +441,7 @@ class GeolocationConfig:
 # ══════════════════════════════════════════════════════════════
 # Main Browser Configuration
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class BrowserConfig:
@@ -691,7 +708,9 @@ class BrowserConfig:
     def to_dict(self) -> dict[str, Any]:
         """Convert to a plain dictionary (safe for JSON serialization)."""
         result: dict[str, Any] = {
-            "browser_type": self.browser_type.value if isinstance(self.browser_type, BrowserType) else self.browser_type,
+            "browser_type": self.browser_type.value
+            if isinstance(self.browser_type, BrowserType)
+            else self.browser_type,
             "headless": self.headless,
             "stealth": self.stealth,
             "channel": self.channel,
@@ -774,9 +793,11 @@ class BrowserConfig:
             session=session or SessionConfig(),
             recording=recording or RecordingConfig(),
             geolocation=geolocation,
-            **{k: v for k, v in filtered.items() if k not in (
-                "viewport", "proxy", "pool", "session", "recording", "geolocation"
-            )},
+            **{
+                k: v
+                for k, v in filtered.items()
+                if k not in ("viewport", "proxy", "pool", "session", "recording", "geolocation")
+            },
         )
 
     # ──────────────────────────────────────────────────────────
@@ -809,6 +830,7 @@ class BrowserConfig:
         Returns:
             BrowserConfig populated from environment.
         """
+
         def _get(key: str, default: str = "") -> str:
             return os.environ.get(f"{prefix}_{key}", default)
 
@@ -955,7 +977,11 @@ class BrowserConfig:
         return BrowserConfig.from_dict(current)
 
     def __repr__(self) -> str:
-        bt = self.browser_type.value if isinstance(self.browser_type, BrowserType) else self.browser_type
+        bt = (
+            self.browser_type.value
+            if isinstance(self.browser_type, BrowserType)
+            else self.browser_type
+        )
         return (
             f"BrowserConfig(browser={bt}, headless={self.headless}, "
             f"stealth={self.stealth}, viewport={self.viewport.width}x{self.viewport.height})"

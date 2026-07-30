@@ -73,6 +73,7 @@ logger = logging.getLogger("agentcrawl.crawling.url_scorer")
 # Scoring Weights
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ScoringWeights:
     """
@@ -90,6 +91,7 @@ class ScoringWeights:
         query_penalty_weight: Weight for query string penalty.
         extension_weight: Weight for file extension signals.
     """
+
     keyword_weight: float = 0.30
     structure_weight: float = 0.20
     depth_weight: float = 0.15
@@ -103,14 +105,17 @@ class ScoringWeights:
         """Validate weights and return warnings."""
         warnings: list[str] = []
         total = (
-            self.keyword_weight + self.structure_weight + self.depth_weight
-            + self.link_text_weight + self.freshness_weight + self.domain_weight
-            + self.query_penalty_weight + self.extension_weight
+            self.keyword_weight
+            + self.structure_weight
+            + self.depth_weight
+            + self.link_text_weight
+            + self.freshness_weight
+            + self.domain_weight
+            + self.query_penalty_weight
+            + self.extension_weight
         )
         if abs(total - 1.0) > 0.1:
-            warnings.append(
-                f"Weights sum to {total:.2f}, expected ~1.0"
-            )
+            warnings.append(f"Weights sum to {total:.2f}, expected ~1.0")
         return warnings
 
     def to_dict(self) -> dict[str, float]:
@@ -130,6 +135,7 @@ class ScoringWeights:
 # Score Breakdown
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ScoreBreakdown:
     """
@@ -148,6 +154,7 @@ class ScoreBreakdown:
         extension_score: File extension score.
         factors: Human-readable factor descriptions.
     """
+
     url: str = ""
     total_score: float = 0.0
     keyword_score: float = 0.0
@@ -181,6 +188,7 @@ class ScoreBreakdown:
 # ══════════════════════════════════════════════════════════════
 # Advanced URL Scorer
 # ══════════════════════════════════════════════════════════════
+
 
 class AdvancedURLScorer(URLScorer):
     """
@@ -224,40 +232,137 @@ class AdvancedURLScorer(URLScorer):
 
     # Content value keywords
     CONTENT_KEYWORDS: tuple[str, ...] = (
-        "guide", "tutorial", "docs", "documentation", "reference",
-        "api", "manual", "help", "faq", "wiki", "blog", "post",
-        "article", "news", "learn", "how-to", "howto", "getting-started",
-        "quickstart", "overview", "introduction", "setup", "install",
-        "installation", "configuration", "config", "examples", "sample",
-        "demo", "walkthrough", "primer", "handbook", "spec",
-        "specification", "changelog", "release", "migration",
-        "troubleshooting", "debug", "best-practices", "patterns",
+        "guide",
+        "tutorial",
+        "docs",
+        "documentation",
+        "reference",
+        "api",
+        "manual",
+        "help",
+        "faq",
+        "wiki",
+        "blog",
+        "post",
+        "article",
+        "news",
+        "learn",
+        "how-to",
+        "howto",
+        "getting-started",
+        "quickstart",
+        "overview",
+        "introduction",
+        "setup",
+        "install",
+        "installation",
+        "configuration",
+        "config",
+        "examples",
+        "sample",
+        "demo",
+        "walkthrough",
+        "primer",
+        "handbook",
+        "spec",
+        "specification",
+        "changelog",
+        "release",
+        "migration",
+        "troubleshooting",
+        "debug",
+        "best-practices",
+        "patterns",
     )
 
     # Noise keywords
     NOISE_KEYWORDS: tuple[str, ...] = (
-        "login", "signin", "signup", "register", "auth", "oauth",
-        "cart", "checkout", "payment", "billing", "pricing", "subscribe",
-        "search", "filter", "sort", "tag", "category", "archive",
-        "page", "feed", "rss", "atom", "sitemap", "robots",
-        "about", "contact", "privacy", "terms", "legal", "cookie",
-        "careers", "jobs", "press", "media", "partners",
-        "admin", "dashboard", "settings", "profile", "account",
-        "wp-admin", "wp-login", "wp-content", "wp-includes",
+        "login",
+        "signin",
+        "signup",
+        "register",
+        "auth",
+        "oauth",
+        "cart",
+        "checkout",
+        "payment",
+        "billing",
+        "pricing",
+        "subscribe",
+        "search",
+        "filter",
+        "sort",
+        "tag",
+        "category",
+        "archive",
+        "page",
+        "feed",
+        "rss",
+        "atom",
+        "sitemap",
+        "robots",
+        "about",
+        "contact",
+        "privacy",
+        "terms",
+        "legal",
+        "cookie",
+        "careers",
+        "jobs",
+        "press",
+        "media",
+        "partners",
+        "admin",
+        "dashboard",
+        "settings",
+        "profile",
+        "account",
+        "wp-admin",
+        "wp-login",
+        "wp-content",
+        "wp-includes",
     )
 
     # Valuable file extensions
-    CONTENT_EXTENSIONS: frozenset[str] = frozenset({
-        ".html", ".htm", ".xhtml", ".md", ".rst",
-    })
+    CONTENT_EXTENSIONS: frozenset[str] = frozenset(
+        {
+            ".html",
+            ".htm",
+            ".xhtml",
+            ".md",
+            ".rst",
+        }
+    )
 
     # Noise file extensions
-    NOISE_EXTENSIONS: frozenset[str] = frozenset({
-        ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
-        ".ico", ".woff", ".woff2", ".ttf", ".eot", ".pdf",
-        ".zip", ".tar", ".gz", ".mp3", ".mp4", ".avi",
-        ".xml", ".json", ".csv", ".txt", ".rss",
-    })
+    NOISE_EXTENSIONS: frozenset[str] = frozenset(
+        {
+            ".css",
+            ".js",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".ico",
+            ".woff",
+            ".woff2",
+            ".ttf",
+            ".eot",
+            ".pdf",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".mp3",
+            ".mp4",
+            ".avi",
+            ".xml",
+            ".json",
+            ".csv",
+            ".txt",
+            ".rss",
+        }
+    )
 
     def __init__(
         self,
@@ -269,7 +374,9 @@ class AdvancedURLScorer(URLScorer):
         **kwargs: Any,
     ):
         super().__init__(
-            content_keywords=content_keywords if content_keywords is not None else self.CONTENT_KEYWORDS,
+            content_keywords=content_keywords
+            if content_keywords is not None
+            else self.CONTENT_KEYWORDS,
             noise_keywords=noise_keywords if noise_keywords is not None else self.NOISE_KEYWORDS,
             **kwargs,
         )
@@ -487,7 +594,8 @@ class AdvancedURLScorer(URLScorer):
 
         # Slug-like segments (long, hyphenated) suggest content
         slug_count = sum(
-            1 for seg in segments
+            1
+            for seg in segments
             if len(seg) > 12 and "-" in seg and re.match(r"^[a-z0-9-]+$", seg, re.I)
         )
         if slug_count > 0:
@@ -603,10 +711,15 @@ class AdvancedURLScorer(URLScorer):
 
         # Known high-authority domains
         high_authority = {
-            "github.com", "stackoverflow.com", "wikipedia.org",
-            "developer.mozilla.org", "docs.python.org",
-            "docs.oracle.com", "learn.microsoft.com",
-            "cloud.google.com", "aws.amazon.com",
+            "github.com",
+            "stackoverflow.com",
+            "wikipedia.org",
+            "developer.mozilla.org",
+            "docs.python.org",
+            "docs.oracle.com",
+            "learn.microsoft.com",
+            "cloud.google.com",
+            "aws.amazon.com",
         }
 
         if hostname in high_authority:
@@ -646,7 +759,15 @@ class AdvancedURLScorer(URLScorer):
             penalty += 0.2
 
         # Penalty for tracking/session parameters
-        tracking_params = {"utm_source", "utm_medium", "utm_campaign", "fbclid", "gclid", "ref", "session"}
+        tracking_params = {
+            "utm_source",
+            "utm_medium",
+            "utm_campaign",
+            "fbclid",
+            "gclid",
+            "ref",
+            "session",
+        }
         if any(p.lower() in tracking_params for p in params):
             penalty += 0.2
 
@@ -709,6 +830,7 @@ class AdvancedURLScorer(URLScorer):
 # Scoring Presets
 # ══════════════════════════════════════════════════════════════
 
+
 class ScoringPreset:
     """
     Pre-built scoring configurations for common use cases.
@@ -733,15 +855,42 @@ class ScoringPreset:
                 extension_weight=0.05,
             ),
             content_keywords=[
-                "docs", "documentation", "guide", "tutorial", "reference",
-                "api", "manual", "help", "faq", "wiki", "setup", "install",
-                "configuration", "getting-started", "quickstart", "overview",
-                "examples", "spec", "specification", "handbook",
+                "docs",
+                "documentation",
+                "guide",
+                "tutorial",
+                "reference",
+                "api",
+                "manual",
+                "help",
+                "faq",
+                "wiki",
+                "setup",
+                "install",
+                "configuration",
+                "getting-started",
+                "quickstart",
+                "overview",
+                "examples",
+                "spec",
+                "specification",
+                "handbook",
             ],
             noise_keywords=[
-                "login", "signup", "cart", "checkout", "pricing",
-                "search", "tag", "category", "blog", "news",
-                "about", "contact", "careers", "press",
+                "login",
+                "signup",
+                "cart",
+                "checkout",
+                "pricing",
+                "search",
+                "tag",
+                "category",
+                "blog",
+                "news",
+                "about",
+                "contact",
+                "careers",
+                "press",
             ],
         )
 
@@ -760,12 +909,27 @@ class ScoringPreset:
                 extension_weight=0.05,
             ),
             content_keywords=[
-                "blog", "post", "article", "news", "story",
-                "opinion", "review", "analysis", "interview",
+                "blog",
+                "post",
+                "article",
+                "news",
+                "story",
+                "opinion",
+                "review",
+                "analysis",
+                "interview",
             ],
             noise_keywords=[
-                "category", "tag", "archive", "page", "author",
-                "login", "signup", "search", "feed", "rss",
+                "category",
+                "tag",
+                "archive",
+                "page",
+                "author",
+                "login",
+                "signup",
+                "search",
+                "feed",
+                "rss",
             ],
         )
 
@@ -784,13 +948,31 @@ class ScoringPreset:
                 extension_weight=0.05,
             ),
             content_keywords=[
-                "api", "endpoint", "reference", "docs", "documentation",
-                "guide", "sdk", "client", "webhook", "authentication",
-                "rate-limit", "error", "response", "request",
+                "api",
+                "endpoint",
+                "reference",
+                "docs",
+                "documentation",
+                "guide",
+                "sdk",
+                "client",
+                "webhook",
+                "authentication",
+                "rate-limit",
+                "error",
+                "response",
+                "request",
             ],
             noise_keywords=[
-                "blog", "news", "pricing", "login", "signup",
-                "status", "changelog", "about", "contact",
+                "blog",
+                "news",
+                "pricing",
+                "login",
+                "signup",
+                "status",
+                "changelog",
+                "about",
+                "contact",
             ],
         )
 
@@ -809,12 +991,26 @@ class ScoringPreset:
                 extension_weight=0.05,
             ),
             content_keywords=[
-                "product", "item", "shop", "buy", "detail",
-                "review", "specification", "description",
+                "product",
+                "item",
+                "shop",
+                "buy",
+                "detail",
+                "review",
+                "specification",
+                "description",
             ],
             noise_keywords=[
-                "cart", "checkout", "payment", "account", "login",
-                "search", "filter", "sort", "wishlist", "compare",
+                "cart",
+                "checkout",
+                "payment",
+                "account",
+                "login",
+                "search",
+                "filter",
+                "sort",
+                "wishlist",
+                "compare",
             ],
         )
 

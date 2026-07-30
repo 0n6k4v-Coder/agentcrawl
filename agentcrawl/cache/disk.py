@@ -65,6 +65,7 @@ logger = logging.getLogger("agentcrawl.cache.disk")
 # Metadata Model
 # ══════════════════════════════════════════════════════════════
 
+
 class _EntryMeta:
     """
     Internal metadata for a disk cache entry.
@@ -145,6 +146,7 @@ class _EntryMeta:
 # ══════════════════════════════════════════════════════════════
 # Disk Cache Backend
 # ══════════════════════════════════════════════════════════════
+
 
 class DiskCacheBackend(CacheBackend):
     """
@@ -362,10 +364,7 @@ class DiskCacheBackend(CacheBackend):
             return
 
         index_path = self._base_path / "_index.json"
-        data = {
-            key: meta.to_dict()
-            for key, meta in self._index.items()
-        }
+        data = {key: meta.to_dict() for key, meta in self._index.items()}
 
         try:
             raw = json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -545,10 +544,7 @@ class DiskCacheBackend(CacheBackend):
         index = await self._ensure_index()
         prefix = f"{self._config.prefix}:"
 
-        keys_to_delete = [
-            key for key in index
-            if key.startswith(prefix)
-        ]
+        keys_to_delete = [key for key in index if key.startswith(prefix)]
 
         for key in keys_to_delete:
             await self._delete_entry(key)
@@ -568,10 +564,7 @@ class DiskCacheBackend(CacheBackend):
         if pattern == "*":
             return list(index.keys())
 
-        return [
-            key for key in index
-            if fnmatch.fnmatch(key, pattern)
-        ]
+        return [key for key in index if fnmatch.fnmatch(key, pattern)]
 
     async def _size_raw(self) -> int:
         """Get the number of entries in the cache."""
@@ -645,6 +638,7 @@ class DiskCacheBackend(CacheBackend):
         Returns:
             Dictionary with total size, file count, and per-shard info.
         """
+
         def _calc() -> dict[str, Any]:
             total_bytes = 0
             file_count = 0
@@ -705,6 +699,7 @@ class DiskCacheBackend(CacheBackend):
         Returns:
             Number of orphaned files removed.
         """
+
         def _find_orphans() -> list[Path]:
             orphans: list[Path] = []
 

@@ -54,6 +54,7 @@ logger = logging.getLogger("agentcrawl.output.screenshot")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ScreenshotInfo:
     """
@@ -67,6 +68,7 @@ class ScreenshotInfo:
         base64_length: Length of base64 string.
         is_full_page: Whether this is a full-page screenshot.
     """
+
     format: str = "png"
     width: int = 0
     height: int = 0
@@ -98,6 +100,7 @@ class ScreenshotDiff:
         width: Image width.
         height: Image height.
     """
+
     similarity: float = 0.0
     diff_percentage: float = 0.0
     diff_image_base64: str = ""
@@ -117,6 +120,7 @@ class ScreenshotDiff:
 # ══════════════════════════════════════════════════════════════
 # Screenshot Handler
 # ══════════════════════════════════════════════════════════════
+
 
 class ScreenshotHandler:
     """
@@ -391,6 +395,7 @@ class ScreenshotHandler:
             if fmt == "png":
                 # PNG: width at bytes 16-20, height at 20-24 (big-endian)
                 import struct
+
                 width = struct.unpack(">I", image_bytes[16:20])[0]
                 height = struct.unpack(">I", image_bytes[20:24])[0]
                 return width, height
@@ -402,6 +407,7 @@ class ScreenshotHandler:
             elif fmt == "webp":
                 # WebP: dimensions at bytes 26-30
                 import struct
+
                 if len(image_bytes) >= 30:
                     width = struct.unpack("<H", image_bytes[26:28])[0] & 0x3FFF
                     height = struct.unpack("<H", image_bytes[28:30])[0] & 0x3FFF
@@ -427,8 +433,8 @@ class ScreenshotHandler:
 
             # SOF markers (Start of Frame)
             if marker in (0xC0, 0xC1, 0xC2, 0xC3) and i + 9 < len(data):
-                height = struct.unpack(">H", data[i + 5:i + 7])[0]
-                width = struct.unpack(">H", data[i + 7:i + 9])[0]
+                height = struct.unpack(">H", data[i + 5 : i + 7])[0]
+                width = struct.unpack(">H", data[i + 7 : i + 9])[0]
                 return width, height
 
             # Skip to next marker
@@ -438,7 +444,7 @@ class ScreenshotHandler:
                 break
             else:
                 if i + 3 < len(data):
-                    length = struct.unpack(">H", data[i + 2:i + 4])[0]
+                    length = struct.unpack(">H", data[i + 2 : i + 4])[0]
                     i += 2 + length
                 else:
                     break
@@ -473,8 +479,7 @@ class ScreenshotHandler:
             from PIL import Image
         except ImportError:
             logger.warning(
-                "Pillow not available for screenshot comparison. "
-                "Install with: pip install Pillow"
+                "Pillow not available for screenshot comparison. Install with: pip install Pillow"
             )
             return ScreenshotDiff()
 
@@ -621,6 +626,5 @@ class ScreenshotHandler:
 
     def __repr__(self) -> str:
         return (
-            f"ScreenshotHandler(format={self._default_format!r}, "
-            f"output_dir={self._output_dir!r})"
+            f"ScreenshotHandler(format={self._default_format!r}, output_dir={self._output_dir!r})"
         )

@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 # Fixtures
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest_asyncio.fixture
 async def app() -> AsyncGenerator[Any, None]:
     """Create a test FastAPI app."""
@@ -51,6 +52,8 @@ async def app() -> AsyncGenerator[Any, None]:
     application = create_app(settings)
 
     yield application
+
+
 @pytest_asyncio.fixture
 async def client(app: Any) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client."""
@@ -68,6 +71,7 @@ async def client(app: Any) -> AsyncGenerator[AsyncClient, None]:
 # POST /search — Basic
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSearchBasic:
     """Tests for basic search operations."""
 
@@ -75,9 +79,12 @@ class TestSearchBasic:
     @pytest.mark.integration
     async def test_search_basic(self, client: AsyncClient) -> None:
         """Basic search returns results."""
-        response = await client.post("/search", json={
-            "query": "python programming",
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python programming",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -92,10 +99,13 @@ class TestSearchBasic:
     @pytest.mark.integration
     async def test_search_returns_results(self, client: AsyncClient) -> None:
         """Search returns structured results."""
-        response = await client.post("/search", json={
-            "query": "python asyncio tutorial",
-            "max_results": 3,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python asyncio tutorial",
+                "max_results": 3,
+            },
+        )
 
         data = response.json()
         assert data["total_results"] >= 1
@@ -109,10 +119,13 @@ class TestSearchBasic:
     @pytest.mark.integration
     async def test_search_result_has_url(self, client: AsyncClient) -> None:
         """Each result has a valid URL."""
-        response = await client.post("/search", json={
-            "query": "python docs",
-            "max_results": 3,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python docs",
+                "max_results": 3,
+            },
+        )
 
         data = response.json()
         for result in data["results"]:
@@ -123,9 +136,12 @@ class TestSearchBasic:
     @pytest.mark.integration
     async def test_search_default_provider(self, client: AsyncClient) -> None:
         """Default provider is duckduckgo."""
-        response = await client.post("/search", json={
-            "query": "test query",
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "test query",
+            },
+        )
 
         data = response.json()
         assert data["provider"] == "duckduckgo"
@@ -135,6 +151,7 @@ class TestSearchBasic:
 # POST /search — Max Results
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSearchMaxResults:
     """Tests for result limiting."""
 
@@ -142,10 +159,13 @@ class TestSearchMaxResults:
     @pytest.mark.integration
     async def test_max_results_respected(self, client: AsyncClient) -> None:
         """max_results limits the number of results."""
-        response = await client.post("/search", json={
-            "query": "python programming",
-            "max_results": 2,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python programming",
+                "max_results": 2,
+            },
+        )
 
         data = response.json()
         assert len(data["results"]) <= 2
@@ -154,10 +174,13 @@ class TestSearchMaxResults:
     @pytest.mark.integration
     async def test_max_results_one(self, client: AsyncClient) -> None:
         """max_results=1 returns at most 1 result."""
-        response = await client.post("/search", json={
-            "query": "python",
-            "max_results": 1,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python",
+                "max_results": 1,
+            },
+        )
 
         data = response.json()
         assert len(data["results"]) <= 1
@@ -167,6 +190,7 @@ class TestSearchMaxResults:
 # POST /search — Providers
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSearchProviders:
     """Tests for search provider selection."""
 
@@ -174,11 +198,14 @@ class TestSearchProviders:
     @pytest.mark.integration
     async def test_duckduckgo_provider(self, client: AsyncClient) -> None:
         """DuckDuckGo provider works."""
-        response = await client.post("/search", json={
-            "query": "python tutorial",
-            "provider": "duckduckgo",
-            "max_results": 3,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python tutorial",
+                "provider": "duckduckgo",
+                "max_results": 3,
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -187,10 +214,13 @@ class TestSearchProviders:
     @pytest.mark.asyncio
     async def test_invalid_provider(self, client: AsyncClient) -> None:
         """Invalid provider returns 422."""
-        response = await client.post("/search", json={
-            "query": "test",
-            "provider": "nonexistent_provider",
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "test",
+                "provider": "nonexistent_provider",
+            },
+        )
 
         assert response.status_code == 422
 
@@ -198,10 +228,13 @@ class TestSearchProviders:
     @pytest.mark.integration
     async def test_provider_without_api_key(self, client: AsyncClient) -> None:
         """Provider requiring API key fails gracefully without one."""
-        response = await client.post("/search", json={
-            "query": "test",
-            "provider": "tavily",
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "test",
+                "provider": "tavily",
+            },
+        )
 
         # Should return 200 with error or 500
         assert response.status_code in (200, 422, 500)
@@ -210,6 +243,7 @@ class TestSearchProviders:
 # ══════════════════════════════════════════════════════════════
 # POST /search — Validation
 # ══════════════════════════════════════════════════════════════
+
 
 class TestSearchValidation:
     """Tests for search request validation."""
@@ -231,30 +265,39 @@ class TestSearchValidation:
     @pytest.mark.asyncio
     async def test_max_results_too_high(self, client: AsyncClient) -> None:
         """max_results above limit returns 422."""
-        response = await client.post("/search", json={
-            "query": "test",
-            "max_results": 1000,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "test",
+                "max_results": 1000,
+            },
+        )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_max_results_zero(self, client: AsyncClient) -> None:
         """max_results=0 returns 422."""
-        response = await client.post("/search", json={
-            "query": "test",
-            "max_results": 0,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "test",
+                "max_results": 0,
+            },
+        )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_invalid_time_range(self, client: AsyncClient) -> None:
         """Invalid time_range returns 422."""
-        response = await client.post("/search", json={
-            "query": "test",
-            "time_range": "invalid_range",
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "test",
+                "time_range": "invalid_range",
+            },
+        )
 
         assert response.status_code == 422
 
@@ -274,6 +317,7 @@ class TestSearchValidation:
 # POST /search — Options
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSearchOptions:
     """Tests for search options."""
 
@@ -281,11 +325,14 @@ class TestSearchOptions:
     @pytest.mark.integration
     async def test_search_with_language(self, client: AsyncClient) -> None:
         """Search with language parameter."""
-        response = await client.post("/search", json={
-            "query": "python programming",
-            "language": "en",
-            "max_results": 3,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python programming",
+                "language": "en",
+                "max_results": 3,
+            },
+        )
 
         assert response.status_code == 200
 
@@ -293,11 +340,14 @@ class TestSearchOptions:
     @pytest.mark.integration
     async def test_search_with_time_range(self, client: AsyncClient) -> None:
         """Search with time range filter."""
-        response = await client.post("/search", json={
-            "query": "python release",
-            "time_range": "year",
-            "max_results": 3,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python release",
+                "time_range": "year",
+                "max_results": 3,
+            },
+        )
 
         assert response.status_code == 200
 
@@ -305,11 +355,14 @@ class TestSearchOptions:
     @pytest.mark.integration
     async def test_search_with_scrape_results(self, client: AsyncClient) -> None:
         """Search with scrape_results=True."""
-        response = await client.post("/search", json={
-            "query": "python asyncio",
-            "max_results": 2,
-            "scrape_results": True,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python asyncio",
+                "max_results": 2,
+                "scrape_results": True,
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -324,6 +377,7 @@ class TestSearchOptions:
 # POST /search — Response Structure
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSearchResponseStructure:
     """Tests for search response structure."""
 
@@ -331,10 +385,13 @@ class TestSearchResponseStructure:
     @pytest.mark.integration
     async def test_response_has_all_fields(self, client: AsyncClient) -> None:
         """Response includes all expected fields."""
-        response = await client.post("/search", json={
-            "query": "python",
-            "max_results": 3,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python",
+                "max_results": 3,
+            },
+        )
 
         data = response.json()
 
@@ -348,10 +405,13 @@ class TestSearchResponseStructure:
     @pytest.mark.integration
     async def test_result_item_structure(self, client: AsyncClient) -> None:
         """Each result item has expected fields."""
-        response = await client.post("/search", json={
-            "query": "python docs",
-            "max_results": 3,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "python docs",
+                "max_results": 3,
+            },
+        )
 
         data = response.json()
         if data["results"]:
@@ -365,9 +425,12 @@ class TestSearchResponseStructure:
     @pytest.mark.integration
     async def test_duration_is_positive(self, client: AsyncClient) -> None:
         """Duration is a positive number."""
-        response = await client.post("/search", json={
-            "query": "test",
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "test",
+            },
+        )
 
         data = response.json()
         assert data["duration_ms"] >= 0
@@ -377,6 +440,7 @@ class TestSearchResponseStructure:
 # POST /search — Error Handling
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSearchErrors:
     """Tests for search error handling."""
 
@@ -384,10 +448,13 @@ class TestSearchErrors:
     @pytest.mark.integration
     async def test_search_no_results(self, client: AsyncClient) -> None:
         """Search with obscure query returns empty results."""
-        response = await client.post("/search", json={
-            "query": "xyzzyplughtwistyNoSuchThing12345",
-            "max_results": 5,
-        })
+        response = await client.post(
+            "/search",
+            json={
+                "query": "xyzzyplughtwistyNoSuchThing12345",
+                "max_results": 5,
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -406,6 +473,7 @@ class TestSearchErrors:
 # Concurrent Searches
 # ══════════════════════════════════════════════════════════════
 
+
 class TestConcurrentSearch:
     """Tests for concurrent search operations."""
 
@@ -421,10 +489,7 @@ class TestConcurrentSearch:
             "rust programming",
         ]
 
-        tasks = [
-            client.post("/search", json={"query": q, "max_results": 2})
-            for q in queries
-        ]
+        tasks = [client.post("/search", json={"query": q, "max_results": 2}) for q in queries]
 
         responses = await asyncio.gather(*tasks)
 

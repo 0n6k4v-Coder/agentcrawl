@@ -68,8 +68,10 @@ logger = logging.getLogger("agentcrawl.core.pipeline")
 # Pipeline Context
 # ══════════════════════════════════════════════════════════════
 
+
 class StageStatus(str, Enum):
     """Status of a pipeline stage execution."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -80,6 +82,7 @@ class StageStatus(str, Enum):
 @dataclass
 class StageResult:
     """Result of a single stage execution."""
+
     stage_name: str
     status: StageStatus = StageStatus.PENDING
     duration_ms: float = 0.0
@@ -127,6 +130,7 @@ class PipelineContext:
         stage_results: Results from each stage.
         extra: Arbitrary extra data for custom stages.
     """
+
     # Input
     url: str = ""
     config: Any = None  # CrawlerConfig
@@ -183,6 +187,7 @@ class PipelineContext:
                 return self.html or self.main_content_html
             elif fmt == "json":
                 import json as json_mod
+
                 return json_mod.dumps(self.json or {}, ensure_ascii=False)
             elif fmt == "text":
                 return self.text or self.main_content_text
@@ -203,10 +208,7 @@ class PipelineContext:
 
     @property
     def failed_stages(self) -> list[str]:
-        return [
-            sr.stage_name for sr in self.stage_results
-            if sr.status == StageStatus.FAILED
-        ]
+        return [sr.stage_name for sr in self.stage_results if sr.status == StageStatus.FAILED]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -232,6 +234,7 @@ class PipelineContext:
 # ══════════════════════════════════════════════════════════════
 # Stage ABC
 # ══════════════════════════════════════════════════════════════
+
 
 class PipelineStage(ABC):
     """
@@ -350,6 +353,7 @@ class PipelineStage(ABC):
 # Built-in Stages
 # ══════════════════════════════════════════════════════════════
 
+
 class FetchStage(PipelineStage):
     """
     Fetch a page using the browser manager.
@@ -382,6 +386,7 @@ class FetchStage(PipelineStage):
             actions = getattr(config, "actions", None) if config else None
             if actions:
                 from agentcrawl.browser.actions import PageActions
+
                 if isinstance(actions, list) and actions:
                     pa = PageActions(actions)
                     await pa.execute(page)
@@ -489,10 +494,12 @@ class ConvertStage(PipelineStage):
         config = ctx.config
         output_format = str(getattr(config, "output_format", "markdown")) if config else "markdown"
 
-        converter = HTMLToMarkdown(MarkdownOptions(
-            include_links=True,
-            include_images=False,
-        ))
+        converter = HTMLToMarkdown(
+            MarkdownOptions(
+                include_links=True,
+                include_images=False,
+            )
+        )
 
         # Always produce markdown (used by filters, chunkers, citations)
         ctx.markdown = converter.convert(ctx.main_content_html)
@@ -679,6 +686,7 @@ class ScreenshotStage(PipelineStage):
         )
 
         import base64
+
         ctx.screenshot = base64.b64encode(screenshot_bytes).decode()
 
     def should_skip(self, ctx: PipelineContext) -> bool:
@@ -791,6 +799,7 @@ class NoOpStage(PipelineStage):
 # Pipeline
 # ══════════════════════════════════════════════════════════════
 
+
 class Pipeline:
     """
     Composable processing pipeline.
@@ -877,11 +886,13 @@ class Pipeline:
                     break
 
             except Exception as e:
-                ctx.stage_results.append(StageResult(
-                    stage_name=stage.name,
-                    status=StageStatus.FAILED,
-                    error=str(e),
-                ))
+                ctx.stage_results.append(
+                    StageResult(
+                        stage_name=stage.name,
+                        status=StageStatus.FAILED,
+                        error=str(e),
+                    )
+                )
                 if self._stop_on_error:
                     ctx.error = str(e)
                     break
@@ -958,15 +969,17 @@ class Pipeline:
         if cache_manager:
             stages.append(CacheReadStage(cache_manager))
 
-        stages.extend([
-            FetchStage(browser_manager),
-            ParseStage(),
-            ConvertStage(),
-            FilterStage(),
-            ChunkStage(),
-            CitationStage(),
-            ExtractionStage(),
-        ])
+        stages.extend(
+            [
+                FetchStage(browser_manager),
+                ParseStage(),
+                ConvertStage(),
+                FilterStage(),
+                ChunkStage(),
+                CitationStage(),
+                ExtractionStage(),
+            ]
+        )
 
         if cache_manager:
             stages.append(CacheWriteStage(cache_manager))
@@ -989,14 +1002,16 @@ class Pipeline:
         if cache_manager:
             stages.append(CacheReadStage(cache_manager))
 
-        stages.extend([
-            FetchStage(browser_manager),
-            ParseStage(),
-            ConvertStage(),
-            FilterStage(),
-            ChunkStage(),
-            CitationStage(),
-        ])
+        stages.extend(
+            [
+                FetchStage(browser_manager),
+                ParseStage(),
+                ConvertStage(),
+                FilterStage(),
+                ChunkStage(),
+                CitationStage(),
+            ]
+        )
 
         if cache_manager:
             stages.append(CacheWriteStage(cache_manager))
@@ -1057,10 +1072,7 @@ class Pipeline:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"Pipeline(name={self._name!r}, "
-            f"stages={self.stage_names})"
-        )
+        return f"Pipeline(name={self._name!r}, stages={self.stage_names})"
 
     def __len__(self) -> int:
         return len(self._stages)
@@ -1069,6 +1081,7 @@ class Pipeline:
 # ══════════════════════════════════════════════════════════════
 # Pipeline Builder
 # ══════════════════════════════════════════════════════════════
+
 
 class PipelineBuilder:
     """

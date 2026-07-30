@@ -49,9 +49,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Pytest Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 def pytest_configure(config: Any) -> None:
     """Register custom markers."""
-    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+    )
     config.addinivalue_line("markers", "integration: marks tests requiring network access")
     config.addinivalue_line("markers", "e2e: marks end-to-end tests")
     config.addinivalue_line("markers", "llm: marks tests requiring LLM API keys")
@@ -92,6 +95,7 @@ def pytest_addoption(parser: Any) -> None:
 # Event Loop
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create a session-scoped event loop for async tests."""
@@ -103,6 +107,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # ══════════════════════════════════════════════════════════════
 # Settings
 # ══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def settings() -> Any:
@@ -134,6 +139,7 @@ def settings_no_cache() -> Any:
 # ══════════════════════════════════════════════════════════════
 # CrawlerConfig
 # ══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def default_config() -> Any:
@@ -194,6 +200,7 @@ def filtered_config() -> Any:
 # Engine
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest_asyncio.fixture
 async def engine(settings: Any) -> AsyncGenerator[Any, None]:
     """
@@ -253,6 +260,7 @@ def mock_engine() -> Any:
 # ══════════════════════════════════════════════════════════════
 # Sample Content
 # ══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def sample_html() -> str:
@@ -371,6 +379,7 @@ def sample_markdown_long() -> str:
 # Mock HTTP
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def mock_httpx_response(sample_html: str) -> MagicMock:
     """Mock httpx.Response object."""
@@ -418,6 +427,7 @@ def mock_search_results() -> list[dict[str, Any]]:
 # Cache
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest_asyncio.fixture
 async def cache_manager() -> AsyncGenerator[Any, None]:
     """Create an in-memory cache manager."""
@@ -434,6 +444,7 @@ async def cache_manager() -> AsyncGenerator[Any, None]:
 # ══════════════════════════════════════════════════════════════
 # Temporary Files
 # ══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def temp_dir(tmp_path: Path) -> Path:
@@ -453,6 +464,7 @@ def temp_output_file(temp_dir: Path) -> Path:
 # Search
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def mock_search_engine(mock_search_results: list[dict[str, Any]]) -> MagicMock:
     """Mock SearchEngine."""
@@ -465,6 +477,7 @@ def mock_search_engine(mock_search_results: list[dict[str, Any]]) -> MagicMock:
 # ══════════════════════════════════════════════════════════════
 # Extraction
 # ══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def css_schema() -> dict[str, Any]:
@@ -495,6 +508,7 @@ def xpath_schema() -> dict[str, Any]:
 # Environment
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure clean environment for each test."""
@@ -512,7 +526,7 @@ def has_openai_key() -> bool:
     return bool(os.environ.get("OPENAI_API_KEY"))
 
 
-@ pytest.fixture
+@pytest.fixture
 def skip_without_openai(has_openai_key: bool) -> None:
     """Skip test if OpenAI API key is not available."""
     if not has_openai_key:
@@ -548,7 +562,7 @@ def playwright_available() -> bool:
     return _PLAYWRIGHT_AVAILABLE
 
 
-@ pytest.fixture
+@pytest.fixture
 def require_playwright() -> None:
     """Skip test if Playwright Chromium is not installed."""
     if not playwright_available():

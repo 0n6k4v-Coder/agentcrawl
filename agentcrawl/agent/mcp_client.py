@@ -49,8 +49,10 @@ logger = logging.getLogger("agentcrawl.mcp")
 # Types & Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class TransportType(str, Enum):
     """Supported MCP transport types."""
+
     SSE = "sse"
     WEBSOCKET = "websocket"
     STDIO = "stdio"
@@ -67,22 +69,26 @@ class MCPError(Exception):
 
 class MCPConnectionError(MCPError):
     """Raised when connection to MCP server fails."""
+
     pass
 
 
 class MCPToolError(MCPError):
     """Raised when a tool call returns an error."""
+
     pass
 
 
 class MCPTimeoutError(MCPError):
     """Raised when a request times out."""
+
     pass
 
 
 @dataclass
 class MCPToolInfo:
     """Metadata about an available MCP tool."""
+
     name: str
     description: str
     input_schema: dict[str, Any]
@@ -99,6 +105,7 @@ class MCPToolInfo:
 @dataclass
 class MCPToolResult:
     """Result from an MCP tool call."""
+
     content: list[dict[str, Any]]
     is_error: bool = False
     raw: dict[str, Any] = field(default_factory=dict)
@@ -137,6 +144,7 @@ class MCPToolResult:
 @dataclass
 class MCPServerInfo:
     """Information about the connected MCP server."""
+
     name: str = ""
     version: str = ""
     protocol_version: str = ""
@@ -156,6 +164,7 @@ class MCPServerInfo:
 # ══════════════════════════════════════════════════════════════
 # JSON-RPC Message Builder
 # ══════════════════════════════════════════════════════════════
+
 
 class _JsonRpc:
     """Helper for building JSON-RPC 2.0 messages."""
@@ -186,7 +195,9 @@ class _JsonRpc:
         }
 
     @staticmethod
-    def error_response(request_id: str, code: int, message: str, data: Any = None) -> dict[str, Any]:
+    def error_response(
+        request_id: str, code: int, message: str, data: Any = None
+    ) -> dict[str, Any]:
         error: dict[str, Any] = {"code": code, "message": message}
         if data is not None:
             error["data"] = data
@@ -200,6 +211,7 @@ class _JsonRpc:
 # ══════════════════════════════════════════════════════════════
 # Transport Implementations
 # ══════════════════════════════════════════════════════════════
+
 
 class _BaseTransport:
     """Abstract base for MCP transports."""
@@ -325,6 +337,7 @@ class _WebSocketTransport(_BaseTransport):
     async def connect(self) -> None:
         try:
             import websockets
+
             self._ws = await websockets.connect(
                 self._url,
                 additional_headers=self._headers,
@@ -389,6 +402,7 @@ class _StdioTransport(_BaseTransport):
 
     async def connect(self) -> None:
         import os
+
         env = os.environ.copy()
         if self._env:
             env.update(self._env)
@@ -409,9 +423,7 @@ class _StdioTransport(_BaseTransport):
                 " ".join(self._args),
             )
         except FileNotFoundError as err:
-            raise MCPConnectionError(
-                f"Command not found: {self._command}"
-            ) from err
+            raise MCPConnectionError(f"Command not found: {self._command}") from err
         except Exception as e:
             raise MCPConnectionError(f"Failed to start process: {e}") from e
 
@@ -459,6 +471,7 @@ class _StdioTransport(_BaseTransport):
 # ══════════════════════════════════════════════════════════════
 # MCP Client
 # ══════════════════════════════════════════════════════════════
+
 
 class MCPClient:
     """
@@ -961,9 +974,7 @@ class MCPClient:
                 try:
                     await handler(params)
                 except Exception as e:
-                    logger.error(
-                        "Error in notification handler for %s: %s", method, e
-                    )
+                    logger.error("Error in notification handler for %s: %s", method, e)
             return
 
         # Server request (e.g., sampling, roots)
@@ -1007,9 +1018,7 @@ class MCPClient:
                     await asyncio.sleep(delay)
                     delay *= 2
 
-        raise MCPConnectionError(
-            f"Failed to reconnect after {max_retries} attempts"
-        )
+        raise MCPConnectionError(f"Failed to reconnect after {max_retries} attempts")
 
     # ──────────────────────────────────────────────────────────
     # Utility
@@ -1038,6 +1047,7 @@ class MCPClient:
 # Factory Helpers
 # ══════════════════════════════════════════════════════════════
 
+
 def create_sse_client(
     url: str = "http://localhost:8000/mcp/sse",
     api_key: str | None = None,
@@ -1053,9 +1063,7 @@ def create_websocket_client(
     **kwargs: Any,
 ) -> MCPClient:
     """Create an MCP client using WebSocket transport."""
-    return MCPClient(
-        transport=TransportType.WEBSOCKET, url=url, api_key=api_key, **kwargs
-    )
+    return MCPClient(transport=TransportType.WEBSOCKET, url=url, api_key=api_key, **kwargs)
 
 
 def create_stdio_client(
@@ -1075,6 +1083,7 @@ def create_stdio_client(
 # ══════════════════════════════════════════════════════════════
 # CLI — Quick test
 # ══════════════════════════════════════════════════════════════
+
 
 async def _main() -> None:
     """Quick connectivity test."""

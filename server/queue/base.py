@@ -34,8 +34,10 @@ from typing import Any
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 class JobPriority(int, Enum):
     """Job priority levels."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -44,6 +46,7 @@ class JobPriority(int, Enum):
 
 class JobStatus(str, Enum):
     """Job lifecycle status."""
+
     PENDING = "pending"
     QUEUED = "queued"
     PROCESSING = "processing"
@@ -76,6 +79,7 @@ class QueueItem:
         result: Processing result data.
         metadata: Additional metadata.
     """
+
     item_id: str = field(default_factory=lambda: f"qi_{uuid.uuid4().hex[:12]}")
     job_id: str = ""
     job_type: str = "crawl"
@@ -141,10 +145,7 @@ class QueueItem:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> QueueItem:
         """Deserialize from dictionary."""
-        return cls(**{
-            k: v for k, v in data.items()
-            if k in cls.__dataclass_fields__
-        })
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 @dataclass
@@ -164,6 +165,7 @@ class QueueStats:
         avg_wait_seconds: Average time in queue.
         avg_process_seconds: Average processing time.
     """
+
     pending: int = 0
     processing: int = 0
     completed: int = 0
@@ -193,6 +195,7 @@ class QueueStats:
 # ══════════════════════════════════════════════════════════════
 # Abstract Backend
 # ══════════════════════════════════════════════════════════════
+
 
 class QueueBackend(ABC):
     """

@@ -50,8 +50,10 @@ logger = logging.getLogger("agentcrawl.agent")
 # Pydantic Input Schemas (for LangChain / CrewAI)
 # ══════════════════════════════════════════════════════════════
 
+
 class WebScrapeInput(BaseModel):
     """Input schema for web_scrape tool."""
+
     url: str = Field(description="The full URL of the web page to scrape.")
     output_format: str = Field(
         default="markdown",
@@ -77,6 +79,7 @@ class WebScrapeInput(BaseModel):
 
 class WebCrawlInput(BaseModel):
     """Input schema for web_crawl tool."""
+
     url: str = Field(description="The starting URL to crawl from.")
     strategy: str = Field(
         default="bfs",
@@ -96,6 +99,7 @@ class WebCrawlInput(BaseModel):
 
 class WebSearchInput(BaseModel):
     """Input schema for web_search tool."""
+
     query: str = Field(description="The search query string.")
     max_results: int = Field(default=5, description="Maximum search results.")
     scrape_results: bool = Field(
@@ -110,6 +114,7 @@ class WebSearchInput(BaseModel):
 
 class WebMapInput(BaseModel):
     """Input schema for web_map tool."""
+
     url: str = Field(description="The website URL to map.")
     max_urls: int = Field(default=500, description="Maximum URLs to discover.")
     use_sitemap: bool = Field(default=True, description="Parse sitemap.xml.")
@@ -118,6 +123,7 @@ class WebMapInput(BaseModel):
 
 class WebExtractInput(BaseModel):
     """Input schema for web_extract tool."""
+
     model_config = ConfigDict(protected_namespaces=())
 
     url: str = Field(description="The URL to extract data from.")
@@ -139,6 +145,7 @@ class WebExtractInput(BaseModel):
 
 class WebScreenshotInput(BaseModel):
     """Input schema for web_screenshot tool."""
+
     url: str = Field(description="The URL to screenshot.")
     full_page: bool = Field(default=True, description="Capture full page or viewport.")
     format: str = Field(default="png", description="Image format: 'png' or 'jpeg'.")
@@ -146,6 +153,7 @@ class WebScreenshotInput(BaseModel):
 
 class WebBatchScrapeInput(BaseModel):
     """Input schema for web_batch_scrape tool."""
+
     urls: str = Field(
         description="Comma-separated list of URLs to scrape.",
     )
@@ -159,6 +167,7 @@ class WebBatchScrapeInput(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Core Engine Manager (Shared Singleton)
 # ══════════════════════════════════════════════════════════════
+
 
 class _EngineManager:
     """
@@ -212,6 +221,7 @@ _engine_manager = _EngineManager()
 # ══════════════════════════════════════════════════════════════
 # Generic Toolkit (Framework-Agnostic)
 # ══════════════════════════════════════════════════════════════
+
 
 class AgentCrawlToolkit:
     """
@@ -308,11 +318,13 @@ class AgentCrawlToolkit:
     def get_openai_schema(self, tools: list[str] | None = None) -> list[dict[str, Any]]:
         """Get OpenAI function calling schema for all or selected tools."""
         from agentcrawl.agent.function_schema import get_openai_tools_schema
+
         return get_openai_tools_schema(tools)
 
     def get_anthropic_schema(self, tools: list[str] | None = None) -> list[dict[str, Any]]:
         """Get Anthropic tool use schema for all or selected tools."""
         from agentcrawl.agent.function_schema import get_anthropic_tools_schema
+
         return get_anthropic_tools_schema(tools)
 
     async def execute(self, tool_name: str, **kwargs: Any) -> Any:
@@ -332,9 +344,7 @@ class AgentCrawlToolkit:
         """
         if tool_name not in self._tool_registry:
             available = ", ".join(sorted(self._tool_registry.keys()))
-            raise ValueError(
-                f"Unknown tool: '{tool_name}'. Available: {available}"
-            )
+            raise ValueError(f"Unknown tool: '{tool_name}'. Available: {available}")
 
         handler = self._tool_registry[tool_name]["handler"]
 
@@ -366,11 +376,13 @@ class AgentCrawlToolkit:
         try:
             kwargs = json.loads(arguments_json)
         except json.JSONDecodeError as e:
-            return self._format_result({
-                "success": False,
-                "error": f"Invalid JSON arguments: {e}",
-                "tool": tool_name,
-            })
+            return self._format_result(
+                {
+                    "success": False,
+                    "error": f"Invalid JSON arguments: {e}",
+                    "tool": tool_name,
+                }
+            )
 
         return await self.execute(tool_name, **kwargs)
 
@@ -414,7 +426,9 @@ class AgentCrawlToolkit:
         output: dict[str, Any] = {
             "success": True,
             "url": result.url,
-            "content": self._truncate(result.markdown if output_format == "markdown" else result.to_json()),
+            "content": self._truncate(
+                result.markdown if output_format == "markdown" else result.to_json()
+            ),
             "format": output_format,
         }
 
@@ -450,10 +464,14 @@ class AgentCrawlToolkit:
         }
 
         crawler_cls = strategy_map.get(strategy, BFSCrawler)
-        url_filter = URLFilter(
-            include_patterns=include_patterns or [],
-            exclude_patterns=exclude_patterns or [],
-        ) if (include_patterns or exclude_patterns) else None
+        url_filter = (
+            URLFilter(
+                include_patterns=include_patterns or [],
+                exclude_patterns=exclude_patterns or [],
+            )
+            if (include_patterns or exclude_patterns)
+            else None
+        )
 
         crawler_strategy = crawler_cls(
             max_depth=max_depth,
@@ -466,13 +484,15 @@ class AgentCrawlToolkit:
 
         pages = []
         for page in results:
-            pages.append({
-                "url": page.url,
-                "content": self._truncate(
-                    page.markdown if output_format == "markdown" else page.to_json()
-                ),
-                "status": getattr(page, "status_code", 200),
-            })
+            pages.append(
+                {
+                    "url": page.url,
+                    "content": self._truncate(
+                        page.markdown if output_format == "markdown" else page.to_json()
+                    ),
+                    "status": getattr(page, "status_code", 200),
+                }
+            )
 
         return {
             "success": True,
@@ -573,13 +593,16 @@ class AgentCrawlToolkit:
         extraction: ExtractionStrategy | Any = None
         if method == "css" and css_schema:
             from agentcrawl.extraction import JsonCssExtractor
+
             extraction = JsonCssExtractor(schema=css_schema)
         elif method == "xpath":
             from agentcrawl.extraction import JsonXPathExtractor
+
             extraction = JsonXPathExtractor(schema=schema)
         else:
             from agentcrawl.config.llm_config import LLMConfig
             from agentcrawl.extraction import LLMExtractor
+
             extraction = LLMExtractor(
                 schema=schema,
                 llm_config=LLMConfig(),
@@ -659,13 +682,15 @@ class AgentCrawlToolkit:
 
         pages = []
         for r in results:
-            pages.append({
-                "url": r.url,
-                "success": r.success if hasattr(r, "success") else True,
-                "content": self._truncate(
-                    r.markdown if output_format == "markdown" else r.to_json()
-                ),
-            })
+            pages.append(
+                {
+                    "url": r.url,
+                    "success": r.success if hasattr(r, "success") else True,
+                    "content": self._truncate(
+                        r.markdown if output_format == "markdown" else r.to_json()
+                    ),
+                }
+            )
 
         return {
             "success": True,
@@ -749,19 +774,31 @@ try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as pool:
                         result = pool.submit(
                             asyncio.run,
-                            self._arun(url, output_format, include_links, include_metadata, stealth, timeout),
+                            self._arun(
+                                url,
+                                output_format,
+                                include_links,
+                                include_metadata,
+                                stealth,
+                                timeout,
+                            ),
                         ).result()
                     return result
                 else:
                     return asyncio.run(
-                        self._arun(url, output_format, include_links, include_metadata, stealth, timeout)
+                        self._arun(
+                            url, output_format, include_links, include_metadata, stealth, timeout
+                        )
                     )
             except RuntimeError:
                 return asyncio.run(
-                    self._arun(url, output_format, include_links, include_metadata, stealth, timeout)
+                    self._arun(
+                        url, output_format, include_links, include_metadata, stealth, timeout
+                    )
                 )
 
         async def _arun(
@@ -812,6 +849,7 @@ try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as pool:
                         return pool.submit(
                             asyncio.run,
@@ -863,6 +901,7 @@ try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as pool:
                         return pool.submit(
                             asyncio.run,
@@ -961,6 +1000,7 @@ try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as pool:
                         return pool.submit(
                             asyncio.run,
@@ -999,6 +1039,7 @@ try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as pool:
                         return pool.submit(asyncio.run, self._arun(**kwargs)).result()
                 return asyncio.run(self._arun(**kwargs))
@@ -1043,14 +1084,13 @@ except ImportError:
     CrewAISearchTool = None  # type: ignore[assignment,misc]
 
     def get_crewai_tools(toolkit: Any = None) -> list[Any]:  # type: ignore[misc]
-        raise ImportError(
-            "CrewAI is required. Install with: pip install crewai"
-        )
+        raise ImportError("CrewAI is required. Install with: pip install crewai")
 
 
 # ══════════════════════════════════════════════════════════════
 # OpenAI Function Calling Handler
 # ══════════════════════════════════════════════════════════════
+
 
 class OpenAIFunctionHandler:
     """
@@ -1143,17 +1183,21 @@ class OpenAIFunctionHandler:
             try:
                 result = await self.handle_tool_call(function_name, arguments)
             except Exception as e:
-                result = json.dumps({
-                    "success": False,
-                    "error": str(e),
-                    "tool": function_name,
-                })
+                result = json.dumps(
+                    {
+                        "success": False,
+                        "error": str(e),
+                        "tool": function_name,
+                    }
+                )
 
-            tool_messages.append({
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": result,
-            })
+            tool_messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": result,
+                }
+            )
 
         return tool_messages
 
@@ -1215,6 +1259,7 @@ class OpenAIFunctionHandler:
 # Convenience Factory
 # ══════════════════════════════════════════════════════════════
 
+
 def create_toolkit(
     framework: str = "generic",
     **kwargs: Any,
@@ -1252,6 +1297,5 @@ def create_toolkit(
         return AgentCrawlToolkit(**kwargs)
     else:
         raise ValueError(
-            f"Unknown framework: '{framework}'. "
-            f"Available: langchain, crewai, openai, generic"
+            f"Unknown framework: '{framework}'. Available: langchain, crewai, openai, generic"
         )

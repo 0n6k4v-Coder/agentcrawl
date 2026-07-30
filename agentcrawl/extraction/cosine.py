@@ -63,6 +63,7 @@ logger = logging.getLogger("agentcrawl.extraction.cosine")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ElementInfo:
     """
@@ -79,6 +80,7 @@ class ElementInfo:
         fields: Extracted field key-value pairs.
         cluster_id: Assigned cluster ID (-1 = unassigned).
     """
+
     tag: str = ""
     text: str = ""
     html: str = ""
@@ -102,6 +104,7 @@ class Cluster:
         pattern: Detected field pattern.
         sample_text: Sample text from the first element.
     """
+
     cluster_id: int
     elements: list[int] = field(default_factory=list)
     avg_similarity: float = 0.0
@@ -116,6 +119,7 @@ class Cluster:
 # ══════════════════════════════════════════════════════════════
 # TF-IDF Vectorizer
 # ══════════════════════════════════════════════════════════════
+
 
 class TFIDFVectorizer:
     """
@@ -226,8 +230,8 @@ class TFIDFVectorizer:
         dot = sum(vec_a[t] * vec_b[t] for t in common)
 
         # Magnitudes
-        mag_a = math.sqrt(sum(v ** 2 for v in vec_a.values()))
-        mag_b = math.sqrt(sum(v ** 2 for v in vec_b.values()))
+        mag_a = math.sqrt(sum(v**2 for v in vec_a.values()))
+        mag_b = math.sqrt(sum(v**2 for v in vec_b.values()))
 
         if mag_a == 0 or mag_b == 0:
             return 0.0
@@ -249,6 +253,7 @@ class TFIDFVectorizer:
 # HTML Element Parser
 # ══════════════════════════════════════════════════════════════
 
+
 class HTMLElementParser:
     """
     Parses HTML into candidate elements for similarity analysis.
@@ -258,10 +263,21 @@ class HTMLElementParser:
     """
 
     # Tags that commonly contain repeated items
-    CANDIDATE_TAGS: frozenset[str] = frozenset({
-        "div", "article", "section", "li", "tr", "td",
-        "span", "p", "a", "figure", "aside",
-    })
+    CANDIDATE_TAGS: frozenset[str] = frozenset(
+        {
+            "div",
+            "article",
+            "section",
+            "li",
+            "tr",
+            "td",
+            "span",
+            "p",
+            "a",
+            "figure",
+            "aside",
+        }
+    )
 
     # Minimum text length for a candidate
     MIN_TEXT_LENGTH: int = 10
@@ -309,6 +325,7 @@ class HTMLElementParser:
                 # Get inner HTML
                 try:
                     from lxml.html import tostring
+
                     inner_html = tostring(element, encoding="unicode", method="html")
                 except Exception:
                     inner_html = text
@@ -318,7 +335,9 @@ class HTMLElementParser:
 
                 # Get parent tag
                 parent = element.getparent()
-                parent_tag = parent.tag if parent is not None and isinstance(parent.tag, str) else ""
+                parent_tag = (
+                    parent.tag if parent is not None and isinstance(parent.tag, str) else ""
+                )
 
                 # Get sibling index
                 index = 0
@@ -331,16 +350,18 @@ class HTMLElementParser:
                 # Extract fields from child elements
                 fields = self._extract_fields(element)
 
-                results.append(ElementInfo(
-                    tag=tag,
-                    text=text,
-                    html=inner_html,
-                    classes=classes,
-                    depth=depth,
-                    index=index,
-                    parent_tag=parent_tag,
-                    fields=fields,
-                ))
+                results.append(
+                    ElementInfo(
+                        tag=tag,
+                        text=text,
+                        html=inner_html,
+                        classes=classes,
+                        depth=depth,
+                        index=index,
+                        parent_tag=parent_tag,
+                        fields=fields,
+                    )
+                )
 
         # Recurse into children
         for child in element:
@@ -423,12 +444,14 @@ class HTMLElementParser:
                 class_match = re.search(r'class="([^"]*)"', match.group(0))
                 classes = class_match.group(1).split() if class_match else []
 
-                elements.append(ElementInfo(
-                    tag=tag,
-                    text=text,
-                    html=match.group(0),
-                    classes=classes,
-                ))
+                elements.append(
+                    ElementInfo(
+                        tag=tag,
+                        text=text,
+                        html=match.group(0),
+                        classes=classes,
+                    )
+                )
 
         return elements
 
@@ -436,6 +459,7 @@ class HTMLElementParser:
 # ══════════════════════════════════════════════════════════════
 # Cosine Extractor
 # ══════════════════════════════════════════════════════════════
+
 
 class CosineExtractor(ExtractionStrategy):
     """
@@ -528,7 +552,7 @@ class CosineExtractor(ExtractionStrategy):
 
         # Limit elements
         if len(elements) > self._max_elements:
-            elements = elements[:self._max_elements]
+            elements = elements[: self._max_elements]
 
         # Step 2: Compute TF-IDF vectors
         texts = [el.text for el in elements]
@@ -547,7 +571,7 @@ class CosineExtractor(ExtractionStrategy):
         # Step 5: Extract data from top clusters
         results: list[dict[str, Any]] = []
 
-        for cluster in clusters[:self._top_k_clusters]:
+        for cluster in clusters[: self._top_k_clusters]:
             if cluster.size < self._min_cluster_size:
                 continue
 
@@ -633,9 +657,7 @@ class CosineExtractor(ExtractionStrategy):
                 for b in range(a + 1, len(member_indices)):
                     idx_a = member_indices[a]
                     idx_b = member_indices[b]
-                    sim = TFIDFVectorizer.cosine_similarity(
-                        vectors[idx_a], vectors[idx_b]
-                    )
+                    sim = TFIDFVectorizer.cosine_similarity(vectors[idx_a], vectors[idx_b])
                     sims.append(sim)
 
             avg_sim = sum(sims) / max(len(sims), 1)
@@ -751,13 +773,15 @@ class CosineExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "threshold": self._threshold,
-            "min_cluster_size": self._min_cluster_size,
-            "max_elements": self._max_elements,
-            "top_k_clusters": self._top_k_clusters,
-            "include_html": self._include_html,
-        })
+        d.update(
+            {
+                "threshold": self._threshold,
+                "min_cluster_size": self._min_cluster_size,
+                "max_elements": self._max_elements,
+                "top_k_clusters": self._top_k_clusters,
+                "include_html": self._include_html,
+            }
+        )
         return d
 
     def __repr__(self) -> str:

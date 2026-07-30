@@ -71,6 +71,7 @@ def set_request_id(request_id: str) -> None:
 # Logging Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 def configure_server_logging(
     level: str = "INFO",
     json_format: bool = False,
@@ -146,6 +147,7 @@ def configure_server_logging(
 # Formatters
 # ══════════════════════════════════════════════════════════════
 
+
 class ServerJsonFormatter(logging.Formatter):
     """
     JSON log formatter with request ID correlation.
@@ -191,13 +193,15 @@ class ServerColoredFormatter(logging.Formatter):
         10:30:00 INFO  [server] Message [req_abc123]
     """
 
-    COLORS: MappingProxyType[str, str] = MappingProxyType({
-        "DEBUG": "\033[36m",
-        "INFO": "\033[32m",
-        "WARNING": "\033[33m",
-        "ERROR": "\033[31m",
-        "CRITICAL": "\033[35m",
-    })
+    COLORS: MappingProxyType[str, str] = MappingProxyType(
+        {
+            "DEBUG": "\033[36m",
+            "INFO": "\033[32m",
+            "WARNING": "\033[33m",
+            "ERROR": "\033[31m",
+            "CRITICAL": "\033[35m",
+        }
+    )
     RESET = "\033[0m"
     DIM = "\033[2m"
 
@@ -210,7 +214,9 @@ class ServerColoredFormatter(logging.Formatter):
         # Append request ID
         req_id = _request_id.get()
         if req_id:
-            record.msg = f"{record.msg} {self.DIM}[{req_id}]{self.RESET if self._use_colors else ''}"
+            record.msg = (
+                f"{record.msg} {self.DIM}[{req_id}]{self.RESET if self._use_colors else ''}"
+            )
 
         formatted = super().format(record)
 
@@ -225,6 +231,7 @@ class ServerColoredFormatter(logging.Formatter):
 # ══════════════════════════════════════════════════════════════
 # Request ID Middleware
 # ══════════════════════════════════════════════════════════════
+
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     """
@@ -271,6 +278,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
 # ══════════════════════════════════════════════════════════════
 # Access Log Middleware
 # ══════════════════════════════════════════════════════════════
+
 
 class AccessLogMiddleware(BaseHTTPMiddleware):
     """
@@ -332,6 +340,7 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
 # Sensitive Data Filter
 # ══════════════════════════════════════════════════════════════
 
+
 class SensitiveDataFilter(logging.Filter):
     """
     Log filter that masks sensitive data in log messages.
@@ -368,9 +377,7 @@ class SensitiveDataFilter(logging.Filter):
 
         if record.args:
             if isinstance(record.args, dict):
-                record.args = {
-                    k: self._mask(v) for k, v in record.args.items()
-                }
+                record.args = {k: self._mask(v) for k, v in record.args.items()}
             elif isinstance(record.args, tuple):
                 record.args = tuple(self._mask(a) for a in record.args)
 
@@ -387,6 +394,7 @@ class SensitiveDataFilter(logging.Filter):
 # ══════════════════════════════════════════════════════════════
 # Structured Logger
 # ══════════════════════════════════════════════════════════════
+
 
 class ServerLogger:
     """

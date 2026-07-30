@@ -86,14 +86,15 @@ logger = logging.getLogger("agentcrawl.extraction.regex")
 # Field Types
 # ══════════════════════════════════════════════════════════════
 
-FIELD_TYPE_FIRST = "first"    # First match only
-FIELD_TYPE_ALL = "all"        # All matches (list)
-FIELD_TYPE_NAMED = "named"    # Named groups → dict
+FIELD_TYPE_FIRST = "first"  # First match only
+FIELD_TYPE_ALL = "all"  # All matches (list)
+FIELD_TYPE_NAMED = "named"  # Named groups → dict
 
 
 # ══════════════════════════════════════════════════════════════
 # Regex Extractor
 # ══════════════════════════════════════════════════════════════
+
 
 class RegexExtractor(ExtractionStrategy):
     """
@@ -154,11 +155,13 @@ class RegexExtractor(ExtractionStrategy):
         elif patterns:
             # Convert simple patterns dict to field definitions
             for name, pattern in patterns.items():
-                self._fields.append({
-                    "name": name,
-                    "pattern": pattern,
-                    "type": FIELD_TYPE_ALL,
-                })
+                self._fields.append(
+                    {
+                        "name": name,
+                        "pattern": pattern,
+                        "type": FIELD_TYPE_ALL,
+                    }
+                )
 
         # Pre-compile patterns
         self._compiled: dict[str, re.Pattern[str]] = {}
@@ -176,9 +179,7 @@ class RegexExtractor(ExtractionStrategy):
             if "name" not in field_def:
                 raise ValueError(f"Field missing 'name': {field_def}")
             if "pattern" not in field_def:
-                raise ValueError(
-                    f"Field '{field_def.get('name')}' missing 'pattern'"
-                )
+                raise ValueError(f"Field '{field_def.get('name')}' missing 'pattern'")
 
     def _compile_patterns(self) -> None:
         """Pre-compile all regex patterns."""
@@ -192,9 +193,7 @@ class RegexExtractor(ExtractionStrategy):
             try:
                 self._compiled[name] = re.compile(pattern, self._flags)
             except re.error as err:
-                raise ValueError(
-                    f"Invalid regex pattern for field '{name}': {err}"
-                ) from err
+                raise ValueError(f"Invalid regex pattern for field '{name}': {err}") from err
 
     # ──────────────────────────────────────────────────────────
     # Core Extraction
@@ -478,13 +477,15 @@ class RegexExtractor(ExtractionStrategy):
 
         results: list[dict[str, Any]] = []
         for match in compiled.finditer(text):
-            results.append({
-                "match": match.group(0),
-                "groups": list(match.groups()),
-                "named_groups": match.groupdict(),
-                "start": match.start(),
-                "end": match.end(),
-            })
+            results.append(
+                {
+                    "match": match.group(0),
+                    "groups": list(match.groups()),
+                    "named_groups": match.groupdict(),
+                    "start": match.start(),
+                    "end": match.end(),
+                }
+            )
 
         return results
 
@@ -503,19 +504,23 @@ class RegexExtractor(ExtractionStrategy):
 
             try:
                 re.compile(pattern, self._flags)
-                results.append({
-                    "field": name,
-                    "pattern": pattern,
-                    "valid": True,
-                    "error": None,
-                })
+                results.append(
+                    {
+                        "field": name,
+                        "pattern": pattern,
+                        "valid": True,
+                        "error": None,
+                    }
+                )
             except re.error as e:
-                results.append({
-                    "field": name,
-                    "pattern": pattern,
-                    "valid": False,
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "field": name,
+                        "pattern": pattern,
+                        "valid": False,
+                        "error": str(e),
+                    }
+                )
 
         return results
 
@@ -525,20 +530,22 @@ class RegexExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "default_value": self._default_value,
-            "strip_whitespace": self._strip_whitespace,
-            "source": self._source,
-            "field_count": len(self._fields),
-            "fields": [
-                {
-                    "name": f.get("name"),
-                    "type": f.get("type", "first"),
-                    "pattern": f.get("pattern", "")[:50],
-                }
-                for f in self._fields
-            ],
-        })
+        d.update(
+            {
+                "default_value": self._default_value,
+                "strip_whitespace": self._strip_whitespace,
+                "source": self._source,
+                "field_count": len(self._fields),
+                "fields": [
+                    {
+                        "name": f.get("name"),
+                        "type": f.get("type", "first"),
+                        "pattern": f.get("pattern", "")[:50],
+                    }
+                    for f in self._fields
+                ],
+            }
+        )
         return d
 
     def __repr__(self) -> str:

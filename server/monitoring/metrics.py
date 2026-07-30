@@ -57,9 +57,11 @@ logger = logging.getLogger("agentcrawl.server.metrics")
 # Metric Types
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class Counter:
     """Monotonically increasing counter."""
+
     name: str
     help: str = ""
     value: float = 0.0
@@ -72,6 +74,7 @@ class Counter:
 @dataclass
 class Gauge:
     """Value that can go up and down."""
+
     name: str
     help: str = ""
     value: float = 0.0
@@ -90,11 +93,24 @@ class Gauge:
 @dataclass
 class Histogram:
     """Distribution of values across buckets."""
+
     name: str
     help: str = ""
-    buckets: list[float] = field(default_factory=lambda: [
-        0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
-    ])
+    buckets: list[float] = field(
+        default_factory=lambda: [
+            0.005,
+            0.01,
+            0.025,
+            0.05,
+            0.1,
+            0.25,
+            0.5,
+            1.0,
+            2.5,
+            5.0,
+            10.0,
+        ]
+    )
     bucket_counts: list[int] = field(default_factory=list)
     sum: float = 0.0
     count: int = 0
@@ -120,6 +136,7 @@ class Histogram:
 # ══════════════════════════════════════════════════════════════
 # Metrics Collector
 # ══════════════════════════════════════════════════════════════
+
 
 class MetricsCollector:
     """
@@ -416,12 +433,10 @@ class MetricsCollector:
         with self._lock:
             return {
                 "counters": {
-                    name: {"value": c.value, "help": c.help}
-                    for name, c in self._counters.items()
+                    name: {"value": c.value, "help": c.help} for name, c in self._counters.items()
                 },
                 "gauges": {
-                    name: {"value": g.value, "help": g.help}
-                    for name, g in self._gauges.items()
+                    name: {"value": g.value, "help": g.help} for name, g in self._gauges.items()
                 },
                 "histograms": {
                     name: {
@@ -450,6 +465,7 @@ class MetricsCollector:
 # ══════════════════════════════════════════════════════════════
 # Middleware
 # ══════════════════════════════════════════════════════════════
+
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     """
@@ -491,6 +507,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 # ══════════════════════════════════════════════════════════════
 # Metrics Endpoint
 # ══════════════════════════════════════════════════════════════
+
 
 async def metrics_endpoint(request: Request) -> PlainTextResponse:
     """

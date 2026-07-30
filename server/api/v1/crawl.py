@@ -33,8 +33,10 @@ logger = logging.getLogger("agentcrawl.server.crawl")
 # Job Management
 # ══════════════════════════════════════════════════════════════
 
+
 class JobStatus(str, Enum):
     """Crawl job status."""
+
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -66,6 +68,7 @@ class CrawlJob:
         error: Error message (if failed).
         task: Background asyncio task.
     """
+
     job_id: str
     status: JobStatus = JobStatus.QUEUED
     start_url: str = ""
@@ -117,12 +120,14 @@ class CrawlJob:
     def to_result_dict(self) -> dict[str, Any]:
         """Serialize to full result dictionary."""
         data = self.to_status_dict()
-        data.update({
-            "total_words": self.total_words,
-            "total_tokens": self.total_tokens,
-            "duration_ms": round(self.duration_ms, 1),
-            "error": self.error,
-        })
+        data.update(
+            {
+                "total_words": self.total_words,
+                "total_tokens": self.total_tokens,
+                "duration_ms": round(self.duration_ms, 1),
+                "error": self.error,
+            }
+        )
 
         if self.result:
             data["pages"] = self.result.get("pages", [])
@@ -157,7 +162,7 @@ def _create_job(
     # Cleanup old jobs (keep last 100)
     if len(_jobs) > 100:
         sorted_jobs = sorted(_jobs.values(), key=lambda j: j.created_at)
-        for old_job in sorted_jobs[:len(_jobs) - 100]:
+        for old_job in sorted_jobs[: len(_jobs) - 100]:
             if old_job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
                 del _jobs[old_job.job_id]
 
@@ -167,6 +172,7 @@ def _create_job(
 # ══════════════════════════════════════════════════════════════
 # Request / Response Models
 # ══════════════════════════════════════════════════════════════
+
 
 class CrawlRequest(BaseModel):
     """Request body for POST /crawl."""
@@ -192,6 +198,7 @@ class CrawlRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Handlers
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_start_crawl(
     engine: Any,
@@ -230,9 +237,7 @@ async def handle_start_crawl(
     )
 
     # Start background task
-    job.task = asyncio.create_task(
-        _run_crawl_job(engine, job, request)
-    )
+    job.task = asyncio.create_task(_run_crawl_job(engine, job, request))
 
     logger.info(
         "Crawl job started: %s (%s, max_depth=%d, max_pages=%d)",
@@ -328,6 +333,7 @@ async def handle_cancel_crawl(job_id: str) -> JSONResponse:
 # ══════════════════════════════════════════════════════════════
 # Background Job Runner
 # ══════════════════════════════════════════════════════════════
+
 
 async def _run_crawl_job(
     engine: Any,

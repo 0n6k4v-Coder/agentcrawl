@@ -65,6 +65,7 @@ logger = logging.getLogger("agentcrawl.extraction.schema")
 # Field Definitions
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class FieldDef:
     """
@@ -83,6 +84,7 @@ class FieldDef:
         fields: Sub-fields (for 'list' and 'nested' types).
         description: Human-readable description.
     """
+
     name: str
     selector: str = ""
     type: str = "text"
@@ -157,6 +159,7 @@ class FieldDef:
 # ══════════════════════════════════════════════════════════════
 # Schema Builder
 # ══════════════════════════════════════════════════════════════
+
 
 class SchemaBuilder:
     """
@@ -236,18 +239,20 @@ class SchemaBuilder:
         Returns:
             Self for chaining.
         """
-        self._fields.append(FieldDef(
-            name=name,
-            selector=selector,
-            type=type_,
-            attribute=attribute,
-            pattern=pattern,
-            group=group,
-            default=default,
-            required=required,
-            transform=transform,
-            description=description,
-        ))
+        self._fields.append(
+            FieldDef(
+                name=name,
+                selector=selector,
+                type=type_,
+                attribute=attribute,
+                pattern=pattern,
+                group=group,
+                default=default,
+                required=required,
+                transform=transform,
+                description=description,
+            )
+        )
         return self
 
     def text_field(
@@ -268,8 +273,11 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add an attribute field (shorthand)."""
         return self.field(
-            name, selector=selector, type_="attribute",
-            attribute=attribute, **kwargs,
+            name,
+            selector=selector,
+            type_="attribute",
+            attribute=attribute,
+            **kwargs,
         )
 
     def link_field(
@@ -280,8 +288,11 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add a link href field (shorthand)."""
         return self.field(
-            name, selector=selector, type_="attribute",
-            attribute="href", **kwargs,
+            name,
+            selector=selector,
+            type_="attribute",
+            attribute="href",
+            **kwargs,
         )
 
     def image_field(
@@ -292,8 +303,11 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add an image src field (shorthand)."""
         return self.field(
-            name, selector=selector, type_="attribute",
-            attribute="src", **kwargs,
+            name,
+            selector=selector,
+            type_="attribute",
+            attribute="src",
+            **kwargs,
         )
 
     def regex_field(
@@ -305,8 +319,11 @@ class SchemaBuilder:
     ) -> SchemaBuilder:
         """Add a regex field (shorthand)."""
         return self.field(
-            name, type_="regex", pattern=pattern,
-            group=group, **kwargs,
+            name,
+            type_="regex",
+            pattern=pattern,
+            group=group,
+            **kwargs,
         )
 
     def list_field(
@@ -327,13 +344,15 @@ class SchemaBuilder:
         Returns:
             Self for chaining.
         """
-        self._fields.append(FieldDef(
-            name=name,
-            selector=selector,
-            type="list",
-            fields=fields,
-            **kwargs,
-        ))
+        self._fields.append(
+            FieldDef(
+                name=name,
+                selector=selector,
+                type="list",
+                fields=fields,
+                **kwargs,
+            )
+        )
         return self
 
     def nested_field(
@@ -352,12 +371,14 @@ class SchemaBuilder:
         Returns:
             Self for chaining.
         """
-        self._fields.append(FieldDef(
-            name=name,
-            type="nested",
-            fields=fields,
-            **kwargs,
-        ))
+        self._fields.append(
+            FieldDef(
+                name=name,
+                type="nested",
+                fields=fields,
+                **kwargs,
+            )
+        )
         return self
 
     def build(self) -> dict[str, Any]:
@@ -417,6 +438,7 @@ class SchemaBuilder:
 # Schema Templates
 # ══════════════════════════════════════════════════════════════
 
+
 class SchemaTemplate:
     """
     Pre-built schema templates for common extraction use cases.
@@ -454,11 +476,17 @@ class SchemaTemplate:
             .text_field("author", selector=".author, .byline, [rel='author']")
             .text_field("date", selector="time, .date, .published, .post-date")
             .text_field("content", selector="article, .content, .post-content, .article-body")
-            .text_field("summary", selector=".summary, .excerpt, .description, meta[name='description']")
+            .text_field(
+                "summary", selector=".summary, .excerpt, .description, meta[name='description']"
+            )
             .image_field("featured_image", selector="img.hero, img.featured, .thumbnail img")
-            .list_field("tags", selector=".tag, .category, a[rel='tag']", fields=[
-                {"name": "text", "selector": "", "type": "text"},
-            ])
+            .list_field(
+                "tags",
+                selector=".tag, .category, a[rel='tag']",
+                fields=[
+                    {"name": "text", "selector": "", "type": "text"},
+                ],
+            )
             .build()
         )
 
@@ -543,12 +571,20 @@ class SchemaTemplate:
             .text_field("prep_time", selector=".prep-time, [data-prep-time]")
             .text_field("cook_time", selector=".cook-time, [data-cook-time]")
             .text_field("servings", selector=".servings, .yield")
-            .list_field("ingredients", selector=".ingredient, li.ingredient", fields=[
-                {"name": "text", "selector": "", "type": "text"},
-            ])
-            .list_field("instructions", selector=".step, li.step, .instruction", fields=[
-                {"name": "text", "selector": "", "type": "text"},
-            ])
+            .list_field(
+                "ingredients",
+                selector=".ingredient, li.ingredient",
+                fields=[
+                    {"name": "text", "selector": "", "type": "text"},
+                ],
+            )
+            .list_field(
+                "instructions",
+                selector=".step, li.step, .instruction",
+                fields=[
+                    {"name": "text", "selector": "", "type": "text"},
+                ],
+            )
             .image_field("image", selector="img")
             .build()
         )
@@ -571,6 +607,7 @@ class SchemaTemplate:
 # ══════════════════════════════════════════════════════════════
 # Schema Converter
 # ══════════════════════════════════════════════════════════════
+
 
 class SchemaConverter:
     """
@@ -651,9 +688,7 @@ class SchemaConverter:
             prop_type = prop.get("type", "string")
             if prop_type == "array":
                 field_def["type"] = "list"
-                field_def["fields"] = [
-                    {"name": "item", "selector": "li", "type": "text"}
-                ]
+                field_def["fields"] = [{"name": "item", "selector": "li", "type": "text"}]
             elif prop_type == "object":
                 field_def["type"] = "nested"
 
@@ -699,9 +734,7 @@ class SchemaConverter:
             prop_type = prop.get("type", "string")
             if prop_type == "array":
                 field_def["type"] = "list"
-                field_def["fields"] = [
-                    {"name": "item", "xpath": ".//li", "type": "text"}
-                ]
+                field_def["fields"] = [{"name": "item", "xpath": ".//li", "type": "text"}]
 
             fields.append(field_def)
 
@@ -733,23 +766,17 @@ class SchemaConverter:
 
         # Convert base selector
         if "baseSelector" in schema:
-            schema["baseXPath"] = SchemaConverter._css_to_xpath(
-                schema.pop("baseSelector")
-            )
+            schema["baseXPath"] = SchemaConverter._css_to_xpath(schema.pop("baseSelector"))
 
         # Convert field selectors
         for field_def in schema.get("fields", []):
             if "selector" in field_def:
-                field_def["xpath"] = SchemaConverter._css_to_xpath(
-                    field_def.pop("selector")
-                )
+                field_def["xpath"] = SchemaConverter._css_to_xpath(field_def.pop("selector"))
 
             # Recurse into sub-fields
             for sub_field in field_def.get("fields", []):
                 if "selector" in sub_field:
-                    sub_field["xpath"] = SchemaConverter._css_to_xpath(
-                        sub_field.pop("selector")
-                    )
+                    sub_field["xpath"] = SchemaConverter._css_to_xpath(sub_field.pop("selector"))
 
         return schema
 
@@ -837,6 +864,7 @@ class SchemaConverter:
 # Schema Validator
 # ══════════════════════════════════════════════════════════════
 
+
 class SchemaValidator:
     """
     Validates extraction schemas for correctness.
@@ -918,6 +946,7 @@ class SchemaValidator:
 # Schema Inference
 # ══════════════════════════════════════════════════════════════
 
+
 def infer_schema_from_html(
     html: str,
     max_depth: int = 3,
@@ -977,10 +1006,7 @@ def infer_schema_from_html(
     _walk(tree, 0)
 
     # Find the most common repeated pattern
-    repeated = {
-        k: v for k, v in tag_class_counts.items()
-        if v >= min_elements
-    }
+    repeated = {k: v for k, v in tag_class_counts.items() if v >= min_elements}
 
     if not repeated:
         return {"name": "InferredSchema", "fields": []}
@@ -1009,28 +1035,34 @@ def infer_schema_from_html(
             # Check for links
             link = child.find(".//a")
             if link is not None:
-                fields.append({
-                    "name": f"{field_name}_url",
-                    "selector": f"{selector} a",
-                    "type": "attribute",
-                    "attribute": "href",
-                })
+                fields.append(
+                    {
+                        "name": f"{field_name}_url",
+                        "selector": f"{selector} a",
+                        "type": "attribute",
+                        "attribute": "href",
+                    }
+                )
 
             # Check for images
             img = child.find(".//img")
             if img is not None:
-                fields.append({
-                    "name": f"{field_name}_image",
-                    "selector": f"{selector} img",
-                    "type": "attribute",
-                    "attribute": "src",
-                })
+                fields.append(
+                    {
+                        "name": f"{field_name}_image",
+                        "selector": f"{selector} img",
+                        "type": "attribute",
+                        "attribute": "src",
+                    }
+                )
 
-            fields.append({
-                "name": field_name,
-                "selector": selector,
-                "type": "text",
-            })
+            fields.append(
+                {
+                    "name": field_name,
+                    "selector": selector,
+                    "type": "text",
+                }
+            )
 
     return {
         "name": "InferredSchema",

@@ -64,6 +64,7 @@ logger = logging.getLogger("agentcrawl.content.html_parser")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class PageMetadata:
     """
@@ -89,6 +90,7 @@ class PageMetadata:
         twitter_image: Twitter Card image.
         extra: Additional meta tags as key-value pairs.
     """
+
     title: str = ""
     description: str = ""
     keywords: str = ""
@@ -159,6 +161,7 @@ class LinkInfo:
         rel: Link rel attribute.
         domain: Target domain.
     """
+
     url: str
     text: str = ""
     title: str = ""
@@ -188,6 +191,7 @@ class HeadingInfo:
         level: Heading level (1-6).
         index: Position in document.
     """
+
     text: str
     level: int
     index: int = 0
@@ -208,6 +212,7 @@ class ImageInfo:
         width: Width attribute.
         height: Height attribute.
     """
+
     src: str
     alt: str = ""
     title: str = ""
@@ -236,6 +241,7 @@ class MainContent:
         char_count: Number of characters.
         content_element: Tag name of the content container.
     """
+
     text: str = ""
     html: str = ""
     word_count: int = 0
@@ -255,28 +261,73 @@ class MainContent:
 
 # Tags to always remove
 REMOVE_TAGS: set[str] = {
-    "script", "style", "noscript", "iframe", "svg", "canvas",
-    "button", "input", "select", "textarea", "form",
-    "dialog", "template", "embed", "object", "applet",
-    "link", "meta", "head",
+    "script",
+    "style",
+    "noscript",
+    "iframe",
+    "svg",
+    "canvas",
+    "button",
+    "input",
+    "select",
+    "textarea",
+    "form",
+    "dialog",
+    "template",
+    "embed",
+    "object",
+    "applet",
+    "link",
+    "meta",
+    "head",
 }
 
 # Tags that indicate navigation / boilerplate
 NOISE_TAGS: set[str] = {
-    "nav", "footer", "aside", "header",
+    "nav",
+    "footer",
+    "aside",
+    "header",
 }
 
 # Class/ID patterns that indicate noise
 NOISE_PATTERNS: list[str] = [
-    r"nav", r"navbar", r"navigation", r"menu", r"sidebar",
-    r"footer", r"header", r"breadcrumb", r"pagination",
-    r"comment", r"comments", r"disqus", r"social",
-    r"share", r"sharing", r"related", r"recommend",
-    r"advert", r"ad-", r"ads-", r"adsby", r"sponsor",
-    r"popup", r"modal", r"overlay", r"cookie",
-    r"banner", r"promo", r"newsletter", r"subscribe",
-    r"widget", r"toc", r"table-of-contents",
-    r"skip-to", r"sr-only", r"visually-hidden",
+    r"nav",
+    r"navbar",
+    r"navigation",
+    r"menu",
+    r"sidebar",
+    r"footer",
+    r"header",
+    r"breadcrumb",
+    r"pagination",
+    r"comment",
+    r"comments",
+    r"disqus",
+    r"social",
+    r"share",
+    r"sharing",
+    r"related",
+    r"recommend",
+    r"advert",
+    r"ad-",
+    r"ads-",
+    r"adsby",
+    r"sponsor",
+    r"popup",
+    r"modal",
+    r"overlay",
+    r"cookie",
+    r"banner",
+    r"promo",
+    r"newsletter",
+    r"subscribe",
+    r"widget",
+    r"toc",
+    r"table-of-contents",
+    r"skip-to",
+    r"sr-only",
+    r"visually-hidden",
 ]
 
 # Content container selectors (in priority order)
@@ -302,6 +353,7 @@ CONTENT_SELECTORS: list[str] = [
 # ══════════════════════════════════════════════════════════════
 # HTML Parser
 # ══════════════════════════════════════════════════════════════
+
 
 class HTMLParser:
     """
@@ -365,8 +417,7 @@ class HTMLParser:
 
         except ImportError as err:
             raise ImportError(
-                "lxml is required for HTML parsing. "
-                "Install with: pip install lxml"
+                "lxml is required for HTML parsing. Install with: pip install lxml"
             ) from err
         except Exception as e:
             logger.warning("HTML parsing failed: %s", e)
@@ -454,6 +505,7 @@ class HTMLParser:
 
         # Clone the element to avoid modifying the original tree
         from copy import deepcopy
+
         content_clone = deepcopy(content_el)
 
         # Remove noise elements
@@ -646,25 +698,28 @@ class HTMLParser:
             except Exception:
                 domain = ""
 
-            is_internal = (
-                self._base_domain != ""
-                and domain == self._base_domain
-            )
+            is_internal = self._base_domain != "" and domain == self._base_domain
             is_external = domain != "" and not is_internal
 
             text = a_el.text_content().strip()
             title = a_el.get("title", "")
-            rel = " ".join(a_el.get("rel", [])) if isinstance(a_el.get("rel"), list) else a_el.get("rel", "")
+            rel = (
+                " ".join(a_el.get("rel", []))
+                if isinstance(a_el.get("rel"), list)
+                else a_el.get("rel", "")
+            )
 
-            links.append(LinkInfo(
-                url=absolute_url,
-                text=text[:200],
-                title=title,
-                is_internal=is_internal,
-                is_external=is_external,
-                rel=rel,
-                domain=domain,
-            ))
+            links.append(
+                LinkInfo(
+                    url=absolute_url,
+                    text=text[:200],
+                    title=title,
+                    is_internal=is_internal,
+                    is_external=is_external,
+                    rel=rel,
+                    domain=domain,
+                )
+            )
 
         # Include images
         if include_images:
@@ -682,13 +737,15 @@ class HTMLParser:
                 except Exception:
                     domain = ""
 
-                links.append(LinkInfo(
-                    url=absolute_src,
-                    text=img_el.get("alt", ""),
-                    is_internal=self._base_domain != "" and domain == self._base_domain,
-                    is_external=domain != "" and domain != self._base_domain,
-                    domain=domain,
-                ))
+                links.append(
+                    LinkInfo(
+                        url=absolute_src,
+                        text=img_el.get("alt", ""),
+                        is_internal=self._base_domain != "" and domain == self._base_domain,
+                        is_external=domain != "" and domain != self._base_domain,
+                        domain=domain,
+                    )
+                )
 
         internal = [link for link in links if link.is_internal]
         external = [link for link in links if link.is_external]
@@ -715,11 +772,13 @@ class HTMLParser:
             for el in self._root.iter(f"h{level}"):
                 text = el.text_content().strip()
                 if text:
-                    headings.append(HeadingInfo(
-                        text=text,
-                        level=level,
-                        index=index,
-                    ))
+                    headings.append(
+                        HeadingInfo(
+                            text=text,
+                            level=level,
+                            index=index,
+                        )
+                    )
                     index += 1
 
         # Sort by document order (approximated by index)
@@ -780,13 +839,15 @@ class HTMLParser:
 
             absolute_src = urljoin(base, src) if base else src
 
-            images.append(ImageInfo(
-                src=absolute_src,
-                alt=img_el.get("alt", ""),
-                title=img_el.get("title", ""),
-                width=img_el.get("width", ""),
-                height=img_el.get("height", ""),
-            ))
+            images.append(
+                ImageInfo(
+                    src=absolute_src,
+                    alt=img_el.get("alt", ""),
+                    title=img_el.get("title", ""),
+                    width=img_el.get("width", ""),
+                    height=img_el.get("height", ""),
+                )
+            )
 
         return images
 
@@ -809,6 +870,7 @@ class HTMLParser:
 
         try:
             from lxml.cssselect import CSSSelector
+
             css = CSSSelector(selector)
             return list(css(self._root))
         except Exception as e:
@@ -831,11 +893,7 @@ class HTMLParser:
 
     def select_attr(self, selector: str, attr: str) -> list[str]:
         """Query elements and return a specific attribute."""
-        return [
-            el.get(attr, "")
-            for el in self.select(selector)
-            if el.get(attr)
-        ]
+        return [el.get(attr, "") for el in self.select(selector) if el.get(attr)]
 
     def xpath(self, expression: str) -> list[Any]:
         """
@@ -927,6 +985,7 @@ class HTMLParser:
         for selector in exclude_selectors:
             try:
                 from lxml.cssselect import CSSSelector
+
                 css = CSSSelector(selector)
                 with contextlib.suppress(Exception):
                     for el in css(element):
@@ -1013,7 +1072,5 @@ class HTMLParser:
     def __repr__(self) -> str:
         status = "parsed" if self._parsed else "not parsed"
         return (
-            f"HTMLParser(url={self._base_url!r}, "
-            f"status={status}, "
-            f"html_len={len(self._raw_html)})"
+            f"HTMLParser(url={self._base_url!r}, status={status}, html_len={len(self._raw_html)})"
         )

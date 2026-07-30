@@ -60,9 +60,7 @@ from agentcrawl.hooks.registry import (
 # ══════════════════════════════════════════════════════════════
 
 # Hook callback types
-AsyncHookCallback: TypeAlias = Callable[
-    [HookContext], Coroutine[Any, Any, None]
-]
+AsyncHookCallback: TypeAlias = Callable[[HookContext], Coroutine[Any, Any, None]]
 SyncHookCallback: TypeAlias = Callable[[HookContext], None]
 HookCallback: TypeAlias = AsyncHookCallback | SyncHookCallback
 
@@ -73,9 +71,7 @@ HookCondition: TypeAlias = Callable[[HookContext], bool]
 HookDecorator: TypeAlias = Callable[[HookCallback], HookCallback]
 
 # Hook transform (returns modified context)
-AsyncHookTransform: TypeAlias = Callable[
-    [HookContext], Coroutine[Any, Any, HookContext | None]
-]
+AsyncHookTransform: TypeAlias = Callable[[HookContext], Coroutine[Any, Any, HookContext | None]]
 SyncHookTransform: TypeAlias = Callable[[HookContext], HookContext | None]
 HookTransform: TypeAlias = AsyncHookTransform | SyncHookTransform
 
@@ -93,8 +89,10 @@ HookName: TypeAlias = str
 # TypedDicts
 # ══════════════════════════════════════════════════════════════
 
+
 class HookConfigDict(TypedDict, total=False):
     """Typed dictionary for hook configuration."""
+
     event: str
     name: str
     group: str
@@ -111,6 +109,7 @@ class HookConfigDict(TypedDict, total=False):
 
 class HookInfoDict(TypedDict, total=False):
     """Typed dictionary for hook info (list output)."""
+
     name: str
     event: str
     group: str
@@ -125,6 +124,7 @@ class HookInfoDict(TypedDict, total=False):
 
 class HookStatsDict(TypedDict, total=False):
     """Typed dictionary for hook statistics."""
+
     total_executions: int
     total_errors: int
     total_skipped: int
@@ -134,6 +134,7 @@ class HookStatsDict(TypedDict, total=False):
 
 class RegistryConfigDict(TypedDict, total=False):
     """Typed dictionary for registry serialization."""
+
     name: str
     hooks: dict[str, dict[str, Any]]
     groups: dict[str, list[str]]
@@ -144,6 +145,7 @@ class RegistryConfigDict(TypedDict, total=False):
 # ══════════════════════════════════════════════════════════════
 # Protocols
 # ══════════════════════════════════════════════════════════════
+
 
 @runtime_checkable
 class Hookable(Protocol):
@@ -189,6 +191,7 @@ class HookDiscoverable(Protocol):
 # Type Guards
 # ══════════════════════════════════════════════════════════════
 
+
 def is_hook_context(obj: Any) -> TypeGuard[HookContext]:
     """Check if an object is a HookContext."""
     return (
@@ -227,6 +230,7 @@ def is_hook_event(obj: Any) -> TypeGuard[HookEvent]:
 def is_async_hook(callback: Callable) -> bool:
     """Check if a hook callback is async."""
     import asyncio
+
     return asyncio.iscoroutinefunction(callback)
 
 

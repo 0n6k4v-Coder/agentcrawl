@@ -67,6 +67,7 @@ _log_context: ContextVar[dict[str, Any] | None] = ContextVar("_log_context", def
 # Logging Context Manager
 # ══════════════════════════════════════════════════════════════
 
+
 class LoggingContext:
     """
     Context manager for adding structured context to log records.
@@ -117,6 +118,7 @@ class LoggingContext:
 # ══════════════════════════════════════════════════════════════
 # Formatters
 # ══════════════════════════════════════════════════════════════
+
 
 class JsonFormatter(logging.Formatter):
     """
@@ -183,13 +185,15 @@ class ColoredFormatter(logging.Formatter):
     """
 
     # ANSI color codes
-    COLORS: MappingProxyType[str, str] = MappingProxyType({
-        "DEBUG": "\033[36m",     # Cyan
-        "INFO": "\033[32m",      # Green
-        "WARNING": "\033[33m",   # Yellow
-        "ERROR": "\033[31m",     # Red
-        "CRITICAL": "\033[35m",  # Magenta
-    })
+    COLORS: MappingProxyType[str, str] = MappingProxyType(
+        {
+            "DEBUG": "\033[36m",  # Cyan
+            "INFO": "\033[32m",  # Green
+            "WARNING": "\033[33m",  # Yellow
+            "ERROR": "\033[31m",  # Red
+            "CRITICAL": "\033[35m",  # Magenta
+        }
+    )
     RESET = "\033[0m"
     BOLD = "\033[1m"
     DIM = "\033[2m"
@@ -229,6 +233,7 @@ class ColoredFormatter(logging.Formatter):
 # Filters
 # ══════════════════════════════════════════════════════════════
 
+
 class ContextFilter(logging.Filter):
     """
     Log filter that injects context variables into log records.
@@ -251,15 +256,13 @@ class ModuleFilter(logging.Filter):
         self._allowed = allowed_modules
 
     def filter(self, record: logging.LogRecord) -> bool:
-        return any(
-            record.name.startswith(module)
-            for module in self._allowed
-        )
+        return any(record.name.startswith(module) for module in self._allowed)
 
 
 # ══════════════════════════════════════════════════════════════
 # Setup
 # ══════════════════════════════════════════════════════════════
+
 
 def setup_logging(
     level: str | int = "INFO",
@@ -304,16 +307,12 @@ def setup_logging(
     console_handler.setLevel(level)
 
     if json_format:
-        console_handler.setFormatter(
-            JsonFormatter(include_context=include_context)
-        )
+        console_handler.setFormatter(JsonFormatter(include_context=include_context))
     else:
         # Auto-detect TTY for colors
         if use_colors and not sys.stdout.isatty():
             use_colors = False
-        console_handler.setFormatter(
-            ColoredFormatter(use_colors=use_colors)
-        )
+        console_handler.setFormatter(ColoredFormatter(use_colors=use_colors))
 
     # Add context filter
     console_handler.addFilter(ContextFilter())
@@ -328,9 +327,7 @@ def setup_logging(
             encoding="utf-8",
         )
         file_handler.setLevel(level)
-        file_handler.setFormatter(
-            JsonFormatter(include_context=include_context)
-        )
+        file_handler.setFormatter(JsonFormatter(include_context=include_context))
         file_handler.addFilter(ContextFilter())
         root_logger.addHandler(file_handler)
 
@@ -365,6 +362,7 @@ def get_logger(name: str) -> logging.Logger:
 # Performance Logging
 # ══════════════════════════════════════════════════════════════
 
+
 def log_performance(
     func: Callable | None = None,
     *,
@@ -392,12 +390,14 @@ def log_performance(
         ...     ...
         # → DEBUG [module] fetch_page completed in 123.45ms
     """
+
     def decorator(fn: Callable) -> Callable:
         _logger_name = logger_name or fn.__module__
         _logger = logging.getLogger(_logger_name)
         _message = message or f"{fn.__name__} completed in {{duration:.2f}}ms"
 
         if _is_async(fn):
+
             @functools.wraps(fn)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 start = time.perf_counter()
@@ -413,8 +413,10 @@ def log_performance(
                         f"{fn.__name__} failed after {duration:.2f}ms: {e}",
                     )
                     raise
+
             return async_wrapper
         else:
+
             @functools.wraps(fn)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 start = time.perf_counter()
@@ -430,6 +432,7 @@ def log_performance(
                         f"{fn.__name__} failed after {duration:.2f}ms: {e}",
                     )
                     raise
+
             return sync_wrapper
 
     if func is not None:
@@ -478,9 +481,11 @@ class PerformanceTimer:
 # Utilities
 # ══════════════════════════════════════════════════════════════
 
+
 def _is_async(func: Callable) -> bool:
     """Check if a function is async."""
     import asyncio
+
     return asyncio.iscoroutinefunction(func)
 
 

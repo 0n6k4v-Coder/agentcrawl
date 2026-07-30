@@ -36,6 +36,7 @@ from pydantic import BaseModel, Field
 # Error
 # ══════════════════════════════════════════════════════════════
 
+
 class ErrorDetail(BaseModel):
     """Error detail object."""
 
@@ -80,6 +81,7 @@ class ErrorResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Scrape
 # ══════════════════════════════════════════════════════════════
+
 
 class ScrapeResponse(BaseModel):
     """
@@ -138,6 +140,7 @@ class ScrapeResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Crawl
 # ══════════════════════════════════════════════════════════════
+
 
 class CrawlJobStatusResponse(BaseModel):
     """
@@ -234,6 +237,7 @@ class CrawlStartResponse(BaseModel):
 # Map
 # ══════════════════════════════════════════════════════════════
 
+
 class MapResponse(BaseModel):
     """
     Response for POST /map.
@@ -266,6 +270,7 @@ class MapResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Search
 # ══════════════════════════════════════════════════════════════
+
 
 class SearchResultItem(BaseModel):
     """A single search result."""
@@ -314,6 +319,7 @@ class SearchResponse(BaseModel):
 # Extract
 # ══════════════════════════════════════════════════════════════
 
+
 class ExtractResponse(BaseModel):
     """
     Response for POST /extract.
@@ -340,6 +346,7 @@ class ExtractResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Batch
 # ══════════════════════════════════════════════════════════════
+
 
 class BatchResultItem(BaseModel):
     """A single result in a batch response."""
@@ -387,6 +394,7 @@ class BatchScrapeResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Interact
 # ══════════════════════════════════════════════════════════════
+
 
 class InteractResponse(BaseModel):
     """
@@ -444,6 +452,7 @@ class SessionResponse(BaseModel):
 # Health
 # ══════════════════════════════════════════════════════════════
 
+
 class ComponentHealthResponse(BaseModel):
     """Health status of a single component."""
 
@@ -492,6 +501,7 @@ class HealthResponse(BaseModel):
 # Pagination
 # ══════════════════════════════════════════════════════════════
 
+
 class PaginationMeta(BaseModel):
     """Pagination metadata for list endpoints."""
 
@@ -516,6 +526,7 @@ class PaginatedResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # API Info
 # ══════════════════════════════════════════════════════════════
+
 
 class APIInfoResponse(BaseModel):
     """

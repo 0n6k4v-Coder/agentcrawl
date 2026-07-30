@@ -58,6 +58,7 @@ logger = logging.getLogger("agentcrawl.content.html_to_md")
 # Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class MarkdownOptions:
     """
@@ -79,17 +80,32 @@ class MarkdownOptions:
         remove_empty_lines: Collapse multiple empty lines.
         max_heading_level: Maximum heading level to convert (1-6).
     """
+
     include_links: bool = True
     include_images: bool = True
     code_block_style: str = "fenced"
     heading_style: str = "atx"
     bullet_marker: str = "-"
     ordered_marker: str = "."
-    strip_tags: list[str] = field(default_factory=lambda: [
-        "script", "style", "noscript", "iframe", "svg",
-        "canvas", "button", "input", "select", "textarea",
-        "form", "dialog", "template", "embed", "object",
-    ])
+    strip_tags: list[str] = field(
+        default_factory=lambda: [
+            "script",
+            "style",
+            "noscript",
+            "iframe",
+            "svg",
+            "canvas",
+            "button",
+            "input",
+            "select",
+            "textarea",
+            "form",
+            "dialog",
+            "template",
+            "embed",
+            "object",
+        ]
+    )
     convert_tags: list[str] = field(default_factory=list)
     wrap_width: int = 0
     escape_snob: bool = False
@@ -144,18 +160,52 @@ INLINE_TAGS: dict[str, tuple[str, str]] = {
 
 # Block-level tags that add newlines
 BLOCK_TAGS: set[str] = {
-    "p", "div", "section", "article", "main", "aside",
-    "header", "footer", "figure", "figcaption",
-    "blockquote", "pre", "ul", "ol", "li",
-    "table", "thead", "tbody", "tfoot", "tr",
-    "h1", "h2", "h3", "h4", "h5", "h6",
-    "hr", "br", "dl", "dt", "dd",
+    "p",
+    "div",
+    "section",
+    "article",
+    "main",
+    "aside",
+    "header",
+    "footer",
+    "figure",
+    "figcaption",
+    "blockquote",
+    "pre",
+    "ul",
+    "ol",
+    "li",
+    "table",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "hr",
+    "br",
+    "dl",
+    "dt",
+    "dd",
 }
 
 # Tags to skip entirely (no content extracted)
 SKIP_TAGS: set[str] = {
-    "script", "style", "noscript", "head", "meta", "link",
-    "title", "iframe", "svg", "canvas", "template",
+    "script",
+    "style",
+    "noscript",
+    "head",
+    "meta",
+    "link",
+    "title",
+    "iframe",
+    "svg",
+    "canvas",
+    "template",
 }
 
 # Language detection from class names
@@ -171,6 +221,7 @@ LANG_PATTERNS: list[tuple[str, str]] = [
 # ══════════════════════════════════════════════════════════════
 # HTML to Markdown Converter
 # ══════════════════════════════════════════════════════════════
+
 
 class HTMLToMarkdown:
     """
@@ -541,9 +592,7 @@ class HTMLToMarkdown:
             return f"\n\n```{lang}\n{code_text}\n```\n\n"
         else:
             # Indented style
-            indented = "\n".join(
-                f"    {line}" for line in code_text.split("\n")
-            )
+            indented = "\n".join(f"    {line}" for line in code_text.split("\n"))
             return f"\n\n{indented}\n\n"
 
     def _convert_blockquote(self, element: Any) -> str:
@@ -795,10 +844,7 @@ class HTMLToMarkdown:
         }
 
         if not self._options.include_images:
-            kwargs["convert"] = [
-                t for t in (kwargs.get("convert") or [])
-                if t != "img"
-            ]
+            kwargs["convert"] = [t for t in (kwargs.get("convert") or []) if t != "img"]
 
         result = markdownify.markdownify(html, **kwargs)
         return self._cleanup_markdown(result)
@@ -846,6 +892,7 @@ class HTMLToMarkdown:
 # ══════════════════════════════════════════════════════════════
 # Convenience Functions
 # ══════════════════════════════════════════════════════════════
+
 
 def html_to_markdown(
     html: str,

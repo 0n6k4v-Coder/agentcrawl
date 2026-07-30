@@ -59,6 +59,7 @@ logger = logging.getLogger("agentcrawl.output.json")
 # JSON Output Formatter
 # ══════════════════════════════════════════════════════════════
 
+
 class JsonOutputFormatter:
     """
     Formats crawl results as structured JSON output.
@@ -264,10 +265,7 @@ class JsonOutputFormatter:
             return {"data": res}
 
         if hasattr(result, "__dict__"):
-            return {
-                k: v for k, v in result.__dict__.items()
-                if not k.startswith("_")
-            }
+            return {k: v for k, v in result.__dict__.items() if not k.startswith("_")}
 
         return {"value": str(result)}
 
@@ -279,10 +277,7 @@ class JsonOutputFormatter:
 
         # Apply exclude filter
         if self._exclude_fields:
-            data = {
-                k: v for k, v in data.items()
-                if k not in self._exclude_fields
-            }
+            data = {k: v for k, v in data.items() if k not in self._exclude_fields}
 
         return data
 
@@ -314,23 +309,17 @@ class JsonOutputFormatter:
     @staticmethod
     def _remove_empty(data: dict[str, Any]) -> dict[str, Any]:
         """Remove fields with empty/null values."""
-        return {
-            k: v for k, v in data.items()
-            if v is not None and v != "" and v != [] and v != {}
-        }
+        return {k: v for k, v in data.items() if v is not None and v != "" and v != [] and v != {}}
 
     def _truncate_strings(self, data: Any) -> Any:
         """Truncate strings longer than max_string_length."""
         if isinstance(data, str):
             if len(data) > self._max_string_length:
-                return data[:self._max_string_length] + "..."
+                return data[: self._max_string_length] + "..."
             return data
 
         if isinstance(data, dict):
-            return {
-                k: self._truncate_strings(v)
-                for k, v in data.items()
-            }
+            return {k: self._truncate_strings(v) for k, v in data.items()}
 
         if isinstance(data, list):
             return [self._truncate_strings(item) for item in data]
@@ -381,6 +370,7 @@ class JsonOutputFormatter:
         # Dataclasses
         if hasattr(obj, "__dataclass_fields__"):
             import dataclasses
+
             return dataclasses.asdict(obj)
 
         # Objects with to_dict

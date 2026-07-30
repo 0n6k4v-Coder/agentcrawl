@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 # Fixtures
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest_asyncio.fixture
 async def queue() -> AsyncGenerator[MemoryQueueBackend, None]:
     """Create a started memory queue backend."""
@@ -73,6 +74,7 @@ def make_item() -> Any:
 # ══════════════════════════════════════════════════════════════
 # Basic Operations
 # ══════════════════════════════════════════════════════════════
+
 
 class TestBasicOperations:
     """Tests for basic queue operations."""
@@ -183,6 +185,7 @@ class TestBasicOperations:
 # Priority
 # ══════════════════════════════════════════════════════════════
 
+
 class TestPriority:
     """Tests for priority-based ordering."""
 
@@ -227,6 +230,7 @@ class TestPriority:
 # ══════════════════════════════════════════════════════════════
 # Acknowledge & Reject
 # ══════════════════════════════════════════════════════════════
+
 
 class TestAckReject:
     """Tests for acknowledge and reject operations."""
@@ -337,6 +341,7 @@ class TestAckReject:
 # Cancel
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCancel:
     """Tests for item cancellation."""
 
@@ -367,6 +372,7 @@ class TestCancel:
 # ══════════════════════════════════════════════════════════════
 # Stats
 # ══════════════════════════════════════════════════════════════
+
 
 class TestStats:
     """Tests for queue statistics."""
@@ -419,6 +425,7 @@ class TestStats:
 # Get Item
 # ══════════════════════════════════════════════════════════════
 
+
 class TestGetItem:
     """Tests for item retrieval."""
 
@@ -446,6 +453,7 @@ class TestGetItem:
 # ══════════════════════════════════════════════════════════════
 # Concurrent Operations
 # ══════════════════════════════════════════════════════════════
+
 
 class TestConcurrent:
     """Tests for concurrent queue operations."""
@@ -483,6 +491,7 @@ class TestConcurrent:
 # ══════════════════════════════════════════════════════════════
 # Delayed Items
 # ══════════════════════════════════════════════════════════════
+
 
 class TestDelayedItems:
     """Tests for scheduled/delayed items."""
@@ -527,6 +536,7 @@ class TestDelayedItems:
 # Health Check
 # ══════════════════════════════════════════════════════════════
 
+
 class TestHealthCheck:
     """Tests for backend health check."""
 
@@ -539,6 +549,7 @@ class TestHealthCheck:
 # ══════════════════════════════════════════════════════════════
 # Dead Letter Queue
 # ══════════════════════════════════════════════════════════════
+
 
 class TestDeadLetter:
     """Tests for dead letter queue."""
@@ -576,6 +587,7 @@ class TestDeadLetter:
 # ══════════════════════════════════════════════════════════════
 # QueueItem Model
 # ══════════════════════════════════════════════════════════════
+
 
 class TestQueueItemModel:
     """Tests for QueueItem data model."""

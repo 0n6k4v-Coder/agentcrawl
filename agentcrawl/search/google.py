@@ -50,6 +50,7 @@ logger = logging.getLogger("agentcrawl.search.google")
 # Google Search Provider
 # ══════════════════════════════════════════════════════════════
 
+
 class GoogleSearchProvider(SearchProvider):
     """
     Google search provider with multiple access methods.
@@ -243,13 +244,15 @@ class GoogleSearchProvider(SearchProvider):
                 data = resp.json()
 
                 for i, item in enumerate(data.get("items", [])):
-                    results.append(SearchResult(
-                        url=item.get("link", ""),
-                        title=item.get("title", ""),
-                        snippet=item.get("snippet", ""),
-                        position=start + i,
-                        raw=item,
-                    ))
+                    results.append(
+                        SearchResult(
+                            url=item.get("link", ""),
+                            title=item.get("title", ""),
+                            snippet=item.get("snippet", ""),
+                            position=start + i,
+                            raw=item,
+                        )
+                    )
 
         except Exception as e:
             logger.warning("Google Custom Search failed: %s", e)
@@ -301,16 +304,16 @@ class GoogleSearchProvider(SearchProvider):
 
                 data = resp.json()
 
-                for i, item in enumerate(
-                    data.get("organic_results", [])
-                ):
-                    results.append(SearchResult(
-                        url=item.get("link", ""),
-                        title=item.get("title", ""),
-                        snippet=item.get("snippet", ""),
-                        position=item.get("position", start + i),
-                        raw=item,
-                    ))
+                for i, item in enumerate(data.get("organic_results", [])):
+                    results.append(
+                        SearchResult(
+                            url=item.get("link", ""),
+                            title=item.get("title", ""),
+                            snippet=item.get("snippet", ""),
+                            position=item.get("position", start + i),
+                            raw=item,
+                        )
+                    )
 
         except Exception as e:
             logger.warning("SerpAPI search failed: %s", e)
@@ -361,9 +364,7 @@ class GoogleSearchProvider(SearchProvider):
                 )
 
                 if resp.status_code != 200:
-                    logger.warning(
-                        "Google scrape error: %d", resp.status_code
-                    )
+                    logger.warning("Google scrape error: %d", resp.status_code)
                     return results
 
                 html = resp.text
@@ -400,7 +401,7 @@ class GoogleSearchProvider(SearchProvider):
         # Pattern 1: Standard result links
         link_pattern = re.compile(
             r'<a[^>]*href="(https?://(?!www\.google\.|accounts\.google\.|support\.google\.)[^"]+)"'
-            r'[^>]*>(?:<[^>]*>)*([^<]{10,})(?:<[^>]*>)*</a>',
+            r"[^>]*>(?:<[^>]*>)*([^<]{10,})(?:<[^>]*>)*</a>",
             re.DOTALL,
         )
 
@@ -432,12 +433,14 @@ class GoogleSearchProvider(SearchProvider):
             seen_urls.add(url)
 
             position += 1
-            results.append(SearchResult(
-                url=url,
-                title=title,
-                snippet="",
-                position=position,
-            ))
+            results.append(
+                SearchResult(
+                    url=url,
+                    title=title,
+                    snippet="",
+                    position=position,
+                )
+            )
 
         # Try to extract snippets
         snippet_pattern = re.compile(
@@ -481,7 +484,4 @@ class GoogleSearchProvider(SearchProvider):
         }
 
     def __repr__(self) -> str:
-        return (
-            f"GoogleSearchProvider(method={self._method!r}, "
-            f"lang={self._language!r})"
-        )
+        return f"GoogleSearchProvider(method={self._method!r}, lang={self._language!r})"

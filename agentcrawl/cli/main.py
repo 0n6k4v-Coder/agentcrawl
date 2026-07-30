@@ -17,8 +17,12 @@ def cli(ctx: click.Context) -> None:
         console.print(f"[bold cyan]AgentCrawl v{__version__}[/bold cyan]")
         console.print("Web Crawling & Scraping Framework for AI Agents")
         console.print("\nRun [bold]agentcrawl --help[/bold] for available commands.")
-        console.print("\n[dim]Package Mode:[/dim]  [cyan]pip install agentcrawl[/cyan] → [green]from agentcrawl import CrawlEngine[/green]")
-        console.print("[dim]Server Mode:[/dim]    [cyan]git clone + docker compose up[/cyan] → [green]python -m server[/green]")
+        console.print(
+            "\n[dim]Package Mode:[/dim]  [cyan]pip install agentcrawl[/cyan] → [green]from agentcrawl import CrawlEngine[/green]"
+        )
+        console.print(
+            "[dim]Server Mode:[/dim]    [cyan]git clone + docker compose up[/cyan] → [green]python -m server[/green]"
+        )
 
 
 @cli.command()
@@ -72,7 +76,9 @@ def install_browsers() -> None:
 
 @cli.command()
 @click.argument("url")
-@click.option("--format", "output_format", default="markdown", type=click.Choice(["markdown", "html", "json"]))
+@click.option(
+    "--format", "output_format", default="markdown", type=click.Choice(["markdown", "html", "json"])
+)
 @click.option("--headless/--no-headless", default=True)
 def scrape(url: str, output_format: str, headless: bool) -> None:
     """Scrape a single URL (package mode)."""

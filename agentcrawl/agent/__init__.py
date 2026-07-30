@@ -96,6 +96,7 @@ try:
         AgentCrawlSearchTool,
         AgentCrawlTool,
     )
+
     _HAS_LANGCHAIN = True
 except ImportError:
     AgentCrawlTool = None  # type: ignore[assignment,misc]
@@ -109,6 +110,7 @@ try:
         CrewAICrawlTool,
         CrewAISearchTool,
     )
+
     _HAS_CREWAI = True
 except ImportError:
     CrewAICrawlTool = None  # type: ignore[assignment,misc]
@@ -167,6 +169,7 @@ __all__ = [
 # Feature Detection Helpers
 # ──────────────────────────────────────────────────────────────
 
+
 def has_langchain() -> bool:
     """Check if LangChain is installed and AgentCrawl tools are available."""
     return _HAS_LANGCHAIN
@@ -195,4 +198,3 @@ def get_available_frameworks() -> list[str]:
     if _HAS_CREWAI:
         frameworks.append("crewai")
     return frameworks
-

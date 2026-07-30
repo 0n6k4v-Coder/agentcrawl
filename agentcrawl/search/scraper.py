@@ -70,6 +70,7 @@ USER_AGENTS: list[str] = [
 # Search Scraper
 # ══════════════════════════════════════════════════════════════
 
+
 class SearchScraper:
     """
     Scrapes search engine results pages directly.
@@ -195,7 +196,8 @@ class SearchScraper:
             except Exception as e:
                 logger.warning(
                     "Search scrape error (attempt %d): %s",
-                    attempt + 1, e,
+                    attempt + 1,
+                    e,
                 )
                 if attempt < self._max_retries:
                     await asyncio.sleep(self._rate_limit_delay)
@@ -267,7 +269,8 @@ class SearchScraper:
                 else:
                     logger.warning(
                         "%s returned status %d",
-                        self._engine, resp.status_code,
+                        self._engine,
+                        resp.status_code,
                     )
                     return None
 
@@ -371,7 +374,7 @@ class SearchScraper:
         # We look for anchor tags with real URLs
         link_pattern = re.compile(
             r'<a[^>]*href="(https?://(?!www\.google\.|accounts\.google\.|support\.google\.|policies\.google\.)[^"]+)"'
-            r'[^>]*>(.*?)</a>',
+            r"[^>]*>(.*?)</a>",
             re.DOTALL,
         )
 
@@ -403,12 +406,14 @@ class SearchScraper:
             seen_urls.add(url)
 
             position += 1
-            results.append(SearchResult(
-                url=url,
-                title=title,
-                snippet="",
-                position=position,
-            ))
+            results.append(
+                SearchResult(
+                    url=url,
+                    title=title,
+                    snippet="",
+                    position=position,
+                )
+            )
 
         # Try to extract snippets
         self._extract_snippets_google(clean, results)
@@ -424,8 +429,8 @@ class SearchScraper:
         # Google snippets are typically in <span> or <div> with specific classes
         snippet_pattern = re.compile(
             r'<(?:span|div)[^>]*class="[^"]*(?:BNeawe|s3v9rd|VwiC3b)[^"]*"[^>]*>'
-            r'((?:(?!</(?:span|div)>).){40,500})'
-            r'</(?:span|div)>',
+            r"((?:(?!</(?:span|div)>).){40,500})"
+            r"</(?:span|div)>",
             re.DOTALL,
         )
 
@@ -491,7 +496,7 @@ class SearchScraper:
             # Extract snippet
             snippet = ""
             snippet_match = re.search(
-                r'<p[^>]*>(.*?)</p>',
+                r"<p[^>]*>(.*?)</p>",
                 block,
                 re.DOTALL,
             )
@@ -500,12 +505,14 @@ class SearchScraper:
                 snippet = re.sub(r"\s+", " ", snippet)
 
             position += 1
-            results.append(SearchResult(
-                url=url,
-                title=title,
-                snippet=snippet,
-                position=position,
-            ))
+            results.append(
+                SearchResult(
+                    url=url,
+                    title=title,
+                    snippet=snippet,
+                    position=position,
+                )
+            )
 
         return results
 
@@ -572,12 +579,14 @@ class SearchScraper:
                 snippet = re.sub(r"<[^>]+>", "", snippets[i].group(1)).strip()
                 snippet = re.sub(r"\s+", " ", snippet)
 
-            results.append(SearchResult(
-                url=url,
-                title=title,
-                snippet=snippet,
-                position=i + 1,
-            ))
+            results.append(
+                SearchResult(
+                    url=url,
+                    title=title,
+                    snippet=snippet,
+                    position=i + 1,
+                )
+            )
 
         return results
 
@@ -603,9 +612,7 @@ class SearchScraper:
             "engine": self._engine,
             "total_requests": self._total_requests,
             "total_blocked": self._total_blocked,
-            "block_rate": round(
-                self._total_blocked / max(self._total_requests, 1), 3
-            ),
+            "block_rate": round(self._total_blocked / max(self._total_requests, 1), 3),
             "language": self._language,
             "country": self._country,
             "rate_limit_delay": self._rate_limit_delay,

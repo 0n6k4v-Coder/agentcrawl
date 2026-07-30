@@ -59,8 +59,10 @@ logger = logging.getLogger("agentcrawl.server.auth.rate_limiter")
 # Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 class RateLimitAlgorithm(str, Enum):
     """Rate limiting algorithms."""
+
     RL_TB = "token-bucket"
     SLIDING_WINDOW = "sliding_window"
     FIXED_WINDOW = "fixed_window"
@@ -80,6 +82,7 @@ class RateLimitConfig:
         cleanup_interval: Seconds between cleanup runs.
         enabled: Whether rate limiting is enabled.
     """
+
     requests_per_minute: int = 60
     requests_per_hour: int = 0
     burst: int = 10
@@ -103,6 +106,7 @@ class RateLimitConfig:
 # Result
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class RateLimitResult:
     """
@@ -115,6 +119,7 @@ class RateLimitResult:
         retry_after: Seconds until next allowed request.
         reset_at: Timestamp when the window resets.
     """
+
     allowed: bool
     remaining: int = 0
     limit: int = 0
@@ -141,9 +146,11 @@ class RateLimitResult:
 # Token Bucket
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class _TokenBucket:
     """Internal token bucket state."""
+
     tokens: float
     last_refill: float
     capacity: float
@@ -223,10 +230,7 @@ class TokenBucketLimiter:
         now = time.time()
         stale_threshold = self._config.window_seconds * 10
 
-        stale = [
-            cid for cid, b in self._buckets.items()
-            if now - b.last_refill > stale_threshold
-        ]
+        stale = [cid for cid, b in self._buckets.items() if now - b.last_refill > stale_threshold]
 
         for cid in stale:
             del self._buckets[cid]
@@ -237,6 +241,7 @@ class TokenBucketLimiter:
 # ══════════════════════════════════════════════════════════════
 # Sliding Window
 # ══════════════════════════════════════════════════════════════
+
 
 class SlidingWindowLimiter:
     """
@@ -270,9 +275,7 @@ class SlidingWindowLimiter:
 
         # Clean old entries
         cutoff = now - window
-        self._requests[client_id] = [
-            t for t in self._requests[client_id] if t > cutoff
-        ]
+        self._requests[client_id] = [t for t in self._requests[client_id] if t > cutoff]
 
         current_count = len(self._requests[client_id])
 
@@ -325,6 +328,7 @@ class SlidingWindowLimiter:
 # ══════════════════════════════════════════════════════════════
 # Fixed Window
 # ══════════════════════════════════════════════════════════════
+
 
 class FixedWindowLimiter:
     """
@@ -397,10 +401,7 @@ class FixedWindowLimiter:
         window = self._config.window_seconds
         stale_threshold = window * 10
 
-        stale = [
-            cid for cid, (start, _) in self._windows.items()
-            if now - start > stale_threshold
-        ]
+        stale = [cid for cid, (start, _) in self._windows.items() if now - start > stale_threshold]
 
         for cid in stale:
             del self._windows[cid]
@@ -411,6 +412,7 @@ class FixedWindowLimiter:
 # ══════════════════════════════════════════════════════════════
 # Unified Rate Limiter
 # ══════════════════════════════════════════════════════════════
+
 
 class RateLimiter:
     """
@@ -468,11 +470,14 @@ class RateLimiter:
 
         # Periodic cleanup
         now = time.time()
-        if hasattr(self._limiter, "_last_cleanup") and now - self._limiter._last_cleanup > self._config.cleanup_interval:
+        if (
+            hasattr(self._limiter, "_last_cleanup")
+            and now - self._limiter._last_cleanup > self._config.cleanup_interval
+        ):
             removed = self._limiter.cleanup()
             self._limiter._last_cleanup = now
             if removed > 0:
-                    logger.debug("Rate limiter cleanup: removed %d entries", removed)
+                logger.debug("Rate limiter cleanup: removed %d entries", removed)
 
         return result
 
@@ -486,9 +491,7 @@ class RateLimiter:
             "total_checks": self._total_checks,
             "total_allowed": self._total_allowed,
             "total_denied": self._total_denied,
-            "denial_rate": round(
-                self._total_denied / max(self._total_checks, 1), 4
-            ),
+            "denial_rate": round(self._total_denied / max(self._total_checks, 1), 4),
         }
 
     def __repr__(self) -> str:
@@ -501,6 +504,7 @@ class RateLimiter:
 # ══════════════════════════════════════════════════════════════
 # FastAPI Middleware
 # ══════════════════════════════════════════════════════════════
+
 
 class RateLimitMiddleware:
     """
@@ -527,7 +531,11 @@ class RateLimitMiddleware:
         self._app = app
         self._limiter = limiter or RateLimiter()
         self._excluded_paths = excluded_paths or {
-            "/health", "/", "/docs", "/redoc", "/openapi.json",
+            "/health",
+            "/",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
         }
         self._identify_by = identify_by
 

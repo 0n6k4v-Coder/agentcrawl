@@ -75,6 +75,7 @@ For advanced usage, see the API reference documentation.
 # TopicChunker
 # ══════════════════════════════════════════════════════════════
 
+
 class TestTopicChunker:
     """Tests for TopicChunker (heading-based splitting)."""
 
@@ -184,6 +185,7 @@ class TestTopicChunker:
 # SentenceChunker
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSentenceChunker:
     """Tests for SentenceChunker (sentence-based splitting)."""
 
@@ -204,18 +206,18 @@ class TestSentenceChunker:
             assert chunk.token_count <= 100  # Allow tolerance
 
     def test_sentences_not_split(self) -> None:
-            """Individual sentences are not split mid-sentence."""
-            chunker = SentenceChunker(max_chunk_size=500, overlap=0)
-            text = "This is sentence one. This is sentence two. This is sentence three."
-            result = chunker.chunk(text)
+        """Individual sentences are not split mid-sentence."""
+        chunker = SentenceChunker(max_chunk_size=500, overlap=0)
+        text = "This is sentence one. This is sentence two. This is sentence three."
+        result = chunker.chunk(text)
 
-            for chunk in result.chunks:
-                # Each chunk should contain complete sentences (no overlap)
-                text = chunk.text.strip()
-                if text:
-                    # The chunk should end with punctuation or be the last chunk
-                    assert text[-1] in ".!?" or chunk.index == result.total_chunks - 1
+        for chunk in result.chunks:
+            # Each chunk should contain complete sentences (no overlap)
+            text = chunk.text.strip()
+            if text:
+                # The chunk should end with punctuation or be the last chunk
                 assert text[-1] in ".!?" or chunk.index == result.total_chunks - 1
+            assert text[-1] in ".!?" or chunk.index == result.total_chunks - 1
 
     def test_empty_content(self) -> None:
         """Empty content returns no chunks."""
@@ -235,6 +237,7 @@ class TestSentenceChunker:
 # ══════════════════════════════════════════════════════════════
 # FixedChunker
 # ══════════════════════════════════════════════════════════════
+
 
 class TestFixedChunker:
     """Tests for FixedChunker (fixed-size splitting)."""
@@ -297,6 +300,7 @@ class TestFixedChunker:
 # RegexChunker
 # ══════════════════════════════════════════════════════════════
 
+
 class TestRegexChunker:
     """Tests for RegexChunker (pattern-based splitting)."""
 
@@ -341,6 +345,7 @@ class TestRegexChunker:
 # Factory Function
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCreateChunker:
     """Tests for create_chunker factory."""
 
@@ -378,6 +383,7 @@ class TestCreateChunker:
 # ══════════════════════════════════════════════════════════════
 # ChunkResult
 # ══════════════════════════════════════════════════════════════
+
 
 class TestChunkResult:
     """Tests for ChunkResult model."""
@@ -417,6 +423,7 @@ class TestChunkResult:
 # ══════════════════════════════════════════════════════════════
 # Edge Cases
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEdgeCases:
     """Tests for edge cases."""

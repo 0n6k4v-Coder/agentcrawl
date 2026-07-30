@@ -77,49 +77,44 @@ BOILERPLATE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"we\s+use\s+cookies", re.I),
     re.compile(r"cookie\s+consent", re.I),
     re.compile(r"gdpr|general\s+data\s+protection", re.I),
-
     # Newsletter / subscription
     re.compile(r"subscribe\s+to\s+(our\s+)?newsletter", re.I),
     re.compile(r"(sign|subscribe)\s*(up)?\s*(for|to)\s*(our\s+)?(email|mailing)", re.I),
     re.compile(r"enter\s+your\s+email", re.I),
     re.compile(r"join\s+our\s+(mailing\s+)?list", re.I),
     re.compile(r"get\s+(the\s+)?latest\s+(news|updates)\s+(in\s+your\s+)?inbox", re.I),
-
     # Social media
-    re.compile(r"(follow|share)\s+(us\s+)?(on|via)\s+(twitter|facebook|instagram|linkedin|youtube|tiktok)", re.I),
+    re.compile(
+        r"(follow|share)\s+(us\s+)?(on|via)\s+(twitter|facebook|instagram|linkedin|youtube|tiktok)",
+        re.I,
+    ),
     re.compile(r"share\s+(this|on)\s+(social|twitter|facebook)", re.I),
     re.compile(r"connect\s+with\s+us", re.I),
-
     # Ads / promotions
     re.compile(r"(sponsored|advertisement|promoted)\s*(content|post|by)?", re.I),
     re.compile(r"(buy|shop|order|purchase)\s+now", re.I),
     re.compile(r"(limited|special)\s+(time\s+)?offer", re.I),
     re.compile(r"(discount|coupon|promo)\s+code", re.I),
     re.compile(r"free\s+trial|start\s+free", re.I),
-
     # Navigation / UI
     re.compile(r"skip\s+to\s+(main\s+)?content", re.I),
     re.compile(r"toggle\s+(navigation|menu|sidebar)", re.I),
     re.compile(r"(back|return)\s+to\s+(top|home|main)", re.I),
     re.compile(r"page\s+\d+\s+of\s+\d+", re.I),
     re.compile(r"(previous|next)\s+(page|post|article)", re.I),
-
     # Legal / footer
     re.compile(r"(all\s+)?rights?\s+reserved", re.I),
     re.compile(r"terms?\s+(of\s+)?(service|use|conditions)", re.I),
     re.compile(r"privacy\s+(policy|statement|notice)", re.I),
     re.compile(r"powered\s+by|built\s+with|made\s+with", re.I),
     re.compile(r"©\s*\d{4}", re.I),
-
     # App / download
     re.compile(r"download\s+(our\s+)?(app|application)", re.I),
     re.compile(r"(available|get\s+it)\s+on\s+(the\s+)?(app\s+store|google\s+play)", re.I),
-
     # Comments
     re.compile(r"(leave|post|write)\s+a\s+comment", re.I),
     re.compile(r"\d+\s+(comments?|replies|responses)", re.I),
     re.compile(r"comments?\s+are\s+(closed|disabled)", re.I),
-
     # Related content
     re.compile(r"(related|recommended|suggested)\s+(articles?|posts?|content|reading)", re.I),
     re.compile(r"you\s+may\s+also\s+(like|enjoy|want)", re.I),
@@ -128,24 +123,50 @@ BOILERPLATE_PATTERNS: list[re.Pattern[str]] = [
 
 # CSS class/ID patterns for boilerplate containers
 BOILERPLATE_CONTAINER_PATTERNS: list[str] = [
-    r"cookie", r"consent", r"gdpr", r"banner",
-    r"newsletter", r"subscribe", r"signup", r"sign-up",
-    r"social", r"share", r"sharing",
-    r"advert", r"ad-", r"ads-", r"sponsor",
-    r"popup", r"modal", r"overlay", r"dialog",
-    r"promo", r"promotion", r"deal",
-    r"related", r"recommend", r"suggested",
-    r"comment", r"disqus",
-    r"footer", r"copyright", r"legal",
-    r"sidebar", r"widget",
-    r"nav", r"menu", r"breadcrumb",
-    r"pagination", r"pager",
+    r"cookie",
+    r"consent",
+    r"gdpr",
+    r"banner",
+    r"newsletter",
+    r"subscribe",
+    r"signup",
+    r"sign-up",
+    r"social",
+    r"share",
+    r"sharing",
+    r"advert",
+    r"ad-",
+    r"ads-",
+    r"sponsor",
+    r"popup",
+    r"modal",
+    r"overlay",
+    r"dialog",
+    r"promo",
+    r"promotion",
+    r"deal",
+    r"related",
+    r"recommend",
+    r"suggested",
+    r"comment",
+    r"disqus",
+    r"footer",
+    r"copyright",
+    r"legal",
+    r"sidebar",
+    r"widget",
+    r"nav",
+    r"menu",
+    r"breadcrumb",
+    r"pagination",
+    r"pager",
 ]
 
 
 # ══════════════════════════════════════════════════════════════
 # Data Models
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class DensityReport:
@@ -165,6 +186,7 @@ class DensityReport:
         readability_score: Approximate Flesch-Kincaid readability score.
         language_hint: Detected language hint.
     """
+
     total_blocks: int = 0
     content_blocks: int = 0
     noise_blocks: int = 0
@@ -196,6 +218,7 @@ class DensityReport:
 # ══════════════════════════════════════════════════════════════
 # Boilerplate Detector
 # ══════════════════════════════════════════════════════════════
+
 
 class BoilerplateDetector:
     """
@@ -264,11 +287,13 @@ class BoilerplateDetector:
 
         for i, block in enumerate(blocks):
             if self.is_boilerplate(block):
-                detected.append({
-                    "index": i,
-                    "text": block[:200],
-                    "length": len(block),
-                })
+                detected.append(
+                    {
+                        "index": i,
+                        "text": block[:200],
+                        "length": len(block),
+                    }
+                )
 
         return detected
 
@@ -318,6 +343,7 @@ class BoilerplateDetector:
 # ══════════════════════════════════════════════════════════════
 # Content Density Analyzer
 # ══════════════════════════════════════════════════════════════
+
 
 class ContentDensityAnalyzer:
     """
@@ -430,19 +456,12 @@ class ContentDensityAnalyzer:
         sentence_markers = text.count(".") + text.count("!") + text.count("?")
         sentence_score = min(sentence_markers / max(word_count / 15, 1), 1.0)
 
-        return (
-            0.5 * min(word_density, 1.0)
-            + 0.3 * word_len_score
-            + 0.2 * sentence_score
-        )
+        return 0.5 * min(word_density, 1.0) + 0.3 * word_len_score + 0.2 * sentence_score
 
     @staticmethod
     def _compute_link_density(text: str) -> float:
         """Compute ratio of link text to total text."""
-        link_text_len = sum(
-            len(m.group(1))
-            for m in re.finditer(r"\[([^\]]*)\]\([^)]+\)", text)
-        )
+        link_text_len = sum(len(m.group(1)) for m in re.finditer(r"\[([^\]]*)\]\([^)]+\)", text))
         total_len = len(text)
         if total_len == 0:
             return 0.0
@@ -524,6 +543,7 @@ class ContentDensityAnalyzer:
 # ══════════════════════════════════════════════════════════════
 # Advanced Pruning Filter
 # ══════════════════════════════════════════════════════════════
+
 
 class AdvancedPruningFilter(ContentFilter):
     """
@@ -709,9 +729,7 @@ class AdvancedPruningFilter(ContentFilter):
                     continue
 
                 # Compute multi-factor score
-                block.score = self._compute_advanced_score(
-                    block, i, total, max_wc
-                )
+                block.score = self._compute_advanced_score(block, i, total, max_wc)
 
                 if block.score < self._threshold:
                     block.kept = False
@@ -828,21 +846,23 @@ class AdvancedPruningFilter(ContentFilter):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "passes": self._passes,
-            "density_weight": self._density_weight,
-            "position_weight": self._position_weight,
-            "length_weight": self._length_weight,
-            "link_penalty_weight": self._link_penalty_weight,
-            "boilerplate_detection": self._boilerplate_detection,
-            "remove_nav": self._remove_nav,
-            "remove_footer": self._remove_footer,
-            "max_link_density": self._max_link_density,
-            "keep_headings": self._keep_headings,
-            "keep_code": self._keep_code,
-            "keep_tables": self._keep_tables,
-            "keep_first_n": self._keep_first_n,
-        })
+        d.update(
+            {
+                "passes": self._passes,
+                "density_weight": self._density_weight,
+                "position_weight": self._position_weight,
+                "length_weight": self._length_weight,
+                "link_penalty_weight": self._link_penalty_weight,
+                "boilerplate_detection": self._boilerplate_detection,
+                "remove_nav": self._remove_nav,
+                "remove_footer": self._remove_footer,
+                "max_link_density": self._max_link_density,
+                "keep_headings": self._keep_headings,
+                "keep_code": self._keep_code,
+                "keep_tables": self._keep_tables,
+                "keep_first_n": self._keep_first_n,
+            }
+        )
         return d
 
     @classmethod
@@ -876,6 +896,7 @@ class AdvancedPruningFilter(ContentFilter):
 # ══════════════════════════════════════════════════════════════
 # Extended Factory
 # ══════════════════════════════════════════════════════════════
+
 
 def create_pruning_filter(
     advanced: bool = False,

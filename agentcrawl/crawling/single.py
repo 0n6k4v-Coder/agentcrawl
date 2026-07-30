@@ -69,6 +69,7 @@ logger = logging.getLogger("agentcrawl.crawling.single")
 # Single Page Crawler
 # ══════════════════════════════════════════════════════════════
 
+
 class SinglePageCrawler(CrawlStrategy):
     """
     Single-page crawler that fetches exactly one URL.
@@ -230,6 +231,7 @@ class SinglePageCrawler(CrawlStrategy):
 
         if self._wait_for_selector:
             from agentcrawl.config.crawler_config import WaitOptions, WaitStrategy
+
             config.wait = WaitOptions(
                 strategy=WaitStrategy.SELECTOR,
                 selector=self._wait_for_selector,
@@ -238,6 +240,7 @@ class SinglePageCrawler(CrawlStrategy):
 
         if self._wait_milliseconds > 0:
             from agentcrawl.config.crawler_config import WaitOptions, WaitStrategy
+
             config.wait = WaitOptions(
                 strategy=WaitStrategy.TIMEOUT,
                 milliseconds=self._wait_milliseconds,
@@ -268,12 +271,15 @@ class SinglePageCrawler(CrawlStrategy):
             self._progress.elapsed_ms = (time.time() - self._start_time) * 1000
 
             from agentcrawl.core.engine import CrawlResult
-            return [CrawlResult(
-                url=url,
-                success=False,
-                error=str(e),
-                response_time_ms=self._fetch_time_ms,
-            )]
+
+            return [
+                CrawlResult(
+                    url=url,
+                    success=False,
+                    error=str(e),
+                    response_time_ms=self._fetch_time_ms,
+                )
+            ]
 
     # ──────────────────────────────────────────────────────────
     # Convenience Methods
@@ -321,17 +327,19 @@ class SinglePageCrawler(CrawlStrategy):
         """Get detailed diagnostics."""
         base = super().get_diagnostics()
 
-        base.update({
-            "fetch_time_ms": round(self._fetch_time_ms, 2),
-            "action_time_ms": round(self._action_time_ms, 2),
-            "wait_time_ms": round(self._wait_time_ms, 2),
-            "actions_count": len(self._actions),
-            "wait_for_selector": self._wait_for_selector,
-            "wait_for_load_state": self._wait_for_load_state,
-            "wait_milliseconds": self._wait_milliseconds,
-            "include_links": self._include_links,
-            "include_screenshot": self._include_screenshot,
-        })
+        base.update(
+            {
+                "fetch_time_ms": round(self._fetch_time_ms, 2),
+                "action_time_ms": round(self._action_time_ms, 2),
+                "wait_time_ms": round(self._wait_time_ms, 2),
+                "actions_count": len(self._actions),
+                "wait_for_selector": self._wait_for_selector,
+                "wait_for_load_state": self._wait_for_load_state,
+                "wait_milliseconds": self._wait_milliseconds,
+                "include_links": self._include_links,
+                "include_screenshot": self._include_screenshot,
+            }
+        )
 
         return base
 

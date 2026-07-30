@@ -67,6 +67,7 @@ logger = logging.getLogger("agentcrawl.crawling.best_first")
 # Priority Queue Entry
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass(order=True)
 class _PriorityEntry:
     """
@@ -75,6 +76,7 @@ class _PriorityEntry:
     Uses negative score for max-heap behavior with heapq (min-heap).
     Ties are broken by discovery time (FIFO).
     """
+
     priority: float  # Negative score (lower = higher priority)
     sequence: int  # Tie-breaker (FIFO order)
     url: str = field(compare=False)
@@ -87,6 +89,7 @@ class _PriorityEntry:
 # ══════════════════════════════════════════════════════════════
 # Best-First Crawler
 # ══════════════════════════════════════════════════════════════
+
 
 class BestFirstCrawler(CrawlStrategy):
     """
@@ -213,10 +216,7 @@ class BestFirstCrawler(CrawlStrategy):
                 break
 
             # Crawl batch concurrently
-            tasks = [
-                self._crawl_entry(entry, engine, semaphore)
-                for entry in batch
-            ]
+            tasks = [self._crawl_entry(entry, engine, semaphore) for entry in batch]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             for result in results:
@@ -409,6 +409,7 @@ class BestFirstCrawler(CrawlStrategy):
         """
         try:
             from urllib.parse import urlparse
+
             path = urlparse(url).path.rstrip("/")
             segments = path.split("/")
 
@@ -452,27 +453,31 @@ class BestFirstCrawler(CrawlStrategy):
         temp_queue = list(self._queue)
         temp_queue.sort()
         for entry in temp_queue[:10]:
-            top_queued.append({
-                "url": entry.url,
-                "score": entry.score,
-                "depth": entry.depth,
-            })
+            top_queued.append(
+                {
+                    "url": entry.url,
+                    "score": entry.score,
+                    "depth": entry.depth,
+                }
+            )
 
-        base.update({
-            "queue_size": len(self._queue),
-            "top_score": self.top_score,
-            "crawl_order_length": len(self._crawl_order),
-            "seen_patterns": len(self._seen_patterns),
-            "top_queued": top_queued,
-            "config": {
-                **base.get("config", {}),
-                "max_concurrent": self._max_concurrent,
-                "score_threshold": self._score_threshold,
-                "decay_factor": self._decay_factor,
-                "diversity_bonus": self._diversity_bonus,
-                "allow_revisit": self._allow_revisit,
-            },
-        })
+        base.update(
+            {
+                "queue_size": len(self._queue),
+                "top_score": self.top_score,
+                "crawl_order_length": len(self._crawl_order),
+                "seen_patterns": len(self._seen_patterns),
+                "top_queued": top_queued,
+                "config": {
+                    **base.get("config", {}),
+                    "max_concurrent": self._max_concurrent,
+                    "score_threshold": self._score_threshold,
+                    "decay_factor": self._decay_factor,
+                    "diversity_bonus": self._diversity_bonus,
+                    "allow_revisit": self._allow_revisit,
+                },
+            }
+        )
 
         return base
 

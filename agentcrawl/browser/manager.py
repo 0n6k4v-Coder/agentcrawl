@@ -69,42 +69,56 @@ async def _async_path_exists(path: str) -> bool:
     """Check if path exists using asyncio.to_thread."""
     return await asyncio.to_thread(os.path.exists, path)
 
+
 async def _async_path_join(*args: str) -> str:
     """Join paths using asyncio.to_thread."""
     return await asyncio.to_thread(os.path.join, *args)
+
 
 async def _async_makedirs(path: str, exist_ok: bool = True) -> None:
     """Create directories using asyncio.to_thread."""
     await asyncio.to_thread(os.makedirs, path, exist_ok=exist_ok)
 
+
 async def _async_remove(path: str) -> None:
     """Remove file using asyncio.to_thread."""
     await asyncio.to_thread(os.remove, path)
+
 
 async def _async_listdir(path: str) -> list[str]:
     """List directory using asyncio.to_thread."""
     return await asyncio.to_thread(os.listdir, path)
 
+
 async def _async_write_file(path: str, content: str, encoding: str = "utf-8") -> None:
     """Write file using asyncio.to_thread."""
+
     def _write():
         with open(path, "w", encoding=encoding) as f:
             f.write(content)
+
     await asyncio.to_thread(_write)
+
 
 async def _async_read_json(path: str) -> Any:
     """Read and parse JSON file using asyncio.to_thread."""
+
     def _read():
         with open(path, encoding="utf-8") as f:
             return json.load(f)
+
     return await asyncio.to_thread(_read)
+
 
 async def _async_write_json(path: str, data: Any, encoding: str = "utf-8") -> None:
     """Write JSON file using asyncio.to_thread."""
+
     def _write():
         with open(path, "w", encoding=encoding) as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+
     await asyncio.to_thread(_write)
+
 
 logger = logging.getLogger("agentcrawl.browser.manager")
 
@@ -113,28 +127,34 @@ logger = logging.getLogger("agentcrawl.browser.manager")
 # Exceptions
 # ══════════════════════════════════════════════════════════════
 
+
 class BrowserManagerError(Exception):
     """Base exception for BrowserManager errors."""
+
     pass
 
 
 class BrowserNotStartedError(BrowserManagerError):
     """Raised when trying to use the manager before start()."""
+
     pass
 
 
 class BrowserLaunchError(BrowserManagerError):
     """Raised when the browser fails to launch."""
+
     pass
 
 
 class PageAcquisitionError(BrowserManagerError):
     """Raised when a page cannot be acquired from the pool."""
+
     pass
 
 
 class PoolExhaustedError(BrowserManagerError):
     """Raised when all pages in the pool are in use."""
+
     pass
 
 
@@ -142,9 +162,11 @@ class PoolExhaustedError(BrowserManagerError):
 # Tracked Resources
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class _TrackedPage:
     """Internal wrapper for a managed Playwright page."""
+
     page: Any
     context: Any
     page_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
@@ -170,6 +192,7 @@ class _TrackedPage:
 @dataclass
 class _TrackedContext:
     """Internal wrapper for a managed Playwright browser context."""
+
     context: Any
     context_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     created_at: float = field(default_factory=time.time)
@@ -180,6 +203,7 @@ class _TrackedContext:
 # ══════════════════════════════════════════════════════════════
 # Browser Manager
 # ══════════════════════════════════════════════════════════════
+
 
 class BrowserManager:
     """
@@ -313,6 +337,7 @@ class BrowserManager:
             try:
                 # 1. Launch Playwright
                 from playwright.async_api import async_playwright
+
                 self._playwright = await async_playwright().start()
 
                 # 2. Select browser engine
@@ -740,9 +765,7 @@ class BrowserManager:
 
         # Remove from context tracking
         for tracked_ctx in self._contexts.values():
-            tracked_ctx.pages = [
-                p for p in tracked_ctx.pages if p.page_id != tracked.page_id
-            ]
+            tracked_ctx.pages = [p for p in tracked_ctx.pages if p.page_id != tracked.page_id]
 
         self._stats["pages_recycled"] += 1
         logger.debug("Recycled page %s", tracked.page_id)
@@ -852,12 +875,11 @@ class BrowserManager:
         """Initialize the stealth adapter."""
         try:
             from agentcrawl.browser.stealth import StealthAdapter
+
             self._stealth_adapter = StealthAdapter(self._config)
             logger.info("Stealth adapter initialized")
         except ImportError:
-            logger.warning(
-                "StealthAdapter not available. Stealth mode disabled."
-            )
+            logger.warning("StealthAdapter not available. Stealth mode disabled.")
             self._stealth_adapter = None
 
     async def _setup_resource_blocking(self, page: Any) -> None:
@@ -895,22 +917,19 @@ class BrowserManager:
             return proxy_config.to_playwright_dict()
 
         if strategy.value == "round_robin":
-            proxy_url = proxy_config.proxy_list[
-                self._proxy_index % len(proxy_config.proxy_list)
-            ]
+            proxy_url = proxy_config.proxy_list[self._proxy_index % len(proxy_config.proxy_list)]
             self._proxy_index += 1
             return {"server": proxy_url}
 
         if strategy.value == "random":
             import secrets
+
             proxy_url = secrets.choice(proxy_config.proxy_list)
             return {"server": proxy_url}
 
         if strategy.value == "least_used":
             # Simple implementation: round-robin as fallback
-            proxy_url = proxy_config.proxy_list[
-                self._proxy_index % len(proxy_config.proxy_list)
-            ]
+            proxy_url = proxy_config.proxy_list[self._proxy_index % len(proxy_config.proxy_list)]
             self._proxy_index += 1
             return {"server": proxy_url}
 
@@ -966,11 +985,7 @@ class BrowserManager:
         if not await _async_path_exists(storage_dir):
             return []
         files = await _async_listdir(storage_dir)
-        return [
-            f.replace(".json", "")
-            for f in files
-            if f.endswith(".json")
-        ]
+        return [f.replace(".json", "") for f in files if f.endswith(".json")]
 
     # ──────────────────────────────────────────────────────────
     # Background Tasks
@@ -980,12 +995,8 @@ class BrowserManager:
         """Start background health check and cleanup tasks."""
         interval = self._config.pool.health_check_interval
         if interval > 0:
-            self._health_check_task = asyncio.create_task(
-                self._health_check_loop(interval)
-            )
-            self._cleanup_task = asyncio.create_task(
-                self._cleanup_loop(interval)
-            )
+            self._health_check_task = asyncio.create_task(self._health_check_loop(interval))
+            self._cleanup_task = asyncio.create_task(self._cleanup_loop(interval))
 
     async def _stop_background_tasks(self) -> None:
         """Cancel background tasks."""
@@ -1034,10 +1045,7 @@ class BrowserManager:
 
                 # Clean up idle pages
                 for tracked in list(self._pages.values()):
-                    if (
-                        not tracked.in_use
-                        and tracked.idle_seconds > self._config.pool.idle_timeout
-                    ):
+                    if not tracked.in_use and tracked.idle_seconds > self._config.pool.idle_timeout:
                         await self._recycle_page(tracked)
                         cleaned += 1
 
@@ -1110,24 +1118,28 @@ class BrowserManager:
         """
         pages_info = []
         for tracked in self._pages.values():
-            pages_info.append({
-                "page_id": tracked.page_id,
-                "in_use": tracked.in_use,
-                "age_seconds": round(tracked.age_seconds, 1),
-                "idle_seconds": round(tracked.idle_seconds, 1),
-                "navigation_count": tracked.navigation_count,
-                "session_id": tracked.session_id,
-                "is_closed": tracked.page.is_closed(),
-            })
+            pages_info.append(
+                {
+                    "page_id": tracked.page_id,
+                    "in_use": tracked.in_use,
+                    "age_seconds": round(tracked.age_seconds, 1),
+                    "idle_seconds": round(tracked.idle_seconds, 1),
+                    "navigation_count": tracked.navigation_count,
+                    "session_id": tracked.session_id,
+                    "is_closed": tracked.page.is_closed(),
+                }
+            )
 
         contexts_info = []
         for tracked_ctx in self._contexts.values():
-            contexts_info.append({
-                "context_id": tracked_ctx.context_id,
-                "session_id": tracked_ctx.session_id,
-                "page_count": len(tracked_ctx.pages),
-                "age_seconds": round(time.time() - tracked_ctx.created_at, 1),
-            })
+            contexts_info.append(
+                {
+                    "context_id": tracked_ctx.context_id,
+                    "session_id": tracked_ctx.session_id,
+                    "page_count": len(tracked_ctx.pages),
+                    "age_seconds": round(time.time() - tracked_ctx.created_at, 1),
+                }
+            )
 
         return {
             "started": self._started,
@@ -1140,11 +1152,7 @@ class BrowserManager:
             "stats": self.stats,
             "pages": pages_info,
             "contexts": contexts_info,
-            "browser_connected": (
-                self._browser.is_connected()
-                if self._browser
-                else False
-            ),
+            "browser_connected": (self._browser.is_connected() if self._browser else False),
         }
 
     def __repr__(self) -> str:

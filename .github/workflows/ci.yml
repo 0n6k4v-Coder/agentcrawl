@@ -82,7 +82,6 @@ jobs:
   lint:
     name: Lint (Ruff)
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout repository
@@ -101,3 +100,7 @@ jobs:
       - name: Run Ruff check
         run: |
           ruff check agentcrawl/ server/ tests/
+
+      - name: Run Ruff format check
+        run: |
+          ruff format --check agentcrawl/ server/ tests/

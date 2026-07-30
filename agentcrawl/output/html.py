@@ -47,6 +47,7 @@ logger = logging.getLogger("agentcrawl.output.html")
 # HTML Sanitizer
 # ══════════════════════════════════════════════════════════════
 
+
 class HtmlSanitizer:
     """
     Sanitizes HTML by removing potentially dangerous elements
@@ -73,35 +74,106 @@ class HtmlSanitizer:
     """
 
     # Tags to always remove
-    REMOVE_TAGS: frozenset[str] = frozenset({
-        "script", "noscript", "iframe", "embed", "object",
-        "applet", "form", "input", "button", "select",
-        "textarea", "link", "meta", "base",
-    })
+    REMOVE_TAGS: frozenset[str] = frozenset(
+        {
+            "script",
+            "noscript",
+            "iframe",
+            "embed",
+            "object",
+            "applet",
+            "form",
+            "input",
+            "button",
+            "select",
+            "textarea",
+            "link",
+            "meta",
+            "base",
+        }
+    )
 
     # Event handler attributes to remove
-    EVENT_ATTRS: frozenset[str] = frozenset({
-        "onclick", "ondblclick", "onmousedown", "onmouseup",
-        "onmouseover", "onmousemove", "onmouseout", "onmouseenter",
-        "onmouseleave", "onkeydown", "onkeypress", "onkeyup",
-        "onfocus", "onblur", "onchange", "oninput", "onsubmit",
-        "onreset", "onselect", "onload", "onunload", "onerror",
-        "onresize", "onscroll", "onabort", "oncanplay",
-        "ondrag", "ondragend", "ondragenter", "ondragleave",
-        "ondragover", "ondragstart", "ondrop", "oncontextmenu",
-        "onwheel", "ontouchstart", "ontouchmove", "ontouchend",
-        "onanimationstart", "onanimationend", "ontransitionend",
-    })
+    EVENT_ATTRS: frozenset[str] = frozenset(
+        {
+            "onclick",
+            "ondblclick",
+            "onmousedown",
+            "onmouseup",
+            "onmouseover",
+            "onmousemove",
+            "onmouseout",
+            "onmouseenter",
+            "onmouseleave",
+            "onkeydown",
+            "onkeypress",
+            "onkeyup",
+            "onfocus",
+            "onblur",
+            "onchange",
+            "oninput",
+            "onsubmit",
+            "onreset",
+            "onselect",
+            "onload",
+            "onunload",
+            "onerror",
+            "onresize",
+            "onscroll",
+            "onabort",
+            "oncanplay",
+            "ondrag",
+            "ondragend",
+            "ondragenter",
+            "ondragleave",
+            "ondragover",
+            "ondragstart",
+            "ondrop",
+            "oncontextmenu",
+            "onwheel",
+            "ontouchstart",
+            "ontouchmove",
+            "ontouchend",
+            "onanimationstart",
+            "onanimationend",
+            "ontransitionend",
+        }
+    )
 
     # Safe attributes
-    SAFE_ATTRS: frozenset[str] = frozenset({
-        "href", "src", "alt", "title", "class", "id", "name",
-        "width", "height", "colspan", "rowspan", "align",
-        "valign", "border", "cellpadding", "cellspacing",
-        "target", "rel", "type", "value", "placeholder",
-        "datetime", "cite", "lang", "dir", "role",
-        "aria-label", "aria-hidden", "aria-describedby",
-    })
+    SAFE_ATTRS: frozenset[str] = frozenset(
+        {
+            "href",
+            "src",
+            "alt",
+            "title",
+            "class",
+            "id",
+            "name",
+            "width",
+            "height",
+            "colspan",
+            "rowspan",
+            "align",
+            "valign",
+            "border",
+            "cellpadding",
+            "cellspacing",
+            "target",
+            "rel",
+            "type",
+            "value",
+            "placeholder",
+            "datetime",
+            "cite",
+            "lang",
+            "dir",
+            "role",
+            "aria-label",
+            "aria-hidden",
+            "aria-describedby",
+        }
+    )
 
     def __init__(
         self,
@@ -225,6 +297,7 @@ class HtmlSanitizer:
 # ══════════════════════════════════════════════════════════════
 # HTML Output Formatter
 # ══════════════════════════════════════════════════════════════
+
 
 class HtmlOutputFormatter:
     """
@@ -402,9 +475,7 @@ class HtmlOutputFormatter:
             )
 
         if metadata.get("author"):
-            tags.append(
-                f'<meta name="author" content="{self._escape_attr(metadata["author"])}">'
-            )
+            tags.append(f'<meta name="author" content="{self._escape_attr(metadata["author"])}">')
 
         if metadata.get("keywords"):
             tags.append(
@@ -424,9 +495,7 @@ class HtmlOutputFormatter:
         for key, og_name in og_map.items():
             value = metadata.get(key, "")
             if value:
-                tags.append(
-                    f'<meta property="{og_name}" content="{self._escape_attr(value)}">'
-                )
+                tags.append(f'<meta property="{og_name}" content="{self._escape_attr(value)}">')
 
         return "\n    ".join(tags)
 
@@ -439,10 +508,13 @@ class HtmlOutputFormatter:
         """Convert markdown to HTML."""
         try:
             import markdown  # type: ignore[import-untyped]
-            return str(markdown.markdown(
-                md_text,
-                extensions=["tables", "fenced_code", "codehilite"],
-            ))
+
+            return str(
+                markdown.markdown(
+                    md_text,
+                    extensions=["tables", "fenced_code", "codehilite"],
+                )
+            )
         except ImportError:
             # Fallback: basic conversion
             html = md_text
@@ -489,8 +561,7 @@ class HtmlOutputFormatter:
             from weasyprint import HTML
         except ImportError as err:
             raise ImportError(
-                "weasyprint is required for PDF conversion. "
-                "Install with: pip install weasyprint"
+                "weasyprint is required for PDF conversion. Install with: pip install weasyprint"
             ) from err
 
         html = self.format(result)
@@ -514,11 +585,7 @@ class HtmlOutputFormatter:
     @staticmethod
     def _escape_html(text: str) -> str:
         """Escape HTML special characters."""
-        return (
-            text.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-        )
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     @staticmethod
     def _escape_attr(text: str) -> str:

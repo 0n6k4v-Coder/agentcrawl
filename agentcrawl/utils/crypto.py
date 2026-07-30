@@ -60,6 +60,7 @@ logger = logging.getLogger("agentcrawl.utils.crypto")
 # Hashing
 # ══════════════════════════════════════════════════════════════
 
+
 def hash_sha256(data: str | bytes) -> str:
     """
     Compute SHA-256 hash of data.
@@ -115,6 +116,7 @@ def hash_url(url: str) -> str:
 # HMAC
 # ══════════════════════════════════════════════════════════════
 
+
 def hmac_sign(
     data: str | bytes,
     key: str | bytes,
@@ -168,6 +170,7 @@ def hmac_verify(
 # ══════════════════════════════════════════════════════════════
 # Token Generation
 # ══════════════════════════════════════════════════════════════
+
 
 def generate_token(length: int = 32, prefix: str = "") -> str:
     """
@@ -245,6 +248,7 @@ def generate_session_id() -> str:
 # Key Derivation
 # ══════════════════════════════════════════════════════════════
 
+
 def derive_key(
     password: str,
     salt: bytes | None = None,
@@ -286,6 +290,7 @@ def derive_key(
 # AES Encryption (using cryptography library)
 # ══════════════════════════════════════════════════════════════
 
+
 def _get_fernet(key: str | bytes) -> Any:
     """
     Get a Fernet instance from an encryption key.
@@ -300,8 +305,7 @@ def _get_fernet(key: str | bytes) -> Any:
         from cryptography.fernet import Fernet
     except ImportError as err:
         raise ImportError(
-            "cryptography library required for encryption. "
-            "Install with: pip install cryptography"
+            "cryptography library required for encryption. Install with: pip install cryptography"
         ) from err
 
     if isinstance(key, str):
@@ -338,9 +342,7 @@ def encrypt_api_key(
         encryption_key = os.environ.get("ENCRYPTION_KEY", "")
 
     if not encryption_key:
-        raise ValueError(
-            "Encryption key required. Set ENCRYPTION_KEY environment variable."
-        )
+        raise ValueError("Encryption key required. Set ENCRYPTION_KEY environment variable.")
 
     fernet = _get_fernet(encryption_key)
     encrypted_bytes = fernet.encrypt(api_key.encode("utf-8"))
@@ -369,9 +371,7 @@ def decrypt_api_key(
         encryption_key = os.environ.get("ENCRYPTION_KEY", "")
 
     if not encryption_key:
-        raise ValueError(
-            "Encryption key required. Set ENCRYPTION_KEY environment variable."
-        )
+        raise ValueError("Encryption key required. Set ENCRYPTION_KEY environment variable.")
 
     fernet = _get_fernet(encryption_key)
     decrypted_bytes = fernet.decrypt(encrypted.encode("ascii"))
@@ -381,6 +381,7 @@ def decrypt_api_key(
 # ══════════════════════════════════════════════════════════════
 # Crypto Manager
 # ══════════════════════════════════════════════════════════════
+
 
 class CryptoManager:
     """
@@ -412,9 +413,7 @@ class CryptoManager:
             encryption_key = os.environ.get("ENCRYPTION_KEY", "")
 
         if not encryption_key:
-            raise ValueError(
-                "Encryption key required. Set ENCRYPTION_KEY or pass encryption_key."
-            )
+            raise ValueError("Encryption key required. Set ENCRYPTION_KEY or pass encryption_key.")
 
         self._encryption_key = encryption_key
         self._signing_key = signing_key or encryption_key
@@ -579,6 +578,7 @@ class CryptoManager:
         """
         try:
             from cryptography.fernet import Fernet
+
             return Fernet.generate_key().decode("ascii")
         except ImportError:
             # Fallback: generate a random key
@@ -591,6 +591,7 @@ class CryptoManager:
 # ══════════════════════════════════════════════════════════════
 # Base64 Utilities
 # ══════════════════════════════════════════════════════════════
+
 
 def b64_encode(data: str | bytes) -> str:
     """
@@ -633,6 +634,7 @@ def b64_decode_bytes(encoded: str) -> bytes:
 # ══════════════════════════════════════════════════════════════
 # Masking
 # ══════════════════════════════════════════════════════════════
+
 
 def mask_api_key(api_key: str, visible_chars: int = 4) -> str:
     """

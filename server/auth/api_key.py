@@ -59,8 +59,10 @@ logger = logging.getLogger("agentcrawl.server.auth")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 class KeyScope(str, Enum):
     """Permission scopes for API keys."""
+
     SCRAPE = "scrape"
     CRAWL = "crawl"
     MAP = "map"
@@ -100,6 +102,7 @@ class APIKeyInfo:
         rate_limit: Requests per minute for this key.
         metadata: Additional metadata.
     """
+
     key_id: str
     key_hash: str
     key_prefix: str
@@ -153,6 +156,7 @@ class CreatedKey:
         plain_key: The full plain-text API key (show once).
         key_info: Stored key information.
     """
+
     plain_key: str
     key_info: APIKeyInfo
 
@@ -167,6 +171,7 @@ class ValidationResult:
         key_info: Key information (if valid).
         error: Error message (if invalid).
     """
+
     valid: bool
     key_info: APIKeyInfo | None = None
     error: str = ""
@@ -175,6 +180,7 @@ class ValidationResult:
 # ══════════════════════════════════════════════════════════════
 # API Key Manager
 # ══════════════════════════════════════════════════════════════
+
 
 class APIKeyManager:
     """
@@ -250,10 +256,7 @@ class APIKeyManager:
         if scopes is None:
             scope_values = [s.value for s in KeyScope.default()]
         else:
-            scope_values = [
-                s.value if isinstance(s, KeyScope) else s
-                for s in scopes
-            ]
+            scope_values = [s.value if isinstance(s, KeyScope) else s for s in scopes]
 
         # Create info
         key_id = f"key_{secrets.token_hex(6)}"
@@ -340,9 +343,7 @@ class APIKeyManager:
 
         if result.key_info and not result.key_info.has_scope(required_scope):
             scope_value = (
-                required_scope.value
-                if isinstance(required_scope, KeyScope)
-                else required_scope
+                required_scope.value if isinstance(required_scope, KeyScope) else required_scope
             )
             return ValidationResult(
                 valid=False,
@@ -607,6 +608,7 @@ def get_api_key_manager() -> APIKeyManager:
 # FastAPI Dependency
 # ══════════════════════════════════════════════════════════════
 
+
 async def require_api_key(
     authorization: str = "",
     x_api_key: str = "",
@@ -651,6 +653,7 @@ async def require_api_key(
             )
 
         from fastapi import HTTPException
+
         raise HTTPException(
             status_code=401,
             detail={"code": "UNAUTHORIZED", "message": "API key required"},
@@ -660,6 +663,7 @@ async def require_api_key(
 
     if not result.valid:
         from fastapi import HTTPException
+
         raise HTTPException(
             status_code=401,
             detail={"code": "UNAUTHORIZED", "message": result.error},

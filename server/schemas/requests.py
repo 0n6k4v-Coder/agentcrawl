@@ -32,6 +32,7 @@ from pydantic import BaseModel, Field, field_validator
 # Scrape
 # ══════════════════════════════════════════════════════════════
 
+
 class ScrapeRequest(BaseModel):
     """
     Request body for POST /scrape.
@@ -91,10 +92,12 @@ class ScrapeRequest(BaseModel):
     actions: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Browser actions to execute before extraction",
-        examples=[[
-            {"type": "click", "selector": "#accept-cookies"},
-            {"type": "scroll", "direction": "down", "amount": 3},
-        ]],
+        examples=[
+            [
+                {"type": "click", "selector": "#accept-cookies"},
+                {"type": "scroll", "direction": "down", "amount": 3},
+            ]
+        ],
     )
     content_filter: str = Field(
         default="none",
@@ -177,6 +180,7 @@ class ScrapeRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Crawl
 # ══════════════════════════════════════════════════════════════
+
 
 class CrawlRequest(BaseModel):
     """
@@ -272,6 +276,7 @@ class CrawlRequest(BaseModel):
 # Map
 # ══════════════════════════════════════════════════════════════
 
+
 class MapRequest(BaseModel):
     """
     Request body for POST /map.
@@ -347,6 +352,7 @@ class MapRequest(BaseModel):
 # Search
 # ══════════════════════════════════════════════════════════════
 
+
 class SearchRequest(BaseModel):
     """
     Request body for POST /search.
@@ -421,6 +427,7 @@ class SearchRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Extract
 # ══════════════════════════════════════════════════════════════
+
 
 class ExtractRequest(BaseModel):
     """
@@ -506,6 +513,7 @@ class ExtractRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Batch
 # ══════════════════════════════════════════════════════════════
+
 
 class BatchScrapeRequest(BaseModel):
     """
@@ -595,6 +603,7 @@ class BatchScrapeRequest(BaseModel):
 # Interact
 # ══════════════════════════════════════════════════════════════
 
+
 class ActionStep(BaseModel):
     """A single browser action."""
 
@@ -617,8 +626,16 @@ class ActionStep(BaseModel):
     @classmethod
     def validate_type(cls, v: str) -> str:
         allowed = {
-            "click", "type", "press", "scroll", "wait",
-            "screenshot", "evaluate", "navigate", "select", "hover",
+            "click",
+            "type",
+            "press",
+            "scroll",
+            "wait",
+            "screenshot",
+            "evaluate",
+            "navigate",
+            "select",
+            "hover",
         }
         if v not in allowed:
             raise ValueError(f"action type must be one of: {', '.join(sorted(allowed))}")

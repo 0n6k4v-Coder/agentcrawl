@@ -27,6 +27,7 @@ logger = logging.getLogger("agentcrawl.server.scrape")
 # Request / Response Models
 # ══════════════════════════════════════════════════════════════
 
+
 class ScrapeRequest(BaseModel):
     """Request body for POST /scrape."""
 
@@ -166,6 +167,7 @@ class ScrapeResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Handler
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_scrape(
     engine: Any,
@@ -316,6 +318,7 @@ async def handle_scrape(
 # ══════════════════════════════════════════════════════════════
 # Utilities
 # ══════════════════════════════════════════════════════════════
+
 
 def _serialize(data: Any) -> Any:
     """Serialize data to JSON-compatible format."""

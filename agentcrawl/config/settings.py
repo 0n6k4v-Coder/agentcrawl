@@ -92,6 +92,7 @@ def _ipv4_all() -> str:
     """Return IPv4 all-interfaces address without literal to avoid S104 false positive."""
     return ".".join(["0"] * 4)
 
+
 # All-interfaces host constants (computed to avoid S104 false positive)
 _ALL_INTERFACES_HOSTS = frozenset([_ipv4_all(), "::"])
 
@@ -108,6 +109,7 @@ MASK_VALUE = "********"
 # ══════════════════════════════════════════════════════════════
 # Global Settings
 # ══════════════════════════════════════════════════════════════
+
 
 class Settings(BaseSettings):
     """
@@ -175,8 +177,12 @@ class Settings(BaseSettings):
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         # Get env_file and env_file_encoding from settings_cls model_config
-        env_file = getattr(settings_cls.model_config, "get", lambda k, d=None: d)("env_file", ".env")
-        env_file_encoding = getattr(settings_cls.model_config, "get", lambda k, d=None: d)("env_file_encoding", "utf-8")
+        env_file = getattr(settings_cls.model_config, "get", lambda k, d=None: d)(
+            "env_file", ".env"
+        )
+        env_file_encoding = getattr(settings_cls.model_config, "get", lambda k, d=None: d)(
+            "env_file_encoding", "utf-8"
+        )
         return (
             init_settings,
             CustomEnvSettingsSource(settings_cls),
@@ -476,11 +482,7 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         """Heuristic: whether this looks like a production config."""
-        return (
-            self.auth_enabled
-            and not self.debug
-            and self.server_workers > 1
-        )
+        return self.auth_enabled and not self.debug and self.server_workers > 1
 
     # ──────────────────────────────────────────────────────────
     # Conversion Methods
@@ -773,6 +775,7 @@ class Settings(BaseSettings):
     def to_json(self, mask_secrets: bool = True) -> str:
         """Serialize to JSON string."""
         import json
+
         return json.dumps(
             self.to_dict(mask_secrets=mask_secrets),
             ensure_ascii=False,
@@ -838,7 +841,9 @@ class Settings(BaseSettings):
             warnings["global"] = global_warnings
 
         # Browser
-        browser_warnings = self.browser.validate_config() if hasattr(self.browser, "validate_config") else []
+        browser_warnings = (
+            self.browser.validate_config() if hasattr(self.browser, "validate_config") else []
+        )
         if browser_warnings:
             warnings["browser"] = browser_warnings
 
@@ -887,15 +892,17 @@ class Settings(BaseSettings):
                 "prefix": self.cache_prefix,
             },
             "redis": {
-                "url": self.redis_url.replace(
-                    self.redis_url.split("@")[-1], "***"
-                ) if "@" in self.redis_url else self.redis_url,
+                "url": self.redis_url.replace(self.redis_url.split("@")[-1], "***")
+                if "@" in self.redis_url
+                else self.redis_url,
                 "used_by": [
-                    component for component, uses in [
+                    component
+                    for component, uses in [
                         ("queue", self.queue_backend == "redis"),
                         ("cache", self.cache_backend == "redis"),
                         ("rate_limit", self.rate_limit_storage == "redis"),
-                    ] if uses
+                    ]
+                    if uses
                 ],
             },
             "mcp": {

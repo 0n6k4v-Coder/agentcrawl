@@ -65,6 +65,7 @@ from typing import Any
 # Cleaning & Normalization
 # ══════════════════════════════════════════════════════════════
 
+
 def clean_text(text: str) -> str:
     """
     Clean and normalize text content.
@@ -147,10 +148,7 @@ def remove_accents(text: str) -> str:
     """
     # Decompose to NFD, then remove combining marks
     nfkd = unicodedata.normalize("NFD", text)
-    return "".join(
-        c for c in nfkd
-        if unicodedata.category(c) != "Mn"
-    )
+    return "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
 
 
 def normalize_whitespace(text: str) -> str:
@@ -169,6 +167,7 @@ def normalize_whitespace(text: str) -> str:
 # ══════════════════════════════════════════════════════════════
 # Counting
 # ══════════════════════════════════════════════════════════════
+
 
 def count_words(text: str) -> int:
     """
@@ -265,6 +264,7 @@ def count_characters(text: str, include_spaces: bool = True) -> int:
 # Token Estimation
 # ══════════════════════════════════════════════════════════════
 
+
 def estimate_tokens(text: str, chars_per_token: float = 4.0) -> int:
     """
     Estimate the number of LLM tokens in text.
@@ -287,10 +287,12 @@ def estimate_tokens(text: str, chars_per_token: float = 4.0) -> int:
         return 0
 
     # Check for CJK content
-    cjk_ratio = len(re.findall(
-        r"[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\u0e00-\u0e7f]",
-        text,
-    )) / max(len(text), 1)
+    cjk_ratio = len(
+        re.findall(
+            r"[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af\u0e00-\u0e7f]",
+            text,
+        )
+    ) / max(len(text), 1)
 
     if cjk_ratio > 0.3:
         # CJK text: ~1.5 chars per token
@@ -314,6 +316,7 @@ def estimate_tokens_tiktoken(text: str, model: str = "gpt-4o") -> int:
     """
     try:
         import tiktoken
+
         encoding = tiktoken.encoding_for_model(model)
         return len(encoding.encode(text))
     except Exception:
@@ -323,6 +326,7 @@ def estimate_tokens_tiktoken(text: str, model: str = "gpt-4o") -> int:
 # ══════════════════════════════════════════════════════════════
 # Truncation
 # ══════════════════════════════════════════════════════════════
+
 
 def truncate(
     text: str,
@@ -361,7 +365,7 @@ def truncate(
             truncated.rfind("? "),
         )
         if last_period > max_length * 0.5:
-            return truncated[:last_period + 1] + suffix
+            return truncated[: last_period + 1] + suffix
 
     if at_word_boundary:
         # Find last space
@@ -402,6 +406,7 @@ def truncate_tokens(
 # ══════════════════════════════════════════════════════════════
 # Slug Generation
 # ══════════════════════════════════════════════════════════════
+
 
 def slugify(
     text: str,
@@ -456,6 +461,7 @@ def slugify(
 # ══════════════════════════════════════════════════════════════
 # Language Detection
 # ══════════════════════════════════════════════════════════════
+
 
 def detect_language(text: str, sample_size: int = 1000) -> str:
     """
@@ -528,6 +534,7 @@ def detect_language(text: str, sample_size: int = 1000) -> str:
 # Text Similarity
 # ══════════════════════════════════════════════════════════════
 
+
 def text_similarity(text_a: str, text_b: str, method: str = "jaccard") -> float:
     """
     Compute similarity between two texts.
@@ -596,8 +603,8 @@ def _cosine_similarity(text_a: str, text_b: str) -> float:
     dot = sum(counter_a.get(t, 0) * counter_b.get(t, 0) for t in all_terms)
 
     # Magnitudes
-    mag_a = math.sqrt(sum(v ** 2 for v in counter_a.values()))
-    mag_b = math.sqrt(sum(v ** 2 for v in counter_b.values()))
+    mag_a = math.sqrt(sum(v**2 for v in counter_a.values()))
+    mag_b = math.sqrt(sum(v**2 for v in counter_b.values()))
 
     if mag_a == 0 or mag_b == 0:
         return 0.0
@@ -625,20 +632,113 @@ def _overlap_coefficient(text_a: str, text_b: str) -> float:
 
 # Common English stop words
 STOP_WORDS: set[str] = {
-    "the", "a", "an", "and", "or", "but", "in", "on", "at", "to",
-    "for", "of", "with", "by", "from", "is", "are", "was", "were",
-    "be", "been", "it", "its", "this", "that", "these", "those",
-    "i", "we", "you", "he", "she", "they", "me", "him", "her",
-    "us", "them", "my", "your", "his", "our", "their",
-    "not", "no", "do", "does", "did", "will", "would", "can",
-    "could", "should", "may", "might", "has", "have", "had",
-    "if", "then", "else", "when", "where", "how", "what",
-    "which", "who", "whom", "why", "all", "each", "every",
-    "both", "few", "more", "most", "other", "some", "such",
-    "than", "too", "very", "just", "about", "above", "after",
-    "again", "also", "am", "as", "because", "before", "below",
-    "between", "during", "into", "through", "under", "until",
-    "up", "down", "out", "off", "over", "once", "here", "there",
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "it",
+    "its",
+    "this",
+    "that",
+    "these",
+    "those",
+    "i",
+    "we",
+    "you",
+    "he",
+    "she",
+    "they",
+    "me",
+    "him",
+    "her",
+    "us",
+    "them",
+    "my",
+    "your",
+    "his",
+    "our",
+    "their",
+    "not",
+    "no",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "can",
+    "could",
+    "should",
+    "may",
+    "might",
+    "has",
+    "have",
+    "had",
+    "if",
+    "then",
+    "else",
+    "when",
+    "where",
+    "how",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "why",
+    "all",
+    "each",
+    "every",
+    "both",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "than",
+    "too",
+    "very",
+    "just",
+    "about",
+    "above",
+    "after",
+    "again",
+    "also",
+    "am",
+    "as",
+    "because",
+    "before",
+    "below",
+    "between",
+    "during",
+    "into",
+    "through",
+    "under",
+    "until",
+    "up",
+    "down",
+    "out",
+    "off",
+    "over",
+    "once",
+    "here",
+    "there",
 }
 
 
@@ -734,6 +834,7 @@ def extract_key_phrases(
 # Text Statistics
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class TextStats:
     """
@@ -752,6 +853,7 @@ class TextStats:
         unique_words: Number of unique words.
         lexical_diversity: Unique words / total words.
     """
+
     char_count: int = 0
     char_count_no_spaces: int = 0
     word_count: int = 0
@@ -780,8 +882,6 @@ class TextStats:
         }
 
 
-
-
 def analyze_text(text: str) -> TextStats:
     """
     Compute comprehensive text statistics.
@@ -807,9 +907,7 @@ def analyze_text(text: str) -> TextStats:
     paragraph_count = count_paragraphs(text)
 
     # Average word length
-    avg_word_length = (
-        sum(len(w) for w in words) / max(word_count, 1)
-    )
+    avg_word_length = sum(len(w) for w in words) / max(word_count, 1)
 
     # Average sentence length
     avg_sentence_length = word_count / max(sentence_count, 1)
@@ -840,6 +938,7 @@ def analyze_text(text: str) -> TextStats:
 # Miscellaneous
 # ══════════════════════════════════════════════════════════════
 
+
 def dedent(text: str) -> str:
     """
     Remove common leading whitespace from all lines.
@@ -851,6 +950,7 @@ def dedent(text: str) -> str:
         Dedented text.
     """
     import textwrap
+
     return textwrap.dedent(text)
 
 
@@ -881,6 +981,7 @@ def wrap_text(text: str, width: int = 80) -> str:
         Wrapped text.
     """
     import textwrap
+
     return textwrap.fill(text, width=width)
 
 

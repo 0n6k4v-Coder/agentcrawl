@@ -50,6 +50,7 @@ logger = logging.getLogger("agentcrawl.utils.html")
 # Tag Stripping
 # ══════════════════════════════════════════════════════════════
 
+
 def strip_tags(html: str, keep_tags: list[str] | None = None) -> str:
     """
     Remove HTML tags from a string.
@@ -133,6 +134,7 @@ def strip_specific_tags(html: str, tags: list[str]) -> str:
 # Text Extraction
 # ══════════════════════════════════════════════════════════════
 
+
 def extract_text(html: str, normalize: bool = True) -> str:
     """
     Extract visible text content from HTML.
@@ -164,9 +166,27 @@ def extract_text(html: str, normalize: bool = True) -> str:
 
     # Replace block-level tags with newlines
     block_tags = (
-        "p", "div", "br", "hr", "h1", "h2", "h3", "h4", "h5", "h6",
-        "li", "tr", "table", "section", "article", "header", "footer",
-        "blockquote", "pre", "ul", "ol",
+        "p",
+        "div",
+        "br",
+        "hr",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "li",
+        "tr",
+        "table",
+        "section",
+        "article",
+        "header",
+        "footer",
+        "blockquote",
+        "pre",
+        "ul",
+        "ol",
     )
     for tag in block_tags:
         text = re.sub(rf"<{tag}\b[^>]*>", "\n", text, flags=re.IGNORECASE)
@@ -212,6 +232,7 @@ def extract_title(html: str) -> str:
 # ══════════════════════════════════════════════════════════════
 # HTML Cleaning
 # ══════════════════════════════════════════════════════════════
+
 
 def clean_html(
     html: str,
@@ -310,6 +331,7 @@ def sanitize_html(html: str) -> str:
 # Entity Handling
 # ══════════════════════════════════════════════════════════════
 
+
 def decode_entities(text: str) -> str:
     """
     Decode HTML entities in text.
@@ -360,6 +382,7 @@ def encode_entities(text: str, quote: bool = True) -> str:
 # Whitespace
 # ══════════════════════════════════════════════════════════════
 
+
 def normalize_whitespace(text: str) -> str:
     """
     Normalize whitespace in text.
@@ -405,6 +428,7 @@ def collapse_spaces(text: str) -> str:
 # Link Extraction
 # ══════════════════════════════════════════════════════════════
 
+
 def extract_links(html: str, base_url: str = "") -> list[dict[str, str]]:
     """
     Extract all links from HTML.
@@ -429,7 +453,7 @@ def extract_links(html: str, base_url: str = "") -> list[dict[str, str]]:
 
     # Match anchor tags
     pattern = re.compile(
-        r'<a\b([^>]*)>(.*?)</a>',
+        r"<a\b([^>]*)>(.*?)</a>",
         re.DOTALL | re.IGNORECASE,
     )
 
@@ -455,6 +479,7 @@ def extract_links(html: str, base_url: str = "") -> list[dict[str, str]]:
         # Resolve relative URL
         if base_url and not href.startswith(("http://", "https://")):
             from urllib.parse import urljoin
+
             href = urljoin(base_url, href)
 
         # Deduplicate
@@ -473,11 +498,13 @@ def extract_links(html: str, base_url: str = "") -> list[dict[str, str]]:
         )
         title = title_match.group(1) if title_match else ""
 
-        links.append({
-            "url": href,
-            "text": text,
-            "title": title,
-        })
+        links.append(
+            {
+                "url": href,
+                "text": text,
+                "title": title,
+            }
+        )
 
     return links
 
@@ -517,6 +544,7 @@ def extract_images(html: str, base_url: str = "") -> list[dict[str, str]]:
         # Resolve relative URL
         if base_url and not src.startswith(("http://", "https://", "data:")):
             from urllib.parse import urljoin
+
             src = urljoin(base_url, src)
 
         # Extract alt
@@ -535,11 +563,13 @@ def extract_images(html: str, base_url: str = "") -> list[dict[str, str]]:
         )
         title = title_match.group(1) if title_match else ""
 
-        images.append({
-            "src": src,
-            "alt": alt,
-            "title": title,
-        })
+        images.append(
+            {
+                "src": src,
+                "alt": alt,
+                "title": title,
+            }
+        )
 
     return images
 
@@ -547,6 +577,7 @@ def extract_images(html: str, base_url: str = "") -> list[dict[str, str]]:
 # ══════════════════════════════════════════════════════════════
 # Meta Tags
 # ══════════════════════════════════════════════════════════════
+
 
 def extract_meta_tags(html: str) -> dict[str, str]:
     """
@@ -629,6 +660,7 @@ def extract_canonical_url(html: str) -> str:
 # ══════════════════════════════════════════════════════════════
 # Encoding Detection
 # ══════════════════════════════════════════════════════════════
+
 
 def detect_encoding(raw_bytes: bytes) -> str:
     """
@@ -716,6 +748,7 @@ def decode_html_bytes(raw_bytes: bytes, encoding: str | None = None) -> str:
 # Validation
 # ══════════════════════════════════════════════════════════════
 
+
 def is_html(text: str) -> bool:
     """
     Check if a string looks like HTML.
@@ -744,9 +777,22 @@ def is_html(text: str) -> bool:
     # Check for common HTML tags in first 500 chars
     head = stripped[:500].lower()
     html_indicators = [
-        "<div", "<p>", "<span", "<a ", "<img", "<table",
-        "<h1", "<h2", "<h3", "<ul", "<ol", "<li",
-        "<head", "<body", "<meta", "<link",
+        "<div",
+        "<p>",
+        "<span",
+        "<a ",
+        "<img",
+        "<table",
+        "<h1",
+        "<h2",
+        "<h3",
+        "<ul",
+        "<ol",
+        "<li",
+        "<head",
+        "<body",
+        "<meta",
+        "<link",
     ]
 
     return any(indicator in head for indicator in html_indicators)
@@ -773,9 +819,19 @@ def is_well_formed(html: str) -> bool:
 
     # Self-closing tags don't need closing
     void_tags = {
-        "br", "hr", "img", "input", "meta", "link",
-        "area", "base", "col", "embed", "source",
-        "track", "wbr",
+        "br",
+        "hr",
+        "img",
+        "input",
+        "meta",
+        "link",
+        "area",
+        "base",
+        "col",
+        "embed",
+        "source",
+        "track",
+        "wbr",
     }
 
     open_count: dict[str, int] = {}

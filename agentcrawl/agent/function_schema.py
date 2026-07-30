@@ -315,8 +315,8 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                     "type": "object",
                     "description": (
                         "JSON schema describing the data to extract. "
-                        "Example: {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, "
-                        "\"price\": {\"type\": \"number\"}}}."
+                        'Example: {"type": "object", "properties": {"name": {"type": "string"}, '
+                        '"price": {"type": "number"}}}.'
                     ),
                 },
                 "method": {
@@ -333,7 +333,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                     "type": "object",
                     "description": (
                         "CSS extraction schema (required if method='css'). "
-                        "Format: {\"baseSelector\": \"...\", \"fields\": [{\"name\": \"...\", \"selector\": \"...\", \"type\": \"text|html|attribute|list\"}]}."
+                        'Format: {"baseSelector": "...", "fields": [{"name": "...", "selector": "...", "type": "text|html|attribute|list"}]}.'
                     ),
                 },
                 "prompt": {
@@ -442,6 +442,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
 # OpenAI Function Calling Format
 # ══════════════════════════════════════════════════════════════
 
+
 def get_openai_tools_schema(
     tools: list[str] | None = None,
 ) -> list[dict[str, Any]]:
@@ -505,6 +506,7 @@ def get_openai_functions_schema(
 # Anthropic Tool Use Format
 # ══════════════════════════════════════════════════════════════
 
+
 def get_anthropic_tools_schema(
     tools: list[str] | None = None,
 ) -> list[dict[str, Any]]:
@@ -539,6 +541,7 @@ def get_anthropic_tools_schema(
 # ══════════════════════════════════════════════════════════════
 # LangChain Tool Format
 # ══════════════════════════════════════════════════════════════
+
 
 def get_langchain_tools(
     tools: list[str] | None = None,
@@ -603,6 +606,7 @@ def _to_langchain_args_schema(parameters: dict[str, Any]) -> dict[str, Any]:
 # CrewAI Tool Format
 # ══════════════════════════════════════════════════════════════
 
+
 def get_crewai_tools(
     tools: list[str] | None = None,
 ) -> list[dict[str, Any]]:
@@ -631,6 +635,7 @@ def get_crewai_tools(
 # MCP (Model Context Protocol) Tool Format
 # ══════════════════════════════════════════════════════════════
 
+
 def get_mcp_tools_schema(
     tools: list[str] | None = None,
 ) -> list[dict[str, Any]]:
@@ -657,6 +662,7 @@ def get_mcp_tools_schema(
 # ══════════════════════════════════════════════════════════════
 # Generic / All Formats
 # ══════════════════════════════════════════════════════════════
+
 
 def get_all_schemas(
     tools: list[str] | None = None,
@@ -733,9 +739,7 @@ def export_schemas_json(
 
     generator = format_map.get(fmt)
     if generator is None:
-        raise ValueError(
-            f"Unknown format '{fmt}'. Available: {', '.join(format_map.keys())}"
-        )
+        raise ValueError(f"Unknown format '{fmt}'. Available: {', '.join(format_map.keys())}")
 
     schemas = generator(tools)
     with open(filepath, "w", encoding="utf-8") as f:
@@ -745,6 +749,7 @@ def export_schemas_json(
 # ══════════════════════════════════════════════════════════════
 # Internal Helpers
 # ══════════════════════════════════════════════════════════════
+
 
 def _filter_tools(tools: list[str] | None) -> list[dict[str, Any]]:
     """Filter tool definitions by name list."""

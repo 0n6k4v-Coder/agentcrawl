@@ -74,6 +74,7 @@ logger = logging.getLogger("agentcrawl.hooks.registry")
 # Hook Metadata
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class HookMetadata:
     """
@@ -89,6 +90,7 @@ class HookMetadata:
         tags: Arbitrary tags for categorization.
         dependencies: Names of hooks that must run before this one.
     """
+
     name: str = ""
     event: str = ""
     group: str = "default"
@@ -114,6 +116,7 @@ class HookMetadata:
 # ══════════════════════════════════════════════════════════════
 # Hook Decorator
 # ══════════════════════════════════════════════════════════════
+
 
 def hook(
     event: str | HookEvent,
@@ -153,6 +156,7 @@ def hook(
         ... async def log_scrape(ctx):
         ...     print(f"Scraping: {ctx.url}")
     """
+
     def decorator(func: Callable) -> Callable:
         # Attach metadata to the function
         func._hook_metadata = HookMetadata(  # type: ignore[attr-defined]
@@ -185,6 +189,7 @@ def hook(
 # ══════════════════════════════════════════════════════════════
 # Hook Registry
 # ══════════════════════════════════════════════════════════════
+
 
 class HookRegistry:
     """
@@ -675,11 +680,13 @@ class HookRegistry:
                 if metadata.event != event_str:
                     continue
 
-            results.append({
-                **metadata.to_dict(),
-                "enabled": name not in self._disabled_hooks
-                and metadata.group not in self._disabled_groups,
-            })
+            results.append(
+                {
+                    **metadata.to_dict(),
+                    "enabled": name not in self._disabled_hooks
+                    and metadata.group not in self._disabled_groups,
+                }
+            )
 
         return results
 
@@ -739,10 +746,7 @@ class HookRegistry:
             "name": self._name,
             "disabled_groups": list(self._disabled_groups),
             "disabled_hooks": list(self._disabled_hooks),
-            "hooks": {
-                name: meta.to_dict()
-                for name, meta in self._metadata.items()
-            },
+            "hooks": {name: meta.to_dict() for name, meta in self._metadata.items()},
         }
 
         with open(filepath, "w", encoding="utf-8") as f:
@@ -804,6 +808,7 @@ class HookRegistry:
 # ══════════════════════════════════════════════════════════════
 # Built-in Hook Functions
 # ══════════════════════════════════════════════════════════════
+
 
 async def _builtin_log_pre_scrape(ctx: HookContext) -> None:
     """Log the URL before scraping."""

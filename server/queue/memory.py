@@ -54,6 +54,7 @@ logger = logging.getLogger("agentcrawl.server.queue.memory")
 # Priority Wrapper
 # ══════════════════════════════════════════════════════════════
 
+
 class _PrioritizedItem:
     """
     Wrapper for heap ordering.
@@ -90,6 +91,7 @@ class _PrioritizedItem:
 # ══════════════════════════════════════════════════════════════
 # Memory Queue Backend
 # ══════════════════════════════════════════════════════════════
+
 
 class MemoryQueueBackend(QueueBackend):
     """
@@ -345,7 +347,7 @@ class MemoryQueueBackend(QueueBackend):
                 item.completed_at = 0.0
 
                 # Exponential backoff: 2^attempts seconds
-                delay = min(2 ** item.attempts, 60)
+                delay = min(2**item.attempts, 60)
                 item.scheduled_at = time.time() + delay
 
                 heapq.heappush(self._queue, _PrioritizedItem(item))
@@ -367,7 +369,7 @@ class MemoryQueueBackend(QueueBackend):
                 # Move to dead letter queue
                 self._dead_letter.append(item)
                 if len(self._dead_letter) > self._dead_letter_max:
-                    self._dead_letter = self._dead_letter[-self._dead_letter_max:]
+                    self._dead_letter = self._dead_letter[-self._dead_letter_max :]
 
                 logger.warning(
                     "Rejected (permanent): %s — %s",
@@ -417,8 +419,7 @@ class MemoryQueueBackend(QueueBackend):
         """Get queue size (pending items only)."""
         async with self._lock:
             return sum(
-                1 for p in self._queue
-                if p.item.status in (JobStatus.QUEUED, JobStatus.RETRYING)
+                1 for p in self._queue if p.item.status in (JobStatus.QUEUED, JobStatus.RETRYING)
             )
 
     async def is_empty(self) -> bool:
@@ -438,26 +439,19 @@ class MemoryQueueBackend(QueueBackend):
         """Get queue statistics."""
         async with self._lock:
             pending = sum(
-                1 for p in self._queue
-                if p.item.status in (JobStatus.QUEUED, JobStatus.RETRYING)
+                1 for p in self._queue if p.item.status in (JobStatus.QUEUED, JobStatus.RETRYING)
             )
 
             completed_count = sum(
-                1 for item in self._items.values()
-                if item.status == JobStatus.COMPLETED
+                1 for item in self._items.values() if item.status == JobStatus.COMPLETED
             )
 
             failed_count = sum(
-                1 for item in self._items.values()
-                if item.status == JobStatus.FAILED
+                1 for item in self._items.values() if item.status == JobStatus.FAILED
             )
 
-            avg_wait = (
-                self._total_wait_time / max(self._total_dequeued, 1)
-            )
-            avg_process = (
-                self._total_process_time / max(self._total_completed, 1)
-            )
+            avg_wait = self._total_wait_time / max(self._total_dequeued, 1)
+            avg_process = self._total_process_time / max(self._total_completed, 1)
 
             return QueueStats(
                 pending=pending,
@@ -549,10 +543,7 @@ class MemoryQueueBackend(QueueBackend):
             now = time.time()
 
             # Check for timed-out processing items
-            timed_out = [
-                item_id for item_id, item in self._processing.items()
-                if item.is_expired
-            ]
+            timed_out = [item_id for item_id, item in self._processing.items() if item.is_expired]
 
             for item_id in timed_out:
                 item = self._processing.pop(item_id)
@@ -573,7 +564,8 @@ class MemoryQueueBackend(QueueBackend):
             # Remove old completed/failed items (keep last 1000)
             if len(self._items) > 1000:
                 terminal = [
-                    (iid, item) for iid, item in self._items.items()
+                    (iid, item)
+                    for iid, item in self._items.items()
                     if item.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED)
                 ]
                 terminal.sort(key=lambda x: x[1].completed_at or x[1].created_at)
@@ -583,8 +575,4 @@ class MemoryQueueBackend(QueueBackend):
                     del self._items[iid]
 
     def __repr__(self) -> str:
-        return (
-            f"MemoryQueueBackend("
-            f"pending={len(self._queue)}, "
-            f"processing={len(self._processing)})"
-        )
+        return f"MemoryQueueBackend(pending={len(self._queue)}, processing={len(self._processing)})"

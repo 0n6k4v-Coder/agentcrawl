@@ -33,6 +33,7 @@ logger = logging.getLogger("agentcrawl.server.extract")
 # Request / Response Models
 # ══════════════════════════════════════════════════════════════
 
+
 class ExtractRequest(BaseModel):
     """Request body for POST /extract."""
 
@@ -78,6 +79,7 @@ class ExtractRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Handler
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_extract(
     engine: Any,
@@ -215,6 +217,7 @@ async def handle_extract(
 # Schema Building
 # ══════════════════════════════════════════════════════════════
 
+
 def _build_schema(request: ExtractRequest) -> Any:
     """
     Build an extraction schema from the request.
@@ -241,10 +244,10 @@ def _build_schema(request: ExtractRequest) -> Any:
                 field_name = field_name.strip()
                 if field_name:
                     patterns[field_name] = ""  # Empty pattern — user must provide
-            return {"name": "RegexExtract", "fields": [
-                {"name": k, "pattern": v, "type": "all"}
-                for k, v in patterns.items()
-            ]}
+            return {
+                "name": "RegexExtract",
+                "fields": [{"name": k, "pattern": v, "type": "all"} for k, v in patterns.items()],
+            }
 
         return None
 
@@ -261,8 +264,7 @@ def _build_schema(request: ExtractRequest) -> Any:
         # If schema_def has field names, build from those
         if request.schema_def and "fields" in request.schema_def:
             field_names = [
-                f.get("name", "") for f in request.schema_def["fields"]
-                if isinstance(f, dict)
+                f.get("name", "") for f in request.schema_def["fields"] if isinstance(f, dict)
             ]
             if field_names:
                 return _build_dynamic_model(",".join(field_names))
@@ -297,6 +299,7 @@ def _build_dynamic_model(fields_str: str) -> Any:
 # ══════════════════════════════════════════════════════════════
 # Serialization
 # ══════════════════════════════════════════════════════════════
+
 
 def _serialize_extracted(data: Any) -> Any:
     """

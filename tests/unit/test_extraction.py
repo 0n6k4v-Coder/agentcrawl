@@ -75,6 +75,7 @@ PRODUCT_HTML = """<html>
 # JsonCssExtractor
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestJsonCssExtractor:
     """Tests for JsonCssExtractor."""
 
@@ -239,6 +240,7 @@ class TestJsonCssExtractor:
 # JsonXPathExtractor
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestJsonXPathExtractor:
     """Tests for JsonXPathExtractor."""
 
@@ -272,7 +274,12 @@ class TestJsonXPathExtractor:
             "name": "Links",
             "baseSelector": "body",
             "fields": [
-                {"name": "href", "xpath": "//a[@class='link']", "type": "attribute", "attribute": "href"},
+                {
+                    "name": "href",
+                    "xpath": "//a[@class='link']",
+                    "type": "attribute",
+                    "attribute": "href",
+                },
             ],
         }
 
@@ -343,6 +350,7 @@ class TestJsonXPathExtractor:
 # RegexExtractor
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestRegexExtractor:
     """Tests for RegexExtractor."""
 
@@ -377,7 +385,9 @@ class TestRegexExtractor:
         }
 
         extractor = RegexExtractor(schema=schema)
-        text = "```python\nprint('hello')\n```\n\nSome text\n\n```javascript\nconsole.log('hi')\n```"
+        text = (
+            "```python\nprint('hello')\n```\n\nSome text\n\n```javascript\nconsole.log('hi')\n```"
+        )
         result = await extractor.extract(text)
 
         assert result.success is True
@@ -445,6 +455,7 @@ class TestRegexExtractor:
 # Factory Function
 # ═══════════════════════════════════════════════════════════════
 
+
 class TestCreateExtractor:
     """Tests for create_extractor factory."""
 
@@ -499,6 +510,7 @@ class TestCreateExtractor:
 # ═══════════════════════════════════════════════════════════════
 # ExtractionResult
 # ═══════════════════════════════════════════════════════════════
+
 
 class TestExtractionResult:
     """Tests for ExtractionResult model."""

@@ -62,6 +62,7 @@ logger = logging.getLogger("agentcrawl.extraction.table")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class TableColumn:
     """
@@ -74,6 +75,7 @@ class TableColumn:
         sample_values: Sample values from the column.
         null_count: Number of empty/null cells.
     """
+
     name: str = ""
     index: int = 0
     inferred_type: str = "string"
@@ -107,6 +109,7 @@ class TableData:
         table_classes: HTML class attributes (if present).
         caption: Table caption (if present).
     """
+
     headers: list[str] = field(default_factory=list)
     rows: list[dict[str, str]] = field(default_factory=list)
     raw_rows: list[list[str]] = field(default_factory=list)
@@ -182,7 +185,7 @@ class TableData:
         for row in self.raw_rows:
             # Pad row to match header count
             padded = row + [""] * (len(self.headers) - len(row))
-            lines.append("| " + " | ".join(padded[:len(self.headers)]) + " |")
+            lines.append("| " + " | ".join(padded[: len(self.headers)]) + " |")
 
         return "\n".join(lines)
 
@@ -200,8 +203,7 @@ class TableData:
             import pandas as pd
         except ImportError as err:
             raise ImportError(
-                "pandas is required for DataFrame conversion. "
-                "Install with: pip install pandas"
+                "pandas is required for DataFrame conversion. Install with: pip install pandas"
             ) from err
 
         return pd.DataFrame(self.rows)
@@ -217,6 +219,7 @@ class TableData:
 # ══════════════════════════════════════════════════════════════
 # Column Type Inference
 # ══════════════════════════════════════════════════════════════
+
 
 class ColumnTypeInferrer:
     """
@@ -235,7 +238,9 @@ class ColumnTypeInferrer:
     # Patterns for type detection
     INTEGER_RE = re.compile(r"^-?\d{1,3}(,\d{3})*$|^-?\d+$")
     FLOAT_RE = re.compile(r"^-?\d+\.\d+$|^-?\d{1,3}(,\d{3})*\.\d+$")
-    BOOLEAN_VALUES: frozenset[str] = frozenset({"true", "false", "yes", "no", "0", "1", "t", "f", "y", "n"})
+    BOOLEAN_VALUES: frozenset[str] = frozenset(
+        {"true", "false", "yes", "no", "0", "1", "t", "f", "y", "n"}
+    )
     DATE_RE = re.compile(
         r"^\d{4}[-/]\d{1,2}[-/]\d{1,2}$|"
         r"^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}$|"
@@ -296,9 +301,7 @@ class ColumnTypeInferrer:
         total = len(non_empty)
         threshold = total * 0.6
 
-        for type_name, count in sorted(
-            type_counts.items(), key=lambda x: x[1], reverse=True
-        ):
+        for type_name, count in sorted(type_counts.items(), key=lambda x: x[1], reverse=True):
             if count >= threshold:
                 return type_name
 
@@ -332,13 +335,15 @@ class ColumnTypeInferrer:
 
             inferred_type = self.infer(values)
 
-            columns.append(TableColumn(
-                name=header,
-                index=col_idx,
-                inferred_type=inferred_type,
-                sample_values=[v for v in values[:5] if v],
-                null_count=null_count,
-            ))
+            columns.append(
+                TableColumn(
+                    name=header,
+                    index=col_idx,
+                    inferred_type=inferred_type,
+                    sample_values=[v for v in values[:5] if v],
+                    null_count=null_count,
+                )
+            )
 
         return columns
 
@@ -346,6 +351,7 @@ class ColumnTypeInferrer:
 # ══════════════════════════════════════════════════════════════
 # Table Extractor
 # ══════════════════════════════════════════════════════════════
+
 
 class TableExtractor(ExtractionStrategy):
     """
@@ -432,8 +438,7 @@ class TableExtractor(ExtractionStrategy):
             from lxml import html as lxml_html
         except ImportError as err:
             raise ImportError(
-                "lxml is required for table extraction. "
-                "Install with: pip install lxml"
+                "lxml is required for table extraction. Install with: pip install lxml"
             ) from err
 
         try:
@@ -451,7 +456,7 @@ class TableExtractor(ExtractionStrategy):
         # Extract data from each table
         results: list[Any] = []
 
-        for idx, table_el in enumerate(tables[:self._max_tables]):
+        for idx, table_el in enumerate(tables[: self._max_tables]):
             table_data = self._extract_table(table_el, idx)
 
             if table_data is None:
@@ -495,6 +500,7 @@ class TableExtractor(ExtractionStrategy):
         """
         try:
             from lxml.cssselect import CSSSelector
+
             css = CSSSelector(self._table_selector)
             return list(css(tree))
         except Exception as e:
@@ -663,16 +669,13 @@ class TableExtractor(ExtractionStrategy):
         if first_tr is not None:
             th_cells = first_tr.findall(".//th")
             if th_cells:
-                headers = [
-                    re.sub(r"\s+", " ", th.text_content().strip())
-                    for th in th_cells
-                ]
+                headers = [re.sub(r"\s+", " ", th.text_content().strip()) for th in th_cells]
                 return headers, all_rows[1:]
 
         # Strategy 3: Use configured header row
         if self._header_row >= 0 and self._header_row < len(all_rows):
             headers = all_rows[self._header_row]
-            data_rows = all_rows[:self._header_row] + all_rows[self._header_row + 1:]
+            data_rows = all_rows[: self._header_row] + all_rows[self._header_row + 1 :]
             return headers, data_rows
 
         # Strategy 4: Heuristic — first row looks like headers
@@ -680,9 +683,7 @@ class TableExtractor(ExtractionStrategy):
             first_row = all_rows[0]
             # Headers are usually short, non-numeric strings
             looks_like_header = all(
-                not re.match(r"^-?\d+\.?\d*$", cell.strip())
-                for cell in first_row
-                if cell.strip()
+                not re.match(r"^-?\d+\.?\d*$", cell.strip()) for cell in first_row if cell.strip()
             )
             if looks_like_header and any(cell.strip() for cell in first_row):
                 return first_row, all_rows[1:]
@@ -696,16 +697,18 @@ class TableExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "table_selector": self._table_selector,
-            "output_format": self._output_format,
-            "infer_types": self._infer_types,
-            "min_rows": self._min_rows,
-            "min_cols": self._min_cols,
-            "header_row": self._header_row,
-            "include_table_metadata": self._include_table_metadata,
-            "max_tables": self._max_tables,
-        })
+        d.update(
+            {
+                "table_selector": self._table_selector,
+                "output_format": self._output_format,
+                "infer_types": self._infer_types,
+                "min_rows": self._min_rows,
+                "min_cols": self._min_cols,
+                "header_row": self._header_row,
+                "include_table_metadata": self._include_table_metadata,
+                "max_tables": self._max_tables,
+            }
+        )
         return d
 
     def __repr__(self) -> str:

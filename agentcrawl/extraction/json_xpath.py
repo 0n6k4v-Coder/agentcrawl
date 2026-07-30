@@ -91,6 +91,7 @@ FIELD_TYPE_REGEX = "regex"
 # JSON XPath Extractor
 # ══════════════════════════════════════════════════════════════
 
+
 class JsonXPathExtractor(ExtractionStrategy):
     """
     XPath expression-based structured data extraction.
@@ -160,9 +161,7 @@ class JsonXPathExtractor(ExtractionStrategy):
             if "name" not in field_def:
                 raise ValueError(f"Field missing 'name': {field_def}")
             if "xpath" not in field_def and field_def.get("type") != "nested":
-                raise ValueError(
-                    f"Field '{field_def.get('name')}' missing 'xpath'"
-                )
+                raise ValueError(f"Field '{field_def.get('name')}' missing 'xpath'")
 
     # ──────────────────────────────────────────────────────────
     # Core Extraction
@@ -196,8 +195,7 @@ class JsonXPathExtractor(ExtractionStrategy):
             from lxml import html as lxml_html
         except ImportError as err:
             raise ImportError(
-                "lxml is required for XPath extraction. "
-                "Install with: pip install lxml"
+                "lxml is required for XPath extraction. Install with: pip install lxml"
             ) from err
 
         try:
@@ -261,7 +259,8 @@ class JsonXPathExtractor(ExtractionStrategy):
             except Exception as e:
                 logger.debug(
                     "Field '%s' extraction error: %s",
-                    name, e,
+                    name,
+                    e,
                 )
                 result[name] = field_def.get("default", self._default_value)
 
@@ -406,6 +405,7 @@ class JsonXPathExtractor(ExtractionStrategy):
 
         try:
             from lxml.html import tostring
+
             return str(tostring(target, encoding="unicode", method="html"))
         except Exception:
             if hasattr(target, "text_content"):
@@ -581,28 +581,28 @@ class JsonXPathExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "default_value": self._default_value,
-            "strip_whitespace": self._strip_whitespace,
-            "raise_on_missing": self._raise_on_missing,
-            "schema_name": self._schema.get("name", "") if self._schema else "",
-            "base_xpath": self._schema.get("baseXPath", "") if self._schema else "",
-            "field_count": len(self._schema.get("fields", [])) if self._schema else 0,
-        })
+        d.update(
+            {
+                "default_value": self._default_value,
+                "strip_whitespace": self._strip_whitespace,
+                "raise_on_missing": self._raise_on_missing,
+                "schema_name": self._schema.get("name", "") if self._schema else "",
+                "base_xpath": self._schema.get("baseXPath", "") if self._schema else "",
+                "field_count": len(self._schema.get("fields", [])) if self._schema else 0,
+            }
+        )
         return d
 
     def __repr__(self) -> str:
         schema_name = self._schema.get("name", "unnamed") if self._schema else "none"
         base = self._schema.get("baseXPath", "") if self._schema else ""
-        return (
-            f"JsonXPathExtractor(schema={schema_name!r}, "
-            f"base='{base}')"
-        )
+        return f"JsonXPathExtractor(schema={schema_name!r}, base='{base}')"
 
 
 # ══════════════════════════════════════════════════════════════
 # Helper: XPath String Result Wrapper
 # ══════════════════════════════════════════════════════════════
+
 
 class _XPathStringResult:
     """

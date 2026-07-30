@@ -56,8 +56,10 @@ from typing import Any
 # Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class OutputFormat(str, Enum):
     """Supported output formats."""
+
     MARKDOWN = "markdown"
     JSON = "json"
     HTML = "html"
@@ -66,6 +68,7 @@ class OutputFormat(str, Enum):
 
 class ContentFilterType(str, Enum):
     """Available content filter types."""
+
     NONE = "none"
     BM25 = "bm25"
     PRUNING = "pruning"
@@ -73,6 +76,7 @@ class ContentFilterType(str, Enum):
 
 class ChunkerType(str, Enum):
     """Available chunker types."""
+
     NONE = "none"
     TOPIC = "topic"
     REGEX = "regex"
@@ -82,6 +86,7 @@ class ChunkerType(str, Enum):
 
 class WaitStrategy(str, Enum):
     """Page wait strategies before content extraction."""
+
     LOAD = "load"
     DOM_CONTENT_LOADED = "domcontentloaded"
     NETWORK_IDLE = "networkidle"
@@ -93,6 +98,7 @@ class WaitStrategy(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Screenshot Options
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ScreenshotOptions:
@@ -109,6 +115,7 @@ class ScreenshotOptions:
         viewport_height: Override viewport height.
         wait_before_ms: Milliseconds to wait before capture.
     """
+
     enabled: bool = False
     full_page: bool = True
     format: str = "png"
@@ -139,6 +146,7 @@ class ScreenshotOptions:
 # Wait Options
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class WaitOptions:
     """
@@ -152,6 +160,7 @@ class WaitOptions:
         expression: JavaScript expression (for FUNCTION strategy).
         load_state: Load state to wait for (for LOAD strategy).
     """
+
     strategy: WaitStrategy = WaitStrategy.LOAD
     selector: str | None = None
     timeout_ms: int = 30_000
@@ -190,6 +199,7 @@ class WaitOptions:
 # ══════════════════════════════════════════════════════════════
 # Main Crawler Configuration
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class CrawlerConfig:
@@ -342,7 +352,9 @@ class CrawlerConfig:
             Configuration dictionary.
         """
         result: dict[str, Any] = {
-            "output_format": self.output_format.value if isinstance(self.output_format, OutputFormat) else self.output_format,
+            "output_format": self.output_format.value
+            if isinstance(self.output_format, OutputFormat)
+            else self.output_format,
             "include_links": self.include_links,
             "include_metadata": self.include_metadata,
             "include_screenshot": self.include_screenshot,
@@ -355,10 +367,14 @@ class CrawlerConfig:
             "xpath": self.xpath,
             "actions": self.actions if isinstance(self.actions, list) else [],
             "wait": self.wait.to_dict(),
-            "content_filter": self.content_filter.value if isinstance(self.content_filter, ContentFilterType) else self.content_filter,
+            "content_filter": self.content_filter.value
+            if isinstance(self.content_filter, ContentFilterType)
+            else self.content_filter,
             "content_filter_query": self.content_filter_query,
             "content_filter_threshold": self.content_filter_threshold,
-            "chunker": self.chunker.value if isinstance(self.chunker, ChunkerType) else self.chunker,
+            "chunker": self.chunker.value
+            if isinstance(self.chunker, ChunkerType)
+            else self.chunker,
             "chunk_max_size": self.chunk_max_size,
             "chunk_overlap": self.chunk_overlap,
             "chunk_pattern": self.chunk_pattern,
@@ -524,11 +540,13 @@ class CrawlerConfig:
 
     def with_timeout(self, seconds: int) -> CrawlerConfig:
         """Return a copy with a different timeout."""
-        return self.merge({
-            "timeout": seconds,
-            "page_timeout_ms": seconds * 1000,
-            "navigation_timeout_ms": seconds * 1000,
-        })
+        return self.merge(
+            {
+                "timeout": seconds,
+                "page_timeout_ms": seconds * 1000,
+                "navigation_timeout_ms": seconds * 1000,
+            }
+        )
 
     def with_selectors(
         self,
@@ -536,10 +554,12 @@ class CrawlerConfig:
         exclude: list[str] | None = None,
     ) -> CrawlerConfig:
         """Return a copy with CSS selectors changed."""
-        return self.merge({
-            "selectors": include or self.selectors,
-            "exclude_selectors": exclude or self.exclude_selectors,
-        })
+        return self.merge(
+            {
+                "selectors": include or self.selectors,
+                "exclude_selectors": exclude or self.exclude_selectors,
+            }
+        )
 
     def with_actions(self, actions: list[dict[str, Any]]) -> CrawlerConfig:
         """Return a copy with page actions changed."""
@@ -552,11 +572,13 @@ class CrawlerConfig:
         threshold: float | None = None,
     ) -> CrawlerConfig:
         """Return a copy with content filter changed."""
-        return self.merge({
-            "content_filter": filter_type,
-            "content_filter_query": query or self.content_filter_query,
-            "content_filter_threshold": threshold or self.content_filter_threshold,
-        })
+        return self.merge(
+            {
+                "content_filter": filter_type,
+                "content_filter_query": query or self.content_filter_query,
+                "content_filter_threshold": threshold or self.content_filter_threshold,
+            }
+        )
 
     def with_chunker(
         self,
@@ -565,11 +587,13 @@ class CrawlerConfig:
         overlap: int | None = None,
     ) -> CrawlerConfig:
         """Return a copy with chunker changed."""
-        return self.merge({
-            "chunker": chunker_type,
-            "chunk_max_size": max_size or self.chunk_max_size,
-            "chunk_overlap": overlap or self.chunk_overlap,
-        })
+        return self.merge(
+            {
+                "chunker": chunker_type,
+                "chunk_max_size": max_size or self.chunk_max_size,
+                "chunk_overlap": overlap or self.chunk_overlap,
+            }
+        )
 
     # ──────────────────────────────────────────────────────────
     # Presets
@@ -667,10 +691,7 @@ class CrawlerConfig:
         if self.chunk_overlap >= self.chunk_max_size:
             warnings.append("chunk_overlap >= chunk_max_size will cause infinite loops")
 
-        if (
-            self.content_filter == ContentFilterType.BM25
-            and not self.content_filter_query
-        ):
+        if self.content_filter == ContentFilterType.BM25 and not self.content_filter_query:
             warnings.append("BM25 filter requires content_filter_query")
 
         if self.include_screenshot and self.output_format == OutputFormat.JSON:
@@ -686,7 +707,11 @@ class CrawlerConfig:
     # ──────────────────────────────────────────────────────────
 
     def __repr__(self) -> str:
-        fmt = self.output_format.value if isinstance(self.output_format, OutputFormat) else self.output_format
+        fmt = (
+            self.output_format.value
+            if isinstance(self.output_format, OutputFormat)
+            else self.output_format
+        )
         parts = [f"format={fmt}"]
 
         if self.selectors:

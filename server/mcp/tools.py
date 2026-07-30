@@ -39,6 +39,7 @@ logger = logging.getLogger("agentcrawl.mcp.tools")
 # Tool Definition
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class ToolDefinition:
     """
@@ -51,6 +52,7 @@ class ToolDefinition:
         handler: Async handler function.
         category: Tool category for grouping.
     """
+
     name: str
     description: str
     input_schema: dict[str, Any]
@@ -69,6 +71,7 @@ class ToolDefinition:
 # ══════════════════════════════════════════════════════════════
 # Tool Registry
 # ══════════════════════════════════════════════════════════════
+
 
 class ToolRegistry:
     """
@@ -132,172 +135,185 @@ class ToolRegistry:
 
     def _register_defaults(self) -> None:
         """Register all default tools."""
-        self.register(ToolDefinition(
-            name="scrape_webpage",
-            description=(
-                "Scrape a webpage and return its content as clean Markdown. "
-                "Removes navigation, ads, and boilerplate. "
-                "Use this to read the content of a specific URL."
-            ),
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "The URL to scrape",
+        self.register(
+            ToolDefinition(
+                name="scrape_webpage",
+                description=(
+                    "Scrape a webpage and return its content as clean Markdown. "
+                    "Removes navigation, ads, and boilerplate. "
+                    "Use this to read the content of a specific URL."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The URL to scrape",
+                        },
+                        "include_links": {
+                            "type": "boolean",
+                            "description": "Include extracted links",
+                            "default": False,
+                        },
+                        "only_main_content": {
+                            "type": "boolean",
+                            "description": "Extract only main content",
+                            "default": True,
+                        },
                     },
-                    "include_links": {
-                        "type": "boolean",
-                        "description": "Include extracted links",
-                        "default": False,
-                    },
-                    "only_main_content": {
-                        "type": "boolean",
-                        "description": "Extract only main content",
-                        "default": True,
-                    },
+                    "required": ["url"],
                 },
-                "required": ["url"],
-            },
-            handler=handle_scrape_webpage,
-            category="scraping",
-        ))
+                handler=handle_scrape_webpage,
+                category="scraping",
+            )
+        )
 
-        self.register(ToolDefinition(
-            name="search_web",
-            description=(
-                "Search the web and return results with titles, URLs, and snippets. "
-                "Use this to find relevant pages before scraping them."
-            ),
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The search query",
+        self.register(
+            ToolDefinition(
+                name="search_web",
+                description=(
+                    "Search the web and return results with titles, URLs, and snippets. "
+                    "Use this to find relevant pages before scraping them."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query",
+                        },
+                        "max_results": {
+                            "type": "integer",
+                            "description": "Maximum number of results",
+                            "default": 5,
+                        },
                     },
-                    "max_results": {
-                        "type": "integer",
-                        "description": "Maximum number of results",
-                        "default": 5,
-                    },
+                    "required": ["query"],
                 },
-                "required": ["query"],
-            },
-            handler=handle_search_web,
-            category="search",
-        ))
+                handler=handle_search_web,
+                category="search",
+            )
+        )
 
-        self.register(ToolDefinition(
-            name="crawl_website",
-            description=(
-                "Crawl a website starting from a URL and return content from "
-                "multiple pages. Use for documentation sites or multi-page resources."
-            ),
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "The starting URL",
+        self.register(
+            ToolDefinition(
+                name="crawl_website",
+                description=(
+                    "Crawl a website starting from a URL and return content from "
+                    "multiple pages. Use for documentation sites or multi-page resources."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The starting URL",
+                        },
+                        "max_pages": {
+                            "type": "integer",
+                            "description": "Maximum pages to crawl",
+                            "default": 10,
+                        },
+                        "max_depth": {
+                            "type": "integer",
+                            "description": "Maximum link depth",
+                            "default": 2,
+                        },
                     },
-                    "max_pages": {
-                        "type": "integer",
-                        "description": "Maximum pages to crawl",
-                        "default": 10,
-                    },
-                    "max_depth": {
-                        "type": "integer",
-                        "description": "Maximum link depth",
-                        "default": 2,
-                    },
+                    "required": ["url"],
                 },
-                "required": ["url"],
-            },
-            handler=handle_crawl_website,
-            category="crawling",
-        ))
+                handler=handle_crawl_website,
+                category="crawling",
+            )
+        )
 
-        self.register(ToolDefinition(
-            name="discover_urls",
-            description=(
-                "Discover all URLs on a website without scraping content. "
-                "Uses sitemap.xml, robots.txt, and link crawling."
-            ),
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "The website URL",
+        self.register(
+            ToolDefinition(
+                name="discover_urls",
+                description=(
+                    "Discover all URLs on a website without scraping content. "
+                    "Uses sitemap.xml, robots.txt, and link crawling."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The website URL",
+                        },
+                        "max_urls": {
+                            "type": "integer",
+                            "description": "Maximum URLs to discover",
+                            "default": 100,
+                        },
                     },
-                    "max_urls": {
-                        "type": "integer",
-                        "description": "Maximum URLs to discover",
-                        "default": 100,
-                    },
+                    "required": ["url"],
                 },
-                "required": ["url"],
-            },
-            handler=handle_discover_urls,
-            category="discovery",
-        ))
+                handler=handle_discover_urls,
+                category="discovery",
+            )
+        )
 
-        self.register(ToolDefinition(
-            name="extract_data",
-            description=(
-                "Extract structured data from a webpage. "
-                "Specify fields to extract as comma-separated names. "
-                "Returns structured JSON."
-            ),
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "The URL to extract from",
+        self.register(
+            ToolDefinition(
+                name="extract_data",
+                description=(
+                    "Extract structured data from a webpage. "
+                    "Specify fields to extract as comma-separated names. "
+                    "Returns structured JSON."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The URL to extract from",
+                        },
+                        "fields": {
+                            "type": "string",
+                            "description": "Comma-separated field names (e.g., 'title,price,description')",
+                        },
                     },
-                    "fields": {
-                        "type": "string",
-                        "description": "Comma-separated field names (e.g., 'title,price,description')",
-                    },
+                    "required": ["url", "fields"],
                 },
-                "required": ["url", "fields"],
-            },
-            handler=handle_extract_data,
-            category="extraction",
-        ))
+                handler=handle_extract_data,
+                category="extraction",
+            )
+        )
 
-        self.register(ToolDefinition(
-            name="batch_scrape",
-            description=(
-                "Scrape multiple URLs at once and return all results. "
-                "More efficient than calling scrape_webpage multiple times."
-            ),
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "urls": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of URLs to scrape",
+        self.register(
+            ToolDefinition(
+                name="batch_scrape",
+                description=(
+                    "Scrape multiple URLs at once and return all results. "
+                    "More efficient than calling scrape_webpage multiple times."
+                ),
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "urls": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of URLs to scrape",
+                        },
+                        "only_main_content": {
+                            "type": "boolean",
+                            "description": "Extract only main content",
+                            "default": True,
+                        },
                     },
-                    "only_main_content": {
-                        "type": "boolean",
-                        "description": "Extract only main content",
-                        "default": True,
-                    },
+                    "required": ["urls"],
                 },
-                "required": ["urls"],
-            },
-            handler=handle_batch_scrape,
-            category="scraping",
-        ))
+                handler=handle_batch_scrape,
+                category="scraping",
+            )
+        )
 
 
 # ══════════════════════════════════════════════════════════════
 # Tool Handlers
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_scrape_webpage(args: dict[str, Any]) -> str:
     """
@@ -415,20 +431,24 @@ async def handle_crawl_website(args: dict[str, Any]) -> str:
                     content = page.markdown
                     if len(content) > 2000:
                         content = content[:2000] + "\n\n[... truncated]"
-                    pages.append({
-                        "url": page.url,
-                        "title": page.metadata.get("title", ""),
-                        "content": content,
-                        "word_count": page.word_count,
-                    })
+                    pages.append(
+                        {
+                            "url": page.url,
+                            "title": page.metadata.get("title", ""),
+                            "content": content,
+                            "word_count": page.word_count,
+                        }
+                    )
 
-            return _json({
-                "start_url": url,
-                "total_pages": job.total_pages,
-                "successful_pages": job.successful_pages,
-                "total_words": job.total_words,
-                "pages": pages,
-            })
+            return _json(
+                {
+                    "start_url": url,
+                    "total_pages": job.total_pages,
+                    "successful_pages": job.successful_pages,
+                    "total_words": job.total_words,
+                    "pages": pages,
+                }
+            )
 
     except Exception as e:
         return _error(str(e))
@@ -456,11 +476,13 @@ async def handle_discover_urls(args: dict[str, Any]) -> str:
         mapper = DomainMapper(max_urls=max_urls)
         urls = await mapper.discover(url)
 
-        return _json({
-            "url": url,
-            "total_urls": len(urls),
-            "urls": urls[:max_urls],
-        })
+        return _json(
+            {
+                "url": url,
+                "total_urls": len(urls),
+                "urls": urls[:max_urls],
+            }
+        )
 
     except Exception as e:
         return _error(str(e))
@@ -570,12 +592,14 @@ async def handle_batch_scrape(args: dict[str, Any]) -> str:
 
             successful = sum(1 for r in results if r.success)
 
-            return _json({
-                "total": len(results),
-                "successful": successful,
-                "failed": len(results) - successful,
-                "pages": pages,
-            })
+            return _json(
+                {
+                    "total": len(results),
+                    "successful": successful,
+                    "failed": len(results) - successful,
+                    "pages": pages,
+                }
+            )
 
     except Exception as e:
         return _error(str(e))
@@ -584,6 +608,7 @@ async def handle_batch_scrape(args: dict[str, Any]) -> str:
 # ══════════════════════════════════════════════════════════════
 # Utilities
 # ══════════════════════════════════════════════════════════════
+
 
 def _json(data: Any) -> str:
     """Serialize to JSON string."""

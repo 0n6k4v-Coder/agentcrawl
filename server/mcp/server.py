@@ -171,8 +171,7 @@ TOOLS: list[dict[str, Any]] = [
                 "fields": {
                     "type": "string",
                     "description": (
-                        "Comma-separated field names to extract. "
-                        "Example: 'title,price,description'"
+                        "Comma-separated field names to extract. Example: 'title,price,description'"
                     ),
                 },
             },
@@ -185,6 +184,7 @@ TOOLS: list[dict[str, Any]] = [
 # ══════════════════════════════════════════════════════════════
 # Tool Handlers
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_scrape_webpage(args: dict[str, Any]) -> str:
     """Handle scrape_webpage tool call."""
@@ -283,12 +283,14 @@ async def handle_crawl_website(args: dict[str, Any]) -> str:
                     content = page.markdown
                     if len(content) > 2000:
                         content = content[:2000] + "\n\n[... truncated]"
-                    pages.append({
-                        "url": page.url,
-                        "title": page.metadata.get("title", ""),
-                        "content": content,
-                        "word_count": page.word_count,
-                    })
+                    pages.append(
+                        {
+                            "url": page.url,
+                            "title": page.metadata.get("title", ""),
+                            "content": content,
+                            "word_count": page.word_count,
+                        }
+                    )
 
             return json.dumps(
                 {
@@ -389,6 +391,7 @@ TOOL_HANDLERS: dict[str, Any] = {
 # MCP Server
 # ══════════════════════════════════════════════════════════════
 
+
 def create_mcp_server() -> Any:
     """
     Create and configure the MCP server.
@@ -416,11 +419,13 @@ def create_mcp_server() -> Any:
         """Return available tools."""
         tools = []
         for tool_def in TOOLS:
-            tools.append(types.Tool(
-                name=tool_def["name"],
-                description=tool_def["description"],
-                inputSchema=tool_def["inputSchema"],
-            ))
+            tools.append(
+                types.Tool(
+                    name=tool_def["name"],
+                    description=tool_def["description"],
+                    inputSchema=tool_def["inputSchema"],
+                )
+            )
         return tools
 
     # ── Call Tool ─────────────────────────────────────────────
@@ -434,20 +439,24 @@ def create_mcp_server() -> Any:
         handler = TOOL_HANDLERS.get(name)
 
         if handler is None:
-            return [types.TextContent(
-                type="text",
-                text=json.dumps({"error": f"Unknown tool: {name}"}),
-            )]
+            return [
+                types.TextContent(
+                    type="text",
+                    text=json.dumps({"error": f"Unknown tool: {name}"}),
+                )
+            ]
 
         try:
             result = await handler(arguments)
             return [types.TextContent(type="text", text=result)]
         except Exception as e:
             logger.error("Tool %s failed: %s", name, e, exc_info=True)
-            return [types.TextContent(
-                type="text",
-                text=json.dumps({"error": str(e)}),
-            )]
+            return [
+                types.TextContent(
+                    type="text",
+                    text=json.dumps({"error": str(e)}),
+                )
+            ]
 
     # ── List Resources (optional) ─────────────────────────────
 
@@ -512,6 +521,7 @@ def create_mcp_server() -> Any:
 # Transports
 # ══════════════════════════════════════════════════════════════
 
+
 async def run_stdio() -> None:
     """Run MCP server with stdio transport."""
     from mcp.server.stdio import stdio_server
@@ -546,11 +556,10 @@ async def run_sse(host: str = "127.0.0.1", port: int = 8080) -> None:
     sse = SseServerTransport("/messages/")
 
     async def handle_sse(request: Any) -> Any:
-        async with sse.connect_sse(
-            request.scope, request.receive, request._send
-        ) as streams:
+        async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
             await server.run(
-                streams[0], streams[1],
+                streams[0],
+                streams[1],
                 server.create_initialization_options(),
             )
 
@@ -571,6 +580,7 @@ async def run_sse(host: str = "127.0.0.1", port: int = 8080) -> None:
 # ══════════════════════════════════════════════════════════════
 # Main
 # ══════════════════════════════════════════════════════════════
+
 
 def main() -> None:
     """Main entry point."""

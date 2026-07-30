@@ -56,6 +56,7 @@ logger = logging.getLogger("agentcrawl.crawling.sitemap")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class SitemapEntry:
     """
@@ -70,6 +71,7 @@ class SitemapEntry:
         images: List of image URLs associated with this entry.
         alternates: Alternate language/version URLs.
     """
+
     url: str
     lastmod: str = ""
     changefreq: str = ""
@@ -109,6 +111,7 @@ class SitemapInfo:
         parse_time_ms: Time to parse in milliseconds.
         error: Error message (if parsing failed).
     """
+
     url: str
     entry_count: int = 0
     is_index: bool = False
@@ -140,6 +143,7 @@ class SitemapParseResult:
         duration_ms: Total parsing time.
         errors: Errors encountered.
     """
+
     entries: list[SitemapEntry] = field(default_factory=list)
     sitemaps: list[SitemapInfo] = field(default_factory=list)
     total_urls: int = 0
@@ -169,6 +173,7 @@ class SitemapParseResult:
 # ══════════════════════════════════════════════════════════════
 # Sitemap Parser
 # ══════════════════════════════════════════════════════════════
+
 
 class SitemapParser:
     """
@@ -395,15 +400,23 @@ class SitemapParser:
                 return
 
             try:
-                async with semaphore, httpx.AsyncClient(
-                    timeout=self._timeout,
-                    follow_redirects=True,
-                ) as client:
-                        resp = await client.head(url)
-                        if resp.status_code == 200:
-                            content_type = resp.headers.get("content-type", "")
-                            if "xml" in content_type or "gzip" in content_type or path.endswith(".xml") or path.endswith(".xml.gz"):
-                                await self._parse_sitemap_url(url, depth=0)
+                async with (
+                    semaphore,
+                    httpx.AsyncClient(
+                        timeout=self._timeout,
+                        follow_redirects=True,
+                    ) as client,
+                ):
+                    resp = await client.head(url)
+                    if resp.status_code == 200:
+                        content_type = resp.headers.get("content-type", "")
+                        if (
+                            "xml" in content_type
+                            or "gzip" in content_type
+                            or path.endswith(".xml")
+                            or path.endswith(".xml.gz")
+                        ):
+                            await self._parse_sitemap_url(url, depth=0)
             except Exception:
                 logger.debug("Error checking sitemap path")
 
@@ -457,8 +470,7 @@ class SitemapParser:
                 # Parse child sitemaps
                 semaphore = asyncio.Semaphore(self._max_concurrent)
                 tasks = [
-                    self._parse_child(child_url, depth + 1, semaphore)
-                    for child_url in child_urls
+                    self._parse_child(child_url, depth + 1, semaphore) for child_url in child_urls
                 ]
                 await asyncio.gather(*tasks, return_exceptions=True)
             else:
@@ -624,15 +636,17 @@ class SitemapParser:
                             alt["hreflang"] = hreflang
                         alternates.append(alt)
 
-            entries.append(SitemapEntry(
-                url=url,
-                lastmod=lastmod,
-                changefreq=changefreq,
-                priority=priority,
-                source_sitemap=source_url,
-                images=images,
-                alternates=alternates,
-            ))
+            entries.append(
+                SitemapEntry(
+                    url=url,
+                    lastmod=lastmod,
+                    changefreq=changefreq,
+                    priority=priority,
+                    source_sitemap=source_url,
+                    images=images,
+                    alternates=alternates,
+                )
+            )
 
         return entries, [], False
 

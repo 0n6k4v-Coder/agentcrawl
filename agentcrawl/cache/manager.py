@@ -74,6 +74,7 @@ logger = logging.getLogger("agentcrawl.cache.manager")
 # TTL Policies
 # ══════════════════════════════════════════════════════════════
 
+
 class TTLPolicy:
     """
     Defines default TTL values for different content types.
@@ -82,16 +83,16 @@ class TTLPolicy:
     """
 
     # Default TTLs in seconds
-    PAGE_MARKDOWN: int = 3600        # 1 hour
-    PAGE_JSON: int = 3600            # 1 hour
-    PAGE_HTML: int = 1800            # 30 minutes
-    PAGE_SCREENSHOT: int = 900       # 15 minutes
-    SEARCH_RESULTS: int = 1800       # 30 minutes
-    CRAWL_RESULTS: int = 7200        # 2 hours
-    URL_MAP: int = 86400             # 24 hours
-    EXTRACTED_DATA: int = 3600       # 1 hour
-    METADATA: int = 7200             # 2 hours
-    DEFAULT: int = 3600              # 1 hour
+    PAGE_MARKDOWN: int = 3600  # 1 hour
+    PAGE_JSON: int = 3600  # 1 hour
+    PAGE_HTML: int = 1800  # 30 minutes
+    PAGE_SCREENSHOT: int = 900  # 15 minutes
+    SEARCH_RESULTS: int = 1800  # 30 minutes
+    CRAWL_RESULTS: int = 7200  # 2 hours
+    URL_MAP: int = 86400  # 24 hours
+    EXTRACTED_DATA: int = 3600  # 1 hour
+    METADATA: int = 7200  # 2 hours
+    DEFAULT: int = 3600  # 1 hour
 
     @classmethod
     def for_output_format(cls, output_format: str) -> int:
@@ -121,6 +122,7 @@ class TTLPolicy:
 # ══════════════════════════════════════════════════════════════
 # Cache Manager
 # ══════════════════════════════════════════════════════════════
+
 
 class CacheManager:
     """
@@ -312,14 +314,17 @@ class CacheManager:
 
         if backend_type == CacheBackendType.MEMORY:
             from agentcrawl.cache.memory import MemoryCacheBackend
+
             return MemoryCacheBackend(config)
 
         if backend_type == CacheBackendType.REDIS:
             from agentcrawl.cache.redis import RedisCacheBackend
+
             return RedisCacheBackend(config)
 
         if backend_type == CacheBackendType.DISK:
             from agentcrawl.cache.disk import DiskCacheBackend
+
             return DiskCacheBackend(config)
 
         raise ValueError(f"Unknown cache backend: {backend_type}")
@@ -853,9 +858,7 @@ class CacheManager:
     def _ensure_started(self) -> None:
         """Raise if the manager hasn't been started."""
         if not self._started:
-            raise RuntimeError(
-                "CacheManager not started. Call start() or use 'async with' first."
-            )
+            raise RuntimeError("CacheManager not started. Call start() or use 'async with' first.")
 
     def __repr__(self) -> str:
         status = "started" if self._started else "stopped"
@@ -869,6 +872,7 @@ class CacheManager:
 # ══════════════════════════════════════════════════════════════
 # Factory Function
 # ══════════════════════════════════════════════════════════════
+
 
 def create_cache_manager(
     backend: str = "memory",

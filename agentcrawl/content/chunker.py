@@ -58,6 +58,7 @@ logger = logging.getLogger("agentcrawl.content.chunker")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class Chunk:
     """
@@ -78,6 +79,7 @@ class Chunk:
         next_chunk_id: ID of the next chunk.
         chunk_id: Unique identifier for this chunk.
     """
+
     text: str
     index: int = 0
     heading: str = ""
@@ -166,6 +168,7 @@ class ChunkResult:
         strategy: Name of the chunking strategy used.
         metadata: Global metadata (source URL, etc.).
     """
+
     chunks: list[Chunk] = field(default_factory=list)
     original_text: str = ""
     total_chunks: int = 0
@@ -220,6 +223,7 @@ class ChunkResult:
 # ══════════════════════════════════════════════════════════════
 # Abstract Base Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class Chunker(ABC):
     """
@@ -397,7 +401,9 @@ class Chunker(ABC):
             overlapped: list[dict[str, Any]] = [merged[0]]
             for i in range(1, len(merged)):
                 prev_text = merged[i - 1]["text"]
-                overlap_text = prev_text[-self._overlap:] if len(prev_text) > self._overlap else prev_text
+                overlap_text = (
+                    prev_text[-self._overlap :] if len(prev_text) > self._overlap else prev_text
+                )
 
                 seg = dict(merged[i])
                 seg["text"] = overlap_text + "\n" + seg["text"]
@@ -439,13 +445,15 @@ class Chunker(ABC):
 
             chunk_text = text[pos:end].strip()
             if chunk_text:
-                sub_segments.append({
-                    "text": chunk_text,
-                    "start": start + pos,
-                    "end": start + end,
-                    "heading": heading,
-                    "heading_level": heading_level,
-                })
+                sub_segments.append(
+                    {
+                        "text": chunk_text,
+                        "start": start + pos,
+                        "end": start + end,
+                        "heading": heading,
+                        "heading_level": heading_level,
+                    }
+                )
 
             # Move position with overlap
             prev_pos = pos
@@ -503,14 +511,14 @@ class Chunker(ABC):
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}(max_size={self._max_chunk_size}, "
-            f"overlap={self._overlap})"
+            f"{self.__class__.__name__}(max_size={self._max_chunk_size}, overlap={self._overlap})"
         )
 
 
 # ══════════════════════════════════════════════════════════════
 # Fixed Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class FixedChunker(Chunker):
     """
@@ -543,13 +551,15 @@ class FixedChunker(Chunker):
                 start = pos
             end = start + len(para)
 
-            segments.append({
-                "text": para,
-                "start": start,
-                "end": end,
-                "heading": "",
-                "heading_level": 0,
-            })
+            segments.append(
+                {
+                    "text": para,
+                    "start": start,
+                    "end": end,
+                    "heading": "",
+                    "heading_level": 0,
+                }
+            )
             pos = end
 
         return segments
@@ -558,6 +568,7 @@ class FixedChunker(Chunker):
 # ══════════════════════════════════════════════════════════════
 # Sentence Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class SentenceChunker(Chunker):
     """
@@ -607,13 +618,15 @@ class SentenceChunker(Chunker):
 
             if len(current_sentences) >= self._max_sentences:
                 chunk_text = " ".join(current_sentences)
-                segments.append({
-                    "text": chunk_text,
-                    "start": current_start,
-                    "end": start + len(sentence),
-                    "heading": "",
-                    "heading_level": 0,
-                })
+                segments.append(
+                    {
+                        "text": chunk_text,
+                        "start": current_start,
+                        "end": start + len(sentence),
+                        "heading": "",
+                        "heading_level": 0,
+                    }
+                )
                 current_sentences = []
                 current_start = start + len(sentence)
 
@@ -622,13 +635,15 @@ class SentenceChunker(Chunker):
         # Remaining sentences
         if current_sentences:
             chunk_text = " ".join(current_sentences)
-            segments.append({
-                "text": chunk_text,
-                "start": current_start,
-                "end": len(text),
-                "heading": "",
-                "heading_level": 0,
-            })
+            segments.append(
+                {
+                    "text": chunk_text,
+                    "start": current_start,
+                    "end": len(text),
+                    "heading": "",
+                    "heading_level": 0,
+                }
+            )
 
         return segments
 
@@ -636,6 +651,7 @@ class SentenceChunker(Chunker):
 # ══════════════════════════════════════════════════════════════
 # Regex Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class RegexChunker(Chunker):
     """
@@ -687,13 +703,15 @@ class RegexChunker(Chunker):
                 start = pos
             end = start + len(part)
 
-            segments.append({
-                "text": part,
-                "start": start,
-                "end": end,
-                "heading": "",
-                "heading_level": 0,
-            })
+            segments.append(
+                {
+                    "text": part,
+                    "start": start,
+                    "end": end,
+                    "heading": "",
+                    "heading_level": 0,
+                }
+            )
             pos = end
 
         return segments
@@ -707,6 +725,7 @@ class RegexChunker(Chunker):
 # ══════════════════════════════════════════════════════════════
 # Topic Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class TopicChunker(Chunker):
     """
@@ -765,28 +784,32 @@ class TopicChunker(Chunker):
 
         if not headings:
             # No headings — treat entire text as one segment
-            return [{
-                "text": text.strip(),
-                "start": 0,
-                "end": len(text),
-                "heading": "",
-                "heading_level": 0,
-            }]
+            return [
+                {
+                    "text": text.strip(),
+                    "start": 0,
+                    "end": len(text),
+                    "heading": "",
+                    "heading_level": 0,
+                }
+            ]
 
         # Build heading stack for hierarchy tracking
         heading_stack: list[tuple[int, str]] = []  # (level, title)
 
         # Content before first heading
         if headings[0][0] > 0:
-            pre_text = text[:headings[0][0]].strip()
+            pre_text = text[: headings[0][0]].strip()
             if pre_text:
-                segments.append({
-                    "text": pre_text,
-                    "start": 0,
-                    "end": headings[0][0],
-                    "heading": "",
-                    "heading_level": 0,
-                })
+                segments.append(
+                    {
+                        "text": pre_text,
+                        "start": 0,
+                        "end": headings[0][0],
+                        "heading": "",
+                        "heading_level": 0,
+                    }
+                )
 
         # Process each heading section
         for i, (h_start, h_end, h_level, h_title) in enumerate(headings):
@@ -808,13 +831,15 @@ class TopicChunker(Chunker):
             full_text = text[h_start:section_end].strip()
 
             if full_text:
-                segments.append({
-                    "text": full_text,
-                    "start": h_start,
-                    "end": section_end,
-                    "heading": heading_path,
-                    "heading_level": h_level,
-                })
+                segments.append(
+                    {
+                        "text": full_text,
+                        "start": h_start,
+                        "end": section_end,
+                        "heading": heading_path,
+                        "heading_level": h_level,
+                    }
+                )
 
         return segments
 
@@ -828,6 +853,7 @@ class TopicChunker(Chunker):
 # ══════════════════════════════════════════════════════════════
 # Markdown Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class MarkdownChunker(Chunker):
     """
@@ -868,13 +894,15 @@ class MarkdownChunker(Chunker):
             if current_lines:
                 block_text = "\n".join(current_lines).strip()
                 if block_text:
-                    segments.append({
-                        "text": block_text,
-                        "start": current_start,
-                        "end": pos,
-                        "heading": current_heading,
-                        "heading_level": current_level,
-                    })
+                    segments.append(
+                        {
+                            "text": block_text,
+                            "start": current_start,
+                            "end": pos,
+                            "heading": current_heading,
+                            "heading_level": current_level,
+                        }
+                    )
                 current_lines = []
 
         for line in lines:
@@ -952,6 +980,7 @@ class MarkdownChunker(Chunker):
 # ══════════════════════════════════════════════════════════════
 # Factory
 # ══════════════════════════════════════════════════════════════
+
 
 def create_chunker(
     strategy: str = "topic",

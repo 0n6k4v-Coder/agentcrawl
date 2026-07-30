@@ -50,6 +50,7 @@ logger = logging.getLogger("agentcrawl.server")
 # Application State
 # ══════════════════════════════════════════════════════════════
 
+
 class AppState:
     """
     Shared application state.
@@ -86,6 +87,7 @@ def get_state() -> AppState:
 # Lifespan
 # ══════════════════════════════════════════════════════════════
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
@@ -100,7 +102,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     _state.start_time = time.time()
 
     logger.info("Starting AgentCrawl server...")
-    logger.info("  Browser: %s (headless=%s)", settings.browser.browser_type, settings.browser.headless)
+    logger.info(
+        "  Browser: %s (headless=%s)", settings.browser.browser_type, settings.browser.headless
+    )
     logger.info("  Cache: %s", settings.cache_backend)
     logger.info("  Log level: %s", settings.log_level)
 
@@ -123,6 +127,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 # ══════════════════════════════════════════════════════════════
 # Application Factory
 # ══════════════════════════════════════════════════════════════
+
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     """
@@ -174,6 +179,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 # ══════════════════════════════════════════════════════════════
 # Middleware
 # ══════════════════════════════════════════════════════════════
+
 
 def _configure_middleware(app: FastAPI) -> None:
     """Configure all middleware."""
@@ -255,6 +261,7 @@ def _configure_middleware(app: FastAPI) -> None:
 # Routes
 # ══════════════════════════════════════════════════════════════
 
+
 def _register_routes(app: FastAPI) -> None:
     """Register all API routes."""
 
@@ -270,17 +277,19 @@ def _register_routes(app: FastAPI) -> None:
         """
         engine = _state.engine
 
-        return JSONResponse(content={
-            "status": "healthy",
-            "version": _get_version(),
-            "uptime_seconds": round(_state.uptime_seconds, 1),
-            "browser_connected": engine.is_started if engine else False,
-            "cache_backend": _state.settings.cache_backend if _state.settings else "none",
-            "active_crawls": _state.active_crawls,
-            "total_requests": _state.total_requests,
-            "total_scrapes": _state.total_scrapes,
-            "total_crawls": _state.total_crawls,
-        })
+        return JSONResponse(
+            content={
+                "status": "healthy",
+                "version": _get_version(),
+                "uptime_seconds": round(_state.uptime_seconds, 1),
+                "browser_connected": engine.is_started if engine else False,
+                "cache_backend": _state.settings.cache_backend if _state.settings else "none",
+                "active_crawls": _state.active_crawls,
+                "total_requests": _state.total_requests,
+                "total_scrapes": _state.total_scrapes,
+                "total_crawls": _state.total_crawls,
+            }
+        )
 
     @app.get("/", tags=["System"])
     async def api_info() -> JSONResponse:
@@ -289,23 +298,25 @@ def _register_routes(app: FastAPI) -> None:
 
         Returns API name, version, and available endpoints.
         """
-        return JSONResponse(content={
-            "name": "AgentCrawl API",
-            "version": _get_version(),
-            "description": "Web Crawling & Scraping Framework for AI Agents",
-            "docs": "/docs",
-            "endpoints": [
-                "POST /scrape",
-                "POST /crawl",
-                "GET /crawl/{job_id}",
-                "DELETE /crawl/{job_id}",
-                "POST /map",
-                "POST /search",
-                "POST /extract",
-                "POST /batch/scrape",
-                "GET /health",
-            ],
-        })
+        return JSONResponse(
+            content={
+                "name": "AgentCrawl API",
+                "version": _get_version(),
+                "description": "Web Crawling & Scraping Framework for AI Agents",
+                "docs": "/docs",
+                "endpoints": [
+                    "POST /scrape",
+                    "POST /crawl",
+                    "GET /crawl/{job_id}",
+                    "DELETE /crawl/{job_id}",
+                    "POST /map",
+                    "POST /search",
+                    "POST /extract",
+                    "POST /batch/scrape",
+                    "GET /health",
+                ],
+            }
+        )
 
     # ── Scrape ────────────────────────────────────────────────
 
@@ -415,6 +426,7 @@ def _register_routes(app: FastAPI) -> None:
 # Error Handlers
 # ══════════════════════════════════════════════════════════════
 
+
 def _register_error_handlers(app: FastAPI) -> None:
     """Register global error handlers."""
     import json
@@ -445,7 +457,9 @@ def _register_error_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(json.JSONDecodeError)
-    async def json_decode_error_handler(request: Request, exc: json.JSONDecodeError) -> JSONResponse:
+    async def json_decode_error_handler(
+        request: Request, exc: json.JSONDecodeError
+    ) -> JSONResponse:
         return JSONResponse(
             status_code=422,
             content={
@@ -488,6 +502,7 @@ def _register_error_handlers(app: FastAPI) -> None:
 # Events
 # ══════════════════════════════════════════════════════════════
 
+
 def _register_events(app: FastAPI) -> None:
     """Register startup/shutdown event handlers."""
 
@@ -504,10 +519,12 @@ def _register_events(app: FastAPI) -> None:
 # Utilities
 # ══════════════════════════════════════════════════════════════
 
+
 def _get_version() -> str:
     """Get the AgentCrawl version."""
     try:
         import agentcrawl
+
         return agentcrawl.__version__
     except Exception:
         return "1.0.0"

@@ -57,14 +57,17 @@ T = TypeVar("T")
 # Types & Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class SerializationFormat(str, Enum):
     """Supported serialization formats for cache values."""
+
     JSON = "json"
     RAW = "raw"
 
 
 class CacheBackendType(str, Enum):
     """Available cache backend types."""
+
     MEMORY = "memory"
     REDIS = "redis"
     DISK = "disk"
@@ -74,6 +77,7 @@ class CacheBackendType(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Configuration
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class CacheConfig:
@@ -92,6 +96,7 @@ class CacheConfig:
         compress: Whether to compress values (for disk backend).
         stats_enabled: Whether to track hit/miss statistics.
     """
+
     backend: CacheBackendType | str = CacheBackendType.MEMORY
     ttl: int = 3600
     prefix: str = "agentcrawl"
@@ -148,7 +153,9 @@ class CacheConfig:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "backend": self.backend.value if isinstance(self.backend, CacheBackendType) else self.backend,
+            "backend": self.backend.value
+            if isinstance(self.backend, CacheBackendType)
+            else self.backend,
             "ttl": self.ttl,
             "prefix": self.prefix,
             "max_size": self.max_size,
@@ -163,6 +170,7 @@ class CacheConfig:
 # ══════════════════════════════════════════════════════════════
 # Cache Entry
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class CacheEntry:
@@ -179,6 +187,7 @@ class CacheEntry:
         size_bytes: Approximate size of the serialized value.
         tags: Optional tags for grouped invalidation.
     """
+
     key: str
     value: Any
     created_at: float = field(default_factory=time.time)
@@ -219,7 +228,9 @@ class CacheEntry:
             "created_at": self.created_at,
             "expires_at": self.expires_at,
             "is_expired": self.is_expired,
-            "ttl_remaining": round(self.ttl_remaining, 1) if self.ttl_remaining is not None else None,
+            "ttl_remaining": round(self.ttl_remaining, 1)
+            if self.ttl_remaining is not None
+            else None,
             "access_count": self.access_count,
             "last_accessed_at": self.last_accessed_at,
             "size_bytes": self.size_bytes,
@@ -231,6 +242,7 @@ class CacheEntry:
 # Cache Statistics
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class CacheStats:
     """
@@ -238,6 +250,7 @@ class CacheStats:
 
     All counters are cumulative since cache creation or last reset.
     """
+
     hits: int = 0
     misses: int = 0
     sets: int = 0
@@ -322,6 +335,7 @@ class CacheStats:
 # Serializer
 # ══════════════════════════════════════════════════════════════
 
+
 class CacheSerializer:
     """
     Handles serialization and deserialization of cache values.
@@ -368,6 +382,7 @@ class CacheSerializer:
 # ══════════════════════════════════════════════════════════════
 # Key Generator
 # ══════════════════════════════════════════════════════════════
+
 
 class CacheKeyGenerator:
     """
@@ -451,6 +466,7 @@ class CacheKeyGenerator:
 # ══════════════════════════════════════════════════════════════
 # Abstract Cache Backend
 # ══════════════════════════════════════════════════════════════
+
 
 class CacheBackend(ABC):
     """
@@ -815,10 +831,7 @@ class CacheBackend(ABC):
             full_keys = await self._keys_raw(full_pattern)
             # Strip prefix from returned keys
             prefix = f"{self._config.prefix}:"
-            return [
-                k[len(prefix):] if k.startswith(prefix) else k
-                for k in full_keys
-            ]
+            return [k[len(prefix) :] if k.startswith(prefix) else k for k in full_keys]
         except Exception as e:
             self._stats.record_error()
             logger.warning("Cache keys error: %s", e)
@@ -1014,6 +1027,7 @@ class CacheBackend(ABC):
 # ══════════════════════════════════════════════════════════════
 # Null Cache (No-Op Backend)
 # ══════════════════════════════════════════════════════════════
+
 
 class NullCacheBackend(CacheBackend):
     """

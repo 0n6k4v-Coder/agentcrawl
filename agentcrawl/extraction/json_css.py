@@ -93,6 +93,7 @@ FIELD_TYPE_REGEX = "regex"
 # JSON CSS Extractor
 # ══════════════════════════════════════════════════════════════
 
+
 class JsonCssExtractor(ExtractionStrategy):
     """
     CSS selector-based structured data extraction.
@@ -162,9 +163,7 @@ class JsonCssExtractor(ExtractionStrategy):
             if "name" not in field_def:
                 raise ValueError(f"Field missing 'name': {field_def}")
             if "selector" not in field_def and field_def.get("type") != "nested":
-                raise ValueError(
-                    f"Field '{field_def.get('name')}' missing 'selector'"
-                )
+                raise ValueError(f"Field '{field_def.get('name')}' missing 'selector'")
 
     # ──────────────────────────────────────────────────────────
     # Core Extraction
@@ -198,8 +197,7 @@ class JsonCssExtractor(ExtractionStrategy):
             from lxml import html as lxml_html
         except ImportError as err:
             raise ImportError(
-                "lxml is required for CSS extraction. "
-                "Install with: pip install lxml"
+                "lxml is required for CSS extraction. Install with: pip install lxml"
             ) from err
 
         try:
@@ -215,6 +213,7 @@ class JsonCssExtractor(ExtractionStrategy):
             # Multiple items: extract from each matching element
             try:
                 from lxml.cssselect import CSSSelector
+
                 css = CSSSelector(base_selector)
                 elements = css(tree)
             except Exception as e:
@@ -231,9 +230,12 @@ class JsonCssExtractor(ExtractionStrategy):
 
         else:
             # Single item: extract from the whole document
-            logger.debug("No baseSelector, extracting from whole document (tree type: %s)", type(tree))
+            logger.debug(
+                "No baseSelector, extracting from whole document (tree type: %s)", type(tree)
+            )
             # Debug: check what elements exist
             from lxml.cssselect import CSSSelector
+
             try:
                 h1_css = CSSSelector("h1")
                 h1_matches = h1_css(tree)
@@ -277,7 +279,8 @@ class JsonCssExtractor(ExtractionStrategy):
             except Exception as e:
                 logger.debug(
                     "Field '%s' extraction error: %s",
-                    name, e,
+                    name,
+                    e,
                 )
                 result[name] = field_def.get("default", self._default_value)
 
@@ -337,6 +340,7 @@ class JsonCssExtractor(ExtractionStrategy):
         """Select the first matching element."""
         try:
             from lxml.cssselect import CSSSelector
+
             css = CSSSelector(selector)
             matches = css(element)
             logger.debug(f"Selector '{selector}' matched {len(matches)} elements")
@@ -349,6 +353,7 @@ class JsonCssExtractor(ExtractionStrategy):
         """Select all matching elements."""
         try:
             from lxml.cssselect import CSSSelector
+
             css = CSSSelector(selector)
             return list(css(element))
         except Exception as e:
@@ -379,6 +384,7 @@ class JsonCssExtractor(ExtractionStrategy):
         """Extract inner HTML from an element."""
         try:
             from lxml.html import tostring
+
             return str(tostring(element, encoding="unicode", method="html"))
         except Exception:
             return str(element.text_content())
@@ -539,20 +545,19 @@ class JsonCssExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "default_value": self._default_value,
-            "strip_whitespace": self._strip_whitespace,
-            "raise_on_missing": self._raise_on_missing,
-            "schema_name": self._schema.get("name", "") if self._schema else "",
-            "base_selector": self._schema.get("baseSelector", "") if self._schema else "",
-            "field_count": len(self._schema.get("fields", [])) if self._schema else 0,
-        })
+        d.update(
+            {
+                "default_value": self._default_value,
+                "strip_whitespace": self._strip_whitespace,
+                "raise_on_missing": self._raise_on_missing,
+                "schema_name": self._schema.get("name", "") if self._schema else "",
+                "base_selector": self._schema.get("baseSelector", "") if self._schema else "",
+                "field_count": len(self._schema.get("fields", [])) if self._schema else 0,
+            }
+        )
         return d
 
     def __repr__(self) -> str:
         schema_name = self._schema.get("name", "unnamed") if self._schema else "none"
         base = self._schema.get("baseSelector", "") if self._schema else ""
-        return (
-            f"JsonCssExtractor(schema={schema_name!r}, "
-            f"base='{base}')"
-        )
+        return f"JsonCssExtractor(schema={schema_name!r}, base='{base}')"

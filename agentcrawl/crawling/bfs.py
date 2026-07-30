@@ -73,9 +73,11 @@ logger = logging.getLogger("agentcrawl.crawling.bfs")
 # BFS Queue Entry
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class _BFSEntry:
     """Internal BFS queue entry."""
+
     url: str
     depth: int = 0
     source_url: str = ""
@@ -87,6 +89,7 @@ class _BFSEntry:
 # ══════════════════════════════════════════════════════════════
 # BFS Crawler
 # ══════════════════════════════════════════════════════════════
+
 
 class BFSCrawler(CrawlStrategy):
     """
@@ -259,10 +262,7 @@ class BFSCrawler(CrawlStrategy):
 
             # Crawl level concurrently
             semaphore = asyncio.Semaphore(self._max_concurrent)
-            tasks = [
-                self._crawl_entry(entry, engine, semaphore)
-                for entry in level_entries
-            ]
+            tasks = [self._crawl_entry(entry, engine, semaphore) for entry in level_entries]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             level_crawled = 0
@@ -320,10 +320,7 @@ class BFSCrawler(CrawlStrategy):
                 continue
 
             # Crawl batch concurrently
-            tasks = [
-                self._crawl_entry(entry, engine, semaphore)
-                for entry in batch
-            ]
+            tasks = [self._crawl_entry(entry, engine, semaphore) for entry in batch]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             for i, result in enumerate(results):
@@ -469,20 +466,22 @@ class BFSCrawler(CrawlStrategy):
         for entry in self._queue:
             queue_depths[entry.depth] = queue_depths.get(entry.depth, 0) + 1
 
-        base.update({
-            "queue_size": len(self._queue),
-            "max_level_reached": self._max_level_reached,
-            "level_stats": self._level_stats,
-            "level_discovered": self._level_discovered,
-            "queue_depth_distribution": queue_depths,
-            "crawl_order_length": len(self._crawl_order),
-            "config": {
-                **base.get("config", {}),
-                "max_concurrent": self._max_concurrent,
-                "process_per_level": self._process_per_level,
-                "sort_by_score": self._sort_by_score,
-            },
-        })
+        base.update(
+            {
+                "queue_size": len(self._queue),
+                "max_level_reached": self._max_level_reached,
+                "level_stats": self._level_stats,
+                "level_discovered": self._level_discovered,
+                "queue_depth_distribution": queue_depths,
+                "crawl_order_length": len(self._crawl_order),
+                "config": {
+                    **base.get("config", {}),
+                    "max_concurrent": self._max_concurrent,
+                    "process_per_level": self._process_per_level,
+                    "sort_by_score": self._sort_by_score,
+                },
+            }
+        )
 
         return base
 

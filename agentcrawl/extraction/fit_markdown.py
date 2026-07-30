@@ -71,17 +71,48 @@ logger = logging.getLogger("agentcrawl.extraction.fit_markdown")
 
 # CSS class/ID patterns that indicate noise
 NOISE_CLASS_PATTERNS: list[str] = [
-    r"nav", r"navbar", r"navigation", r"menu", r"sidebar",
-    r"footer", r"header", r"breadcrumb", r"pagination",
-    r"comment", r"comments", r"disqus", r"social",
-    r"share", r"sharing", r"related", r"recommend",
-    r"advert", r"ad-", r"ads-", r"adsby", r"sponsor",
-    r"popup", r"modal", r"overlay", r"cookie",
-    r"banner", r"promo", r"newsletter", r"subscribe",
-    r"widget", r"toc", r"table-of-contents",
-    r"skip-to", r"sr-only", r"visually-hidden",
-    r"gdpr", r"consent", r"privacy",
-    r"cart", r"checkout", r"payment",
+    r"nav",
+    r"navbar",
+    r"navigation",
+    r"menu",
+    r"sidebar",
+    r"footer",
+    r"header",
+    r"breadcrumb",
+    r"pagination",
+    r"comment",
+    r"comments",
+    r"disqus",
+    r"social",
+    r"share",
+    r"sharing",
+    r"related",
+    r"recommend",
+    r"advert",
+    r"ad-",
+    r"ads-",
+    r"adsby",
+    r"sponsor",
+    r"popup",
+    r"modal",
+    r"overlay",
+    r"cookie",
+    r"banner",
+    r"promo",
+    r"newsletter",
+    r"subscribe",
+    r"widget",
+    r"toc",
+    r"table-of-contents",
+    r"skip-to",
+    r"sr-only",
+    r"visually-hidden",
+    r"gdpr",
+    r"consent",
+    r"privacy",
+    r"cart",
+    r"checkout",
+    r"payment",
 ]
 
 # Text patterns that indicate boilerplate
@@ -108,16 +139,34 @@ BOILERPLATE_TEXT_PATTERNS: list[re.Pattern[str]] = [
 
 # HTML tags to always remove
 REMOVE_TAGS: set[str] = {
-    "script", "style", "noscript", "iframe", "svg", "canvas",
-    "button", "input", "select", "textarea", "form",
-    "dialog", "template", "embed", "object", "applet",
-    "link", "meta", "head", "nav", "footer",
+    "script",
+    "style",
+    "noscript",
+    "iframe",
+    "svg",
+    "canvas",
+    "button",
+    "input",
+    "select",
+    "textarea",
+    "form",
+    "dialog",
+    "template",
+    "embed",
+    "object",
+    "applet",
+    "link",
+    "meta",
+    "head",
+    "nav",
+    "footer",
 }
 
 
 # ══════════════════════════════════════════════════════════════
 # Fit Markdown Extractor
 # ══════════════════════════════════════════════════════════════
+
 
 class FitMarkdownExtractor(ExtractionStrategy):
     """
@@ -363,11 +412,13 @@ class FitMarkdownExtractor(ExtractionStrategy):
         """Convert HTML to markdown."""
         from agentcrawl.content.html_to_markdown import HTMLToMarkdown, MarkdownOptions
 
-        converter = HTMLToMarkdown(MarkdownOptions(
-            include_links=self._include_links,
-            include_images=self._include_images,
-            code_block_style="fenced" if self._include_code_blocks else "indented",
-        ))
+        converter = HTMLToMarkdown(
+            MarkdownOptions(
+                include_links=self._include_links,
+                include_images=self._include_images,
+                code_block_style="fenced" if self._include_code_blocks else "indented",
+            )
+        )
 
         return converter.convert(html)
 
@@ -554,7 +605,7 @@ class FitMarkdownExtractor(ExtractionStrategy):
             truncated.rfind("? "),
         )
         if last_sentence > max_length * 0.7:
-            return truncated[:last_sentence + 1].strip() + "\n\n[... content truncated]"
+            return truncated[: last_sentence + 1].strip() + "\n\n[... content truncated]"
 
         # Try word boundary
         last_space = truncated.rfind(" ")
@@ -569,18 +620,20 @@ class FitMarkdownExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "include_links": self._include_links,
-            "include_images": self._include_images,
-            "include_tables": self._include_tables,
-            "include_code_blocks": self._include_code_blocks,
-            "remove_boilerplate": self._remove_boilerplate,
-            "remove_empty_sections": self._remove_empty_sections,
-            "remove_noise_elements": self._remove_noise_elements,
-            "max_length": self._max_length,
-            "min_section_words": self._min_section_words,
-            "normalize_whitespace": self._normalize_whitespace,
-        })
+        d.update(
+            {
+                "include_links": self._include_links,
+                "include_images": self._include_images,
+                "include_tables": self._include_tables,
+                "include_code_blocks": self._include_code_blocks,
+                "remove_boilerplate": self._remove_boilerplate,
+                "remove_empty_sections": self._remove_empty_sections,
+                "remove_noise_elements": self._remove_noise_elements,
+                "max_length": self._max_length,
+                "min_section_words": self._min_section_words,
+                "normalize_whitespace": self._normalize_whitespace,
+            }
+        )
         return d
 
     def __repr__(self) -> str:

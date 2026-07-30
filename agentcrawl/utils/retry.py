@@ -70,6 +70,7 @@ logger = logging.getLogger("agentcrawl.utils.retry")
 # Retry Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class RetryConfig:
     """
@@ -89,6 +90,7 @@ class RetryConfig:
         on_success: Callback on success (attempt, result).
         on_failure: Callback on final failure (attempts, exception).
     """
+
     max_retries: int = 3
     base_delay: float = 1.0
     max_delay: float = 60.0
@@ -113,7 +115,7 @@ class RetryConfig:
             Delay in seconds.
         """
         # Exponential backoff
-        delay = self.base_delay * (self.backoff_factor ** attempt)
+        delay = self.base_delay * (self.backoff_factor**attempt)
 
         # Cap at max_delay
         delay = min(delay, self.max_delay)
@@ -153,6 +155,7 @@ class RetryConfig:
 # ══════════════════════════════════════════════════════════════
 # Retry Decorator
 # ══════════════════════════════════════════════════════════════
+
 
 def retry(
     func: Callable | None = None,
@@ -220,14 +223,18 @@ def retry(
 
     def decorator(fn: Callable) -> Callable:
         if _is_async(fn):
+
             @functools.wraps(fn)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 return await _retry_async(fn, config, args, kwargs)
+
             return async_wrapper
         else:
+
             @functools.wraps(fn)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 return _retry_sync(fn, config, args, kwargs)
+
             return sync_wrapper
 
     if func is not None:
@@ -354,10 +361,12 @@ def _retry_sync(
 # Circuit Breaker
 # ══════════════════════════════════════════════════════════════
 
+
 class CircuitState(str, Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"        # Normal operation
-    OPEN = "open"            # Failing, reject calls
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, reject calls
     HALF_OPEN = "half_open"  # Testing recovery
 
 
@@ -450,14 +459,18 @@ class CircuitBreaker:
     def __call__(self, func: Callable) -> Callable:
         """Use as a decorator."""
         if _is_async(func):
+
             @functools.wraps(func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 return await self._call_async(func, args, kwargs)
+
             return async_wrapper
         else:
+
             @functools.wraps(func)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 return self._call_sync(func, args, kwargs)
+
             return sync_wrapper
 
     async def _call_async(
@@ -532,8 +545,7 @@ class CircuitBreaker:
         if state == CircuitState.OPEN:
             self._total_rejected += 1
             raise CircuitBreakerError(
-                f"Circuit breaker is OPEN. "
-                f"Retry after {self._recovery_timeout}s."
+                f"Circuit breaker is OPEN. Retry after {self._recovery_timeout}s."
             )
 
     def _on_success(self) -> None:
@@ -601,6 +613,7 @@ class CircuitBreaker:
 # ══════════════════════════════════════════════════════════════
 # Rate Limiter
 # ══════════════════════════════════════════════════════════════
+
 
 class RateLimiter:
     """
@@ -680,15 +693,13 @@ class RateLimiter:
         return max(0, self._max_calls - active)
 
     def __repr__(self) -> str:
-        return (
-            f"RateLimiter(max={self._max_calls}/{self._window}s, "
-            f"available={self.available})"
-        )
+        return f"RateLimiter(max={self._max_calls}/{self._window}s, available={self.available})"
 
 
 # ══════════════════════════════════════════════════════════════
 # Utilities
 # ══════════════════════════════════════════════════════════════
+
 
 def _is_async(func: Callable) -> bool:
     """Check if a function is async."""

@@ -67,6 +67,7 @@ logger = logging.getLogger("agentcrawl.crawling.adaptive")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class URLPattern:
     """
@@ -83,6 +84,7 @@ class URLPattern:
         is_pagination: Whether this pattern looks like pagination.
         is_content: Whether this pattern looks like content.
     """
+
     pattern: str = ""
     template: str = ""
     example_urls: list[str] = field(default_factory=list)
@@ -124,6 +126,7 @@ class CrawlCandidate:
         content_hash: Hash of crawled content (for dedup).
         similarity_to_existing: Max similarity to already-crawled pages.
     """
+
     url: str
     depth: int = 0
     score: float = 0.0
@@ -149,6 +152,7 @@ class CrawlCandidate:
 @dataclass
 class AdaptiveStats:
     """Statistics from an adaptive crawl."""
+
     total_discovered: int = 0
     total_crawled: int = 0
     total_skipped_duplicate: int = 0
@@ -185,6 +189,7 @@ class AdaptiveStats:
 # ══════════════════════════════════════════════════════════════
 # URL Pattern Analyzer
 # ══════════════════════════════════════════════════════════════
+
 
 class URLPatternAnalyzer:
     """
@@ -260,17 +265,19 @@ class URLPatternAnalyzer:
                 is_content=is_content,
             )
 
-            patterns.append(URLPattern(
-                pattern=self._template_to_regex(template),
-                template=template,
-                example_urls=group_urls[:5],
-                count=len(group_urls),
-                avg_depth=round(avg_depth),
-                score=score,
-                is_navigation=is_nav,
-                is_pagination=is_pag,
-                is_content=is_content,
-            ))
+            patterns.append(
+                URLPattern(
+                    pattern=self._template_to_regex(template),
+                    template=template,
+                    example_urls=group_urls[:5],
+                    count=len(group_urls),
+                    avg_depth=round(avg_depth),
+                    score=score,
+                    is_navigation=is_nav,
+                    is_pagination=is_pag,
+                    is_content=is_content,
+                )
+            )
 
         # Sort by score descending
         patterns.sort(key=lambda p: p.score, reverse=True)
@@ -306,7 +313,8 @@ class URLPatternAnalyzer:
             # UUID
             elif re.match(
                 r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-                seg, re.I,
+                seg,
+                re.I,
             ):
                 template_segments.append("{uuid}")
             # Hex hash
@@ -371,9 +379,7 @@ class URLPatternAnalyzer:
 
     def _is_pagination(self, template: str, urls: list[str]) -> bool:
         """Check if a pattern looks like pagination."""
-        pagination_re = re.compile(
-            r"(page|p|pg|offset|start)[=/]\{?(num|val|\d+)\}?", re.I
-        )
+        pagination_re = re.compile(r"(page|p|pg|offset|start)[=/]\{?(num|val|\d+)\}?", re.I)
         if pagination_re.search(template):
             return True
         for url in urls[:3]:
@@ -434,6 +440,7 @@ class URLPatternAnalyzer:
 # Content Similarity Tracker
 # ══════════════════════════════════════════════════════════════
 
+
 class ContentSimilarityTracker:
     """
     Tracks content similarity between crawled pages to detect
@@ -464,7 +471,7 @@ class ContentSimilarityTracker:
         words = text.lower().split()
         shingles: list[str] = []
         for i in range(len(words) - 2):
-            shingles.append(" ".join(words[i:i + 3]))
+            shingles.append(" ".join(words[i : i + 3]))
 
         if not shingles:
             shingles = words
@@ -483,7 +490,7 @@ class ContentSimilarityTracker:
         fingerprint = 0
         for i in range(self._hash_bits):
             if v[i] > 0:
-                fingerprint |= (1 << i)
+                fingerprint |= 1 << i
 
         return fingerprint
 
@@ -558,6 +565,7 @@ class ContentSimilarityTracker:
 # ══════════════════════════════════════════════════════════════
 # Adaptive Crawler
 # ══════════════════════════════════════════════════════════════
+
 
 class AdaptiveCrawler:
     """
@@ -717,21 +725,18 @@ class AdaptiveCrawler:
         self._stats.navigation_patterns = sum(1 for p in self._patterns if p.is_navigation)
 
         if self._response_times:
-            self._stats.avg_response_time_ms = (
-                sum(self._response_times) / len(self._response_times)
-            )
+            self._stats.avg_response_time_ms = sum(self._response_times) / len(self._response_times)
 
         # Return crawled URLs in priority order
-        crawled_candidates = [
-            c for c in self._candidates.values() if c.crawled
-        ]
+        crawled_candidates = [c for c in self._candidates.values() if c.crawled]
         crawled_candidates.sort(key=lambda c: c.score, reverse=True)
 
         result_urls = [c.url for c in crawled_candidates]
 
         # Add discovered but not crawled (high priority)
         uncrawled = [
-            c for c in self._candidates.values()
+            c
+            for c in self._candidates.values()
             if not c.crawled and c.score >= self._min_pattern_score
         ]
         uncrawled.sort(key=lambda c: c.score, reverse=True)
@@ -744,7 +749,7 @@ class AdaptiveCrawler:
             len(self._patterns),
         )
 
-        return result_urls[:self._max_pages]
+        return result_urls[: self._max_pages]
 
     async def crawl(
         self,
@@ -877,8 +882,8 @@ class AdaptiveCrawler:
             for p in self._patterns:
                 try:
                     if re.search(p.pattern, candidate.url, re.I) and p.score > best_score:
-                            best_score = p.score
-                            best_pattern = p.template
+                        best_score = p.score
+                        best_pattern = p.template
                 except re.error:
                     continue
 
@@ -964,16 +969,16 @@ class AdaptiveCrawler:
 
             # Content deduplication
             if result.markdown:
-                is_dup, sim, sim_url = self._similarity_tracker.is_duplicate(
-                    result.markdown
-                )
+                is_dup, sim, sim_url = self._similarity_tracker.is_duplicate(result.markdown)
                 candidate.similarity_to_existing = sim
 
                 if is_dup:
                     self._stats.total_skipped_duplicate += 1
                     logger.debug(
                         "Skipping duplicate %s (sim=%.2f to %s)",
-                        candidate.url, sim, sim_url,
+                        candidate.url,
+                        sim,
+                        sim_url,
                     )
                     return
 
@@ -1041,9 +1046,25 @@ class AdaptiveCrawler:
         # Skip file extensions
         path = parsed.path.lower()
         skip_extensions = (
-            ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
-            ".ico", ".woff", ".woff2", ".ttf", ".eot", ".pdf",
-            ".zip", ".tar", ".gz", ".mp3", ".mp4", ".avi",
+            ".css",
+            ".js",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".ico",
+            ".woff",
+            ".woff2",
+            ".ttf",
+            ".eot",
+            ".pdf",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".mp3",
+            ".mp4",
+            ".avi",
         )
         if any(path.endswith(ext) for ext in skip_extensions):
             return False
@@ -1051,12 +1072,14 @@ class AdaptiveCrawler:
         # Include patterns
         if self._include_patterns:
             import fnmatch
+
             if not any(fnmatch.fnmatch(url, p) for p in self._include_patterns):
                 return False
 
         # Exclude patterns
         if self._exclude_patterns:
             import fnmatch
+
             if any(fnmatch.fnmatch(url, p) for p in self._exclude_patterns):
                 return False
 

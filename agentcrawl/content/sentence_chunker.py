@@ -72,6 +72,7 @@ logger = logging.getLogger("agentcrawl.content.sentence_chunker")
 # Language Patterns
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class LanguagePattern:
     """
@@ -84,6 +85,7 @@ class LanguagePattern:
         boundary_pattern: Full regex for sentence boundaries.
         abbreviations: Common abbreviations that don't end sentences.
     """
+
     code: str
     name: str
     sentence_endings: str
@@ -98,14 +100,57 @@ LANGUAGE_PATTERNS: dict[str, LanguagePattern] = {
         sentence_endings=r"[.!?]+",
         boundary_pattern=r"(?<=[.!?])\s+(?=[A-Z\"'\(\[])",
         abbreviations=[
-            "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st",
-            "vs", "etc", "inc", "ltd", "co", "corp",
-            "jan", "feb", "mar", "apr", "jun", "jul", "aug",
-            "sep", "sept", "oct", "nov", "dec",
-            "mon", "tue", "wed", "thu", "fri", "sat", "sun",
-            "ave", "blvd", "dept", "est", "fig", "govt",
-            "approx", "appt", "apt", "dept", "dpt", "etc",
-            "min", "max", "misc", "no", "vol", "rev",
+            "mr",
+            "mrs",
+            "ms",
+            "dr",
+            "prof",
+            "sr",
+            "jr",
+            "st",
+            "vs",
+            "etc",
+            "inc",
+            "ltd",
+            "co",
+            "corp",
+            "jan",
+            "feb",
+            "mar",
+            "apr",
+            "jun",
+            "jul",
+            "aug",
+            "sep",
+            "sept",
+            "oct",
+            "nov",
+            "dec",
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun",
+            "ave",
+            "blvd",
+            "dept",
+            "est",
+            "fig",
+            "govt",
+            "approx",
+            "appt",
+            "apt",
+            "dept",
+            "dpt",
+            "etc",
+            "min",
+            "max",
+            "misc",
+            "no",
+            "vol",
+            "rev",
         ],
     ),
     "th": LanguagePattern(
@@ -148,7 +193,15 @@ LANGUAGE_PATTERNS: dict[str, LanguagePattern] = {
         name="Russian",
         sentence_endings=r"[.!?…]+",
         boundary_pattern=r"(?<=[.!?…])\s+(?=[A-Z\u0410-\u042f\u0401\"'])",
-        abbreviations=["\u0433", "\u0433\u0433", "\u0442", "\u0442\u0442", "\u0441\u0442\u0440", "\u0440\u0443\u0431", "\u043a\u043e\u043f"],
+        abbreviations=[
+            "\u0433",
+            "\u0433\u0433",
+            "\u0442",
+            "\u0442\u0442",
+            "\u0441\u0442\u0440",
+            "\u0440\u0443\u0431",
+            "\u043a\u043e\u043f",
+        ],
     ),
     "de": LanguagePattern(
         code="de",
@@ -186,6 +239,7 @@ GENERIC_PATTERN = LanguagePattern(
 # ══════════════════════════════════════════════════════════════
 # Language Detection
 # ══════════════════════════════════════════════════════════════
+
 
 def detect_language(text: str, sample_size: int = 2000) -> str:
     """
@@ -258,6 +312,7 @@ def detect_language(text: str, sample_size: int = 2000) -> str:
 # Sentence Tokenizer
 # ══════════════════════════════════════════════════════════════
 
+
 class SentenceTokenizer:
     """
     Language-aware sentence boundary tokenizer.
@@ -302,9 +357,7 @@ class SentenceTokenizer:
         # Pre-compile abbreviation set
         self._abbreviations: set[str] = set()
         if self._lang_pattern and handle_abbreviations:
-            self._abbreviations = {
-                a.lower() for a in self._lang_pattern.abbreviations
-            }
+            self._abbreviations = {a.lower() for a in self._lang_pattern.abbreviations}
 
     def tokenize(self, text: str) -> list[str]:
         """
@@ -342,8 +395,8 @@ class SentenceTokenizer:
 
             # Check abbreviation false positives
             if self._handle_abbreviations and self._is_abbreviation_end(sent) and sentences:
-                    sentences[-1] = sentences[-1] + " " + sent
-                    continue
+                sentences[-1] = sentences[-1] + " " + sent
+                continue
 
             # Filter by minimum length
             if len(sent) >= self._min_sentence_length:
@@ -407,6 +460,7 @@ class SentenceTokenizer:
 # Token Counter
 # ══════════════════════════════════════════════════════════════
 
+
 class TokenCounter:
     """
     Token counting with tiktoken or heuristic fallback.
@@ -438,10 +492,12 @@ class TokenCounter:
         if method == "tiktoken":
             try:
                 import tiktoken
+
                 self._encoding = tiktoken.encoding_for_model(model)
             except Exception:
                 try:
                     import tiktoken
+
                     self._encoding = tiktoken.get_encoding("cl100k_base")
                 except ImportError:
                     logger.warning(
@@ -484,6 +540,7 @@ class TokenCounter:
 # ══════════════════════════════════════════════════════════════
 # Advanced Sentence Chunker
 # ══════════════════════════════════════════════════════════════
+
 
 class AdvancedSentenceChunker(Chunker):
     """
@@ -573,13 +630,15 @@ class AdvancedSentenceChunker(Chunker):
                 para_offset = start + len(sent)
 
         if not all_sentences:
-            return [{
-                "text": text.strip(),
-                "start": 0,
-                "end": len(text),
-                "heading": "",
-                "heading_level": 0,
-            }]
+            return [
+                {
+                    "text": text.strip(),
+                    "start": 0,
+                    "end": len(text),
+                    "heading": "",
+                    "heading_level": 0,
+                }
+            ]
 
         # Group sentences into chunks
         segments: list[dict[str, Any]] = []
@@ -612,21 +671,21 @@ class AdvancedSentenceChunker(Chunker):
             if would_exceed and current_sentences:
                 # Flush current chunk
                 chunk_text = " ".join(current_sentences)
-                segments.append({
-                    "text": chunk_text,
-                    "start": current_start,
-                    "end": current_start + len(chunk_text),
-                    "heading": "",
-                    "heading_level": 0,
-                })
+                segments.append(
+                    {
+                        "text": chunk_text,
+                        "start": current_start,
+                        "end": current_start + len(chunk_text),
+                        "heading": "",
+                        "heading_level": 0,
+                    }
+                )
 
                 # Overlap: keep last N sentences
                 if self._overlap_sentences > 0 and len(current_sentences) > self._overlap_sentences:
-                    overlap_sents = current_sentences[-self._overlap_sentences:]
+                    overlap_sents = current_sentences[-self._overlap_sentences :]
                     current_sentences = list(overlap_sents)
-                    current_tokens = sum(
-                        self._token_counter.count(s) for s in current_sentences
-                    )
+                    current_tokens = sum(self._token_counter.count(s) for s in current_sentences)
                 else:
                     current_sentences = []
                     current_tokens = 0
@@ -647,13 +706,15 @@ class AdvancedSentenceChunker(Chunker):
         # Flush remaining
         if current_sentences:
             chunk_text = " ".join(current_sentences)
-            segments.append({
-                "text": chunk_text,
-                "start": current_start,
-                "end": current_start + len(chunk_text),
-                "heading": "",
-                "heading_level": 0,
-            })
+            segments.append(
+                {
+                    "text": chunk_text,
+                    "start": current_start,
+                    "end": current_start + len(chunk_text),
+                    "heading": "",
+                    "heading_level": 0,
+                }
+            )
 
         # Merge undersized chunks
         segments = self._merge_small_segments(segments)
@@ -717,15 +778,17 @@ class AdvancedSentenceChunker(Chunker):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "max_tokens": self._max_tokens,
-            "max_sentences": self._max_sentences,
-            "overlap_sentences": self._overlap_sentences,
-            "language": self._language,
-            "token_counter": self._token_counter.method,
-            "respect_paragraphs": self._respect_paragraphs,
-            "min_chunk_sentences": self._min_chunk_sentences,
-        })
+        d.update(
+            {
+                "max_tokens": self._max_tokens,
+                "max_sentences": self._max_sentences,
+                "overlap_sentences": self._overlap_sentences,
+                "language": self._language,
+                "token_counter": self._token_counter.method,
+                "respect_paragraphs": self._respect_paragraphs,
+                "min_chunk_sentences": self._min_chunk_sentences,
+            }
+        )
         return d
 
     @classmethod
@@ -756,6 +819,7 @@ class AdvancedSentenceChunker(Chunker):
 # ══════════════════════════════════════════════════════════════
 # Convenience Functions
 # ══════════════════════════════════════════════════════════════
+
 
 def chunk_by_sentences(
     text: str,

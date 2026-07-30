@@ -55,6 +55,7 @@ MASK_VALUE = "********"
 # Proxy Settings (Pydantic)
 # ══════════════════════════════════════════════════════════════
 
+
 class ProxySettings(BaseSettings):
     """
     Pydantic-based proxy configuration with env var support.
@@ -308,15 +309,11 @@ class ProxySettings(BaseSettings):
         # Apply filters
         if self.country_filter:
             proxies = [
-                p for p in proxies
-                if p.country is None or p.country == self.country_filter.upper()
+                p for p in proxies if p.country is None or p.country == self.country_filter.upper()
             ]
 
         if self.protocol_filter:
-            proxies = [
-                p for p in proxies
-                if p.protocol.value == self.protocol_filter
-            ]
+            proxies = [p for p in proxies if p.protocol.value == self.protocol_filter]
 
         return ProxyManager(
             proxies=proxies,
@@ -547,8 +544,7 @@ class ProxySettings(BaseSettings):
 
         if self.rotation != "none" and self.proxy_count <= 1:
             warnings.append(
-                f"Rotation '{self.rotation}' configured but only "
-                f"{self.proxy_count} proxy available"
+                f"Rotation '{self.rotation}' configured but only {self.proxy_count} proxy available"
             )
 
         if self.needs_auth and not self.password:
@@ -697,6 +693,7 @@ class ProxySettings(BaseSettings):
     def to_json(self, mask_password: bool = True) -> str:
         """Serialize to JSON string."""
         import json
+
         return json.dumps(
             self.to_dict(mask_password=mask_password),
             ensure_ascii=False,
@@ -738,7 +735,5 @@ class ProxySettings(BaseSettings):
         if not self.enabled:
             return "ProxySettings(disabled)"
         return (
-            f"ProxySettings(enabled=True, "
-            f"proxies={self.proxy_count}, "
-            f"rotation={self.rotation!r})"
+            f"ProxySettings(enabled=True, proxies={self.proxy_count}, rotation={self.rotation!r})"
         )

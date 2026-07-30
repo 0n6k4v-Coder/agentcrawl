@@ -120,6 +120,7 @@ Return a JSON object matching the schema above. Respond with ONLY the JSON — n
 # LLM Extractor
 # ══════════════════════════════════════════════════════════════
 
+
 class LLMExtractor(ExtractionStrategy):
     """
     LLM-powered structured data extraction.
@@ -199,10 +200,12 @@ class LLMExtractor(ExtractionStrategy):
     def estimated_cost(self) -> float:
         """Estimated total cost in USD."""
         if self._llm_config and hasattr(self._llm_config, "estimate_cost"):
-            return float(self._llm_config.estimate_cost(
-                self._total_input_tokens,
-                self._total_output_tokens,
-            ))
+            return float(
+                self._llm_config.estimate_cost(
+                    self._total_input_tokens,
+                    self._total_output_tokens,
+                )
+            )
         return 0.0
 
     # ──────────────────────────────────────────────────────────
@@ -474,7 +477,7 @@ class LLMExtractor(ExtractionStrategy):
                 elif char == end_char:
                     depth -= 1
                     if depth == 0:
-                        return text[start:i + 1]
+                        return text[start : i + 1]
 
         return None
 
@@ -543,16 +546,18 @@ class LLMExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "schema_name": self._schema_name,
-            "max_content_tokens": self._max_content_tokens,
-            "use_markdown": self._use_markdown,
-            "instructions": self._instructions[:100] if self._instructions else None,
-            "total_calls": self._total_calls,
-            "total_input_tokens": self._total_input_tokens,
-            "total_output_tokens": self._total_output_tokens,
-            "estimated_cost": round(self.estimated_cost, 6),
-        })
+        d.update(
+            {
+                "schema_name": self._schema_name,
+                "max_content_tokens": self._max_content_tokens,
+                "use_markdown": self._use_markdown,
+                "instructions": self._instructions[:100] if self._instructions else None,
+                "total_calls": self._total_calls,
+                "total_input_tokens": self._total_input_tokens,
+                "total_output_tokens": self._total_output_tokens,
+                "estimated_cost": round(self.estimated_cost, 6),
+            }
+        )
         if self._llm_config:
             d["llm_provider"] = getattr(self._llm_config, "provider", "unknown")
         return d

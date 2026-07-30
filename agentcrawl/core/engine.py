@@ -68,6 +68,7 @@ logger = logging.getLogger("agentcrawl.core.engine")
 # Result Models
 # ═══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class CrawlResult:
     """
@@ -95,6 +96,7 @@ class CrawlResult:
         cached: Whether the result came from cache.
         request_id: Unique request identifier.
     """
+
     url: str
     success: bool = False
     status_code: int = 0
@@ -157,6 +159,7 @@ class CrawlResult:
     def to_json(self) -> str:
         """Serialize to JSON string."""
         import json
+
         return json.dumps(self.to_dict(), ensure_ascii=False, default=str)
 
     def __repr__(self) -> str:
@@ -187,6 +190,7 @@ class CrawlJobResult:
         strategy: Crawling strategy used.
         status: Job status ('completed', 'partial', 'failed').
     """
+
     job_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
     start_url: str = ""
     pages: list[CrawlResult] = field(default_factory=list)
@@ -233,6 +237,7 @@ class CrawlJobResult:
     def to_json(self) -> str:
         """Serialize to JSON string."""
         import json
+
         return json.dumps(self.to_dict(), ensure_ascii=False, default=str)
 
 
@@ -240,9 +245,11 @@ class CrawlJobResult:
 # Engine Statistics
 # ════════════════════════════════════════════════════════════════
 
+
 @dataclass
 class EngineStats:
     """Cumulative engine statistics."""
+
     total_scrapes: int = 0
     total_crawls: int = 0
     total_searches: int = 0
@@ -260,9 +267,7 @@ class EngineStats:
         self.total_scrapes += 1
         self.total_pages_scraped += 1
         self._total_response_time_ms += result.response_time_ms
-        self.avg_response_time_ms = (
-            self._total_response_time_ms / self.total_scrapes
-        )
+        self.avg_response_time_ms = self._total_response_time_ms / self.total_scrapes
         if not result.success:
             self.total_errors += 1
         if result.cached:
@@ -292,6 +297,7 @@ class EngineStats:
 # ════════════════════════════════════════════════════════════════
 # CrawlEngine
 # ════════════════════════════════════════════════════════════════
+
 
 class CrawlEngine:
     """
@@ -360,6 +366,7 @@ class CrawlEngine:
         # Initialize cache
         if self._settings.cache_backend != "none":
             from agentcrawl.cache.manager import CacheManager
+
             self._cache_manager = CacheManager(
                 backend=self._settings.cache_backend,
                 ttl=self._settings.cache_ttl,
@@ -474,15 +481,17 @@ class CrawlEngine:
 
     def _build_cache_key(self, url: str, config: CrawlerConfig) -> str:
         # Build cache key
-                key_parts = [
-                    url,
-                    config.output_format if isinstance(config.output_format, str) else config.output_format.value,
-                    str(config.include_links),
-                    str(config.only_main_content),
-                    config.content_filter or "",
-                    config.chunker or "",
-                ]
-                return hashlib.sha256("|".join(key_parts).encode()).hexdigest()[:32]
+        key_parts = [
+            url,
+            config.output_format
+            if isinstance(config.output_format, str)
+            else config.output_format.value,
+            str(config.include_links),
+            str(config.only_main_content),
+            config.content_filter or "",
+            config.chunker or "",
+        ]
+        return hashlib.sha256("|".join(key_parts).encode()).hexdigest()[:32]
 
     async def _fetch_and_process(
         self,
@@ -572,11 +581,13 @@ class CrawlEngine:
         processed: list[CrawlResult] = []
         for url, result in zip(urls, results, strict=True):
             if isinstance(result, Exception):
-                processed.append(CrawlResult(
-                    url=url,
-                    success=False,
-                    error=str(result),
-                ))
+                processed.append(
+                    CrawlResult(
+                        url=url,
+                        success=False,
+                        error=str(result),
+                    )
+                )
             elif not isinstance(result, Exception):
                 processed.append(cast("CrawlResult", result))
 
@@ -615,6 +626,7 @@ class CrawlEngine:
             else:
                 # Default: simple BFS
                 from agentcrawl.crawling.bfs import BFSCrawler
+
                 default_strategy = BFSCrawler(max_depth=2, max_pages=20)
                 urls = await default_strategy.discover(url, self)
 
@@ -625,11 +637,13 @@ class CrawlEngine:
                     job.add_page(result)
                 except Exception as e:
                     logger.warning("Failed to scrape %s: %s", page_url, e)
-                    job.add_page(CrawlResult(
-                        url=page_url,
-                        success=False,
-                        error=str(e),
-                    ))
+                    job.add_page(
+                        CrawlResult(
+                            url=page_url,
+                            success=False,
+                            error=str(e),
+                        )
+                    )
 
             job.status = "completed"
 
@@ -674,12 +688,14 @@ class CrawlEngine:
                 # Return basic results
                 results = []
                 for sr in search_results:
-                    results.append(CrawlResult(
-                        url=sr.get("url", ""),
-                        markdown=sr.get("snippet", ""),
-                        metadata={"title": sr.get("title", "")},
-                        success=True,
-                    ))
+                    results.append(
+                        CrawlResult(
+                            url=sr.get("url", ""),
+                            markdown=sr.get("snippet", ""),
+                            metadata={"title": sr.get("title", "")},
+                            success=True,
+                        )
+                    )
                 self._stats.total_searches += 1
                 return results
 
@@ -723,6 +739,7 @@ class CrawlEngine:
                 else:
                     # It's an ExtractionStrategy instance
                     from agentcrawl.extraction.base import ExtractionStrategy
+
                     if isinstance(config.extraction, ExtractionStrategy):
                         extractor = config.extraction
                         result.extracted_data = await extractor.extract(

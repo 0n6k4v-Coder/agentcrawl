@@ -18,6 +18,7 @@ Run:
     pytest tests/integration/test_crawl_api.py -v
     pytest tests/integration/test_crawl_api.py -v --run-integration
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -28,6 +29,7 @@ from fastapi.testclient import TestClient
 # ══════════════════════════════════════════════════════════════
 # Fixtures
 # ══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def app(require_playwright) -> Any:
@@ -58,18 +60,22 @@ def client(app: Any) -> Any:
 # POST /crawl — Start Job
 # ══════════════════════════════════════════════════════════════
 
+
 class TestStartCrawl:
     """Tests for POST /crawl."""
 
     @pytest.mark.integration
     def test_start_crawl_basic(self, client: TestClient, require_playwright) -> None:
         """Start a basic crawl job."""
-        response = client.post("/crawl", json={
-            "url": "https://example.com",
-            "strategy": "bfs",
-            "max_depth": 1,
-            "max_pages": 2,
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "strategy": "bfs",
+                "max_depth": 1,
+                "max_pages": 2,
+            },
+        )
 
         assert response.status_code == 202
         data = response.json()
@@ -80,14 +86,20 @@ class TestStartCrawl:
     @pytest.mark.integration
     def test_start_crawl_returns_job_id(self, client: TestClient, require_playwright) -> None:
         """Each crawl returns a unique job ID."""
-        resp1 = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 1,
-        })
-        resp2 = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 1,
-        })
+        resp1 = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 1,
+            },
+        )
+        resp2 = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 1,
+            },
+        )
 
         job1 = resp1.json()["job_id"]
         job2 = resp2.json()["job_id"]
@@ -96,10 +108,13 @@ class TestStartCrawl:
     @pytest.mark.integration
     def test_start_crawl_default_strategy(self, client: TestClient, require_playwright) -> None:
         """Default strategy is BFS."""
-        response = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 1,
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 1,
+            },
+        )
 
         assert response.status_code == 202
 
@@ -109,36 +124,45 @@ class TestStartCrawl:
         strategies = ["bfs", "dfs", "best_first", "adaptive"]
 
         for strategy in strategies:
-            response = client.post("/crawl", json={
-                "url": "https://example.com",
-                "strategy": strategy,
-                "max_pages": 1,
-            })
+            response = client.post(
+                "/crawl",
+                json={
+                    "url": "https://example.com",
+                    "strategy": strategy,
+                    "max_pages": 1,
+                },
+            )
             assert response.status_code == 202, f"Strategy {strategy} failed"
 
     @pytest.mark.integration
     def test_start_crawl_with_url_filters(self, client: TestClient, require_playwright) -> None:
         """Crawl with include/exclude patterns."""
-        response = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 2,
-            "include_patterns": ["/*"],
-            "exclude_patterns": ["*.pdf", "*.zip"],
-            "same_domain": True,
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 2,
+                "include_patterns": ["/*"],
+                "exclude_patterns": ["*.pdf", "*.zip"],
+                "same_domain": True,
+            },
+        )
 
         assert response.status_code == 202
 
     @pytest.mark.integration
     def test_start_crawl_with_content_options(self, client: TestClient, require_playwright) -> None:
         """Crawl with content processing options."""
-        response = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 1,
-            "output_format": "markdown",
-            "only_main_content": True,
-            "content_filter": "pruning",
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 1,
+                "output_format": "markdown",
+                "only_main_content": True,
+                "content_filter": "pruning",
+            },
+        )
 
         assert response.status_code == 202
 
@@ -147,14 +171,18 @@ class TestStartCrawl:
 # POST /crawl — Validation
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCrawlValidation:
     """Tests for crawl request validation."""
 
     def test_missing_url(self, client: TestClient) -> None:
         """Missing URL returns 422."""
-        response = client.post("/crawl", json={
-            "max_pages": 5,
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "max_pages": 5,
+            },
+        )
 
         assert response.status_code == 422
 
@@ -166,28 +194,37 @@ class TestCrawlValidation:
 
     def test_invalid_strategy(self, client: TestClient) -> None:
         """Invalid strategy returns 422."""
-        response = client.post("/crawl", json={
-            "url": "https://example.com",
-            "strategy": "invalid_strategy",
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "strategy": "invalid_strategy",
+            },
+        )
 
         assert response.status_code == 422
 
     def test_max_pages_too_high(self, client: TestClient) -> None:
         """max_pages above limit returns 422."""
-        response = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 10000,
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 10000,
+            },
+        )
 
         assert response.status_code == 422
 
     def test_max_depth_too_high(self, client: TestClient) -> None:
         """max_depth above limit returns 422."""
-        response = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_depth": 100,
-        })
+        response = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_depth": 100,
+            },
+        )
 
         assert response.status_code == 422
 
@@ -206,16 +243,20 @@ class TestCrawlValidation:
 # GET /crawl/{job_id} — Status
 # ══════════════════════════════════════════════════════════════
 
+
 class TestGetCrawlStatus:
     """Tests for GET /crawl/{job_id}."""
 
     def test_get_status_after_start(self, client: TestClient) -> None:
         """Get status immediately after starting."""
         # Start job
-        start_resp = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 1,
-        })
+        start_resp = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 1,
+            },
+        )
         job_id = start_resp.json()["job_id"]
 
         # Get status
@@ -236,10 +277,13 @@ class TestGetCrawlStatus:
 
     def test_status_has_progress(self, client: TestClient) -> None:
         """Status includes progress information."""
-        start_resp = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 2,
-        })
+        start_resp = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 2,
+            },
+        )
         job_id = start_resp.json()["job_id"]
 
         status_resp = client.get(f"/crawl/{job_id}")
@@ -254,6 +298,7 @@ class TestGetCrawlStatus:
 # Job Lifecycle
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCrawlLifecycle:
     """Tests for complete crawl job lifecycle."""
 
@@ -261,11 +306,14 @@ class TestCrawlLifecycle:
     def test_full_lifecycle(self, client: TestClient, require_playwright) -> None:
         """Test complete job lifecycle: start -> poll -> complete."""
         # Start
-        start_resp = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_depth": 1,
-            "max_pages": 2,
-        })
+        start_resp = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_depth": 1,
+                "max_pages": 2,
+            },
+        )
         assert start_resp.status_code == 202
         job_id = start_resp.json()["job_id"]
 
@@ -280,6 +328,7 @@ class TestCrawlLifecycle:
                 break
 
             import time
+
             time.sleep(1)
 
         assert final_data is not None, "Job did not complete in time"
@@ -289,10 +338,13 @@ class TestCrawlLifecycle:
     @pytest.mark.integration
     def test_completed_job_has_pages(self, client: TestClient, require_playwright) -> None:
         """Completed job includes page results."""
-        start_resp = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 1,
-        })
+        start_resp = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 1,
+            },
+        )
         job_id = start_resp.json()["job_id"]
 
         # Wait for completion
@@ -302,6 +354,7 @@ class TestCrawlLifecycle:
             if data["status"] == "completed":
                 break
             import time
+
             time.sleep(1)
 
         assert data["status"] == "completed"
@@ -317,6 +370,7 @@ class TestCrawlLifecycle:
 # DELETE /crawl/{job_id} — Cancel
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCancelCrawl:
     """Tests for DELETE /crawl/{job_id}."""
 
@@ -328,11 +382,14 @@ class TestCancelCrawl:
 
     def test_cancel_returns_status(self, client: TestClient) -> None:
         """Cancel returns job status."""
-        start_resp = client.post("/crawl", json={
-            "url": "https://example.com",
-            "max_pages": 50,
-            "max_depth": 5,
-        })
+        start_resp = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "max_pages": 50,
+                "max_depth": 5,
+            },
+        )
         job_id = start_resp.json()["job_id"]
 
         cancel_resp = client.delete(f"/crawl/{job_id}")
@@ -345,6 +402,7 @@ class TestCancelCrawl:
 # Concurrent Crawls
 # ══════════════════════════════════════════════════════════════
 
+
 class TestConcurrentCrawls:
     """Tests for concurrent crawl jobs."""
 
@@ -354,10 +412,13 @@ class TestConcurrentCrawls:
 
         # Start 3 jobs
         for _i in range(3):
-            resp = client.post("/crawl", json={
-                "url": "https://example.com",
-                "max_pages": 1,
-            })
+            resp = client.post(
+                "/crawl",
+                json={
+                    "url": "https://example.com",
+                    "max_pages": 1,
+                },
+            )
             assert resp.status_code == 202
             job_ids.append(resp.json()["job_id"])
 
@@ -374,6 +435,7 @@ class TestConcurrentCrawls:
 # Strategy-Specific Tests
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCrawlStrategies:
     """Tests for specific crawl strategies."""
 
@@ -386,12 +448,15 @@ class TestCrawlStrategies:
         require_playwright,
     ) -> None:
         """Each strategy completes successfully."""
-        start_resp = client.post("/crawl", json={
-            "url": "https://example.com",
-            "strategy": strategy,
-            "max_depth": 1,
-            "max_pages": 2,
-        })
+        start_resp = client.post(
+            "/crawl",
+            json={
+                "url": "https://example.com",
+                "strategy": strategy,
+                "max_depth": 1,
+                "max_pages": 2,
+            },
+        )
         assert start_resp.status_code == 202
         job_id = start_resp.json()["job_id"]
 
@@ -402,6 +467,7 @@ class TestCrawlStrategies:
             if data["status"] in ("completed", "failed"):
                 break
             import time
+
             time.sleep(1)
 
         assert data["status"] == "completed", f"Strategy {strategy} failed: {data.get('error')}"
@@ -411,16 +477,20 @@ class TestCrawlStrategies:
 # Error Handling
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCrawlErrors:
     """Tests for crawl error handling."""
 
     @pytest.mark.integration
     def test_crawl_invalid_url(self, client: TestClient, require_playwright) -> None:
         """Crawl with invalid URL fails gracefully."""
-        start_resp = client.post("/crawl", json={
-            "url": "https://this-domain-does-not-exist-12345.com",
-            "max_pages": 1,
-        })
+        start_resp = client.post(
+            "/crawl",
+            json={
+                "url": "https://this-domain-does-not-exist-12345.com",
+                "max_pages": 1,
+            },
+        )
 
         if start_resp.status_code == 202:
             job_id = start_resp.json()["job_id"]
@@ -432,6 +502,7 @@ class TestCrawlErrors:
                 if data["status"] in ("completed", "failed"):
                     break
                 import time
+
                 time.sleep(1)
 
             # Should fail or complete with 0 pages

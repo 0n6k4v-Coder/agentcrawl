@@ -144,6 +144,7 @@ def __getattr__(name: str) -> object:
     if name in _LAZY_IMPORTS:
         module_path, attr_name = _LAZY_IMPORTS[name]
         import importlib
+
         module = importlib.import_module(module_path)
         return getattr(module, attr_name)
 
@@ -152,15 +153,13 @@ def __getattr__(name: str) -> object:
 
 def __dir__() -> list[str]:
     """List all available attributes."""
-    return sorted(
-        list(globals().keys())
-        + list(_LAZY_IMPORTS.keys())
-    )
+    return sorted(list(globals().keys()) + list(_LAZY_IMPORTS.keys()))
 
 
 # ══════════════════════════════════════════════════════════════
 # Convenience Functions
 # ══════════════════════════════════════════════════════════════
+
 
 async def scrape(
     url: str,

@@ -72,6 +72,7 @@ def print_banner(
 # Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 def load_settings(args: argparse.Namespace) -> Any:
     """
     Load Settings from CLI args and environment.
@@ -100,6 +101,7 @@ def load_settings(args: argparse.Namespace) -> Any:
 # ══════════════════════════════════════════════════════════════
 # Server Runner
 # ══════════════════════════════════════════════════════════════
+
 
 def run_server(
     host: str = "127.0.0.1",
@@ -173,6 +175,7 @@ def run_server(
 # CLI
 # ══════════════════════════════════════════════════════════════
 
+
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -240,10 +243,12 @@ Examples:
 # Utilities
 # ══════════════════════════════════════════════════════════════
 
+
 def _get_version() -> str:
     """Get the AgentCrawl version."""
     try:
         import agentcrawl
+
         return agentcrawl.__version__
     except Exception:
         return "1.0.0"
@@ -252,6 +257,7 @@ def _get_version() -> str:
 # ══════════════════════════════════════════════════════════════
 # Main
 # ══════════════════════════════════════════════════════════════
+
 
 def main() -> None:
     """Main entry point."""

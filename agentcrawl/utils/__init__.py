@@ -299,7 +299,6 @@ __all__ = [
     # URL
     "normalize_url",
     "normalize_whitespace",
-    "normalize_whitespace",
     "remove_accents",
     "remove_fragment",
     "remove_query_params",

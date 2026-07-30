@@ -86,6 +86,7 @@ return removed
 # Redis Queue Backend
 # ══════════════════════════════════════════════════════════════
 
+
 class RedisQueueBackend(QueueBackend):
     """
     Redis-backed queue backend for distributed deployments.
@@ -170,8 +171,7 @@ class RedisQueueBackend(QueueBackend):
             import redis.asyncio as aioredis
         except ImportError:
             raise ImportError(
-                "redis is required for RedisQueueBackend. "
-                "Install with: pip install redis"
+                "redis is required for RedisQueueBackend. Install with: pip install redis"
             ) from None
 
         self._redis = aioredis.from_url(
@@ -320,6 +320,7 @@ class RedisQueueBackend(QueueBackend):
                 return None
 
             import asyncio
+
             await asyncio.sleep(min(0.1, deadline - time.time()))
 
     async def peek(self) -> QueueItem | None:
@@ -421,7 +422,7 @@ class RedisQueueBackend(QueueBackend):
             item.started_at = 0.0
             item.completed_at = 0.0
 
-            delay = min(2 ** item.attempts, 60)
+            delay = min(2**item.attempts, 60)
             item.scheduled_at = time.time() + delay
 
             score = (-item.priority * 1_000_000_000) + item.scheduled_at

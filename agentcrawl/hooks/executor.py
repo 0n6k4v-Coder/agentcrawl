@@ -67,8 +67,10 @@ logger = logging.getLogger("agentcrawl.hooks")
 # Hook Events
 # ══════════════════════════════════════════════════════════════
 
+
 class HookEvent(str, Enum):
     """Available hook event types."""
+
     PRE_SCRAPE = "pre_scrape"
     POST_SCRAPE = "post_scrape"
     PRE_EXTRACT = "pre_extract"
@@ -90,6 +92,7 @@ class HookEvent(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Hook Context
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class HookContext:
@@ -113,6 +116,7 @@ class HookContext:
         started_at: Unix timestamp when the pipeline started.
         stage: Current pipeline stage name.
     """
+
     url: str = ""
     data: dict[str, Any] = field(default_factory=dict)
     html: str = ""
@@ -154,6 +158,7 @@ class HookContext:
 # Hook Registration
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class HookRegistration:
     """
@@ -169,6 +174,7 @@ class HookRegistration:
         continue_on_error: Whether to continue on hook error.
         enabled: Whether the hook is enabled.
     """
+
     event: HookEvent
     callback: Callable[..., Any]
     name: str = ""
@@ -187,9 +193,11 @@ class HookRegistration:
 # Hook Statistics
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class HookStats:
     """Statistics for hook execution."""
+
     total_executions: int = 0
     total_errors: int = 0
     total_skipped: int = 0
@@ -235,6 +243,7 @@ class HookStats:
 # Hook Executor
 # ══════════════════════════════════════════════════════════════
 
+
 class HookExecutor:
     """
     Manages and executes hooks at defined pipeline events.
@@ -264,9 +273,7 @@ class HookExecutor:
         default_timeout: float = 30.0,
         enable_stats: bool = True,
     ):
-        self._hooks: dict[HookEvent, list[HookRegistration]] = {
-            event: [] for event in HookEvent
-        }
+        self._hooks: dict[HookEvent, list[HookRegistration]] = {event: [] for event in HookEvent}
         self._continue_on_error = continue_on_error
         self._default_timeout = default_timeout
         self._enable_stats = enable_stats
@@ -354,9 +361,7 @@ class HookExecutor:
             condition=condition,
             timeout=timeout or self._default_timeout,
             continue_on_error=(
-                continue_on_error
-                if continue_on_error is not None
-                else self._continue_on_error
+                continue_on_error if continue_on_error is not None else self._continue_on_error
             ),
         )
 
@@ -474,7 +479,8 @@ class HookExecutor:
                 except Exception as e:
                     logger.debug(
                         "Hook '%s' condition error: %s",
-                        hook.name, e,
+                        hook.name,
+                        e,
                     )
                     continue
 
@@ -522,7 +528,8 @@ class HookExecutor:
 
             logger.debug(
                 "Hook '%s' completed in %.1fms",
-                hook.name, duration,
+                hook.name,
+                duration,
             )
 
         except asyncio.TimeoutError:
@@ -532,7 +539,8 @@ class HookExecutor:
                 self._stats.record(hook.name, duration, error=True)
             logger.warning(
                 "Hook '%s' timed out after %.0fms",
-                hook.name, duration,
+                hook.name,
+                duration,
             )
 
         except Exception as e:
@@ -541,7 +549,8 @@ class HookExecutor:
                 self._stats.record(hook.name, duration, error=True)
             logger.warning(
                 "Hook '%s' failed: %s",
-                hook.name, e,
+                hook.name,
+                e,
             )
 
             if not hook.continue_on_error:
@@ -590,9 +599,7 @@ class HookExecutor:
                     result = await hook.callback(current_input)
                 else:
                     loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(
-                        None, hook.callback, current_input
-                    )
+                    result = await loop.run_in_executor(None, hook.callback, current_input)
 
                 if result is not None:
                     current_input = result
@@ -670,6 +677,5 @@ class HookExecutor:
 
     def __repr__(self) -> str:
         return (
-            f"HookExecutor(hooks={self.hook_count()}, "
-            f"continue_on_error={self._continue_on_error})"
+            f"HookExecutor(hooks={self.hook_count()}, continue_on_error={self._continue_on_error})"
         )

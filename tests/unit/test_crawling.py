@@ -31,6 +31,7 @@ from agentcrawl.crawling.url_filter import URLFilter
 # URLFilter
 # ══════════════════════════════════════════════════════════════
 
+
 class TestURLFilter:
     """Tests for URLFilter."""
 
@@ -118,6 +119,7 @@ class TestURLFilter:
 # BFSCrawler
 # ══════════════════════════════════════════════════════════════
 
+
 class TestBFSCrawler:
     """Tests for BFSCrawler."""
 
@@ -158,7 +160,10 @@ class TestBFSCrawler:
         async def mock_fetch(url: str, depth: int) -> tuple[str, list[str]]:
             visited.append(url)
             responses = {
-                "https://example.com": ("<html></html>", ["https://example.com/a", "https://example.com/b"]),
+                "https://example.com": (
+                    "<html></html>",
+                    ["https://example.com/a", "https://example.com/b"],
+                ),
                 "https://example.com/a": ("<html></html>", ["https://example.com/a/1"]),
                 "https://example.com/b": ("<html></html>", ["https://example.com/b/1"]),
             }
@@ -186,6 +191,7 @@ class TestBFSCrawler:
 # ══════════════════════════════════════════════════════════════
 # DFSCrawler
 # ══════════════════════════════════════════════════════════════
+
 
 class TestDFSCrawler:
     """Tests for DFSCrawler."""
@@ -217,6 +223,7 @@ class TestDFSCrawler:
 # ══════════════════════════════════════════════════════════════
 # BestFirstCrawler
 # ══════════════════════════════════════════════════════════════
+
 
 class TestBestFirstCrawler:
     """Tests for BestFirstCrawler."""
@@ -254,6 +261,7 @@ class TestBestFirstCrawler:
 # AdaptiveCrawler
 # ══════════════════════════════════════════════════════════════
 
+
 class TestAdaptiveCrawler:
     """Tests for AdaptiveCrawler."""
 
@@ -283,6 +291,7 @@ class TestAdaptiveCrawler:
 # ══════════════════════════════════════════════════════════════
 # CrawlResult
 # ══════════════════════════════════════════════════════════════
+
 
 class TestCrawlResult:
     """Tests for CrawlResult model."""
@@ -325,17 +334,21 @@ class TestCrawlResult:
 
         result = CrawlJobResult(start_url="https://example.com")
 
-        result.pages.append(CrawlResult(
-            url="https://example.com/1",
-            success=True,
-            word_count=100,
-            token_count=150,
-        ))
-        result.pages.append(CrawlResult(
-            url="https://example.com/2",
-            success=False,
-            error="Timeout",
-        ))
+        result.pages.append(
+            CrawlResult(
+                url="https://example.com/1",
+                success=True,
+                word_count=100,
+                token_count=150,
+            )
+        )
+        result.pages.append(
+            CrawlResult(
+                url="https://example.com/2",
+                success=False,
+                error="Timeout",
+            )
+        )
         result.total_pages = len(result.pages)
         result.successful_pages = sum(1 for p in result.pages if p.success)
         result.failed_pages = result.total_pages - result.successful_pages
@@ -356,10 +369,12 @@ class TestCrawlResult:
             start_url="https://example.com",
             strategy="bfs",
         )
-        result.pages.append(CrawlResult(
-            url="https://example.com/1",
-            success=True,
-        ))
+        result.pages.append(
+            CrawlResult(
+                url="https://example.com/1",
+                success=True,
+            )
+        )
 
         data = result.to_dict()
         assert "start_url" in data
@@ -371,6 +386,7 @@ class TestCrawlResult:
 # ══════════════════════════════════════════════════════════════
 # CrawlResult (single page)
 # ══════════════════════════════════════════════════════════════
+
 
 class TestCrawlResultPage:
     """Tests for CrawlResult (single page)."""
@@ -419,6 +435,7 @@ class TestCrawlResultPage:
 # SitemapParser
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSitemapParser:
     """Tests for SitemapParser."""
 
@@ -451,7 +468,7 @@ class TestSitemapParser:
         </sitemapindex>"""
 
         parser = SitemapParser()
-        _entries, child_urls, is_index = parser._parse_xml(xml, 'https://example.com/sitemap.xml')
+        _entries, child_urls, is_index = parser._parse_xml(xml, "https://example.com/sitemap.xml")
 
         # For sitemap index, entries should be empty but child_urls should have the sitemap URLs
         assert len(child_urls) == 2
@@ -499,7 +516,7 @@ class TestSitemapParser:
         </urlset>"""
 
         parser = SitemapParser(max_urls=3)
-        entries, _child_urls, _is_index = parser._parse_xml(xml, 'https://example.com/sitemap.xml')
+        entries, _child_urls, _is_index = parser._parse_xml(xml, "https://example.com/sitemap.xml")
 
         assert len(entries) == 3
         assert len(entries) <= 3
@@ -509,14 +526,15 @@ class TestSitemapParser:
 # RobotsTxtParser
 # ══════════════════════════════════════════════════════════════
 
+
 class TestRobotsTxtParser:
     """Tests for RobotsTxtParser."""
 
     def test_parse_robots_txt(self) -> None:
-            """Parse a standard robots.txt."""
-            from agentcrawl.crawling.url_filter import RobotsTxtParser
+        """Parse a standard robots.txt."""
+        from agentcrawl.crawling.url_filter import RobotsTxtParser
 
-            content = """User-agent: *
+        content = """User-agent: *
     Disallow: /admin/
     Disallow: /private/
     Allow: /public/
@@ -524,13 +542,13 @@ class TestRobotsTxtParser:
     Sitemap: https://example.com/sitemap.xml
     """
 
-            parser = RobotsTxtParser()
-            parser.parse(content)
+        parser = RobotsTxtParser()
+        parser.parse(content)
 
-            # Check internal structures
-            assert len(parser._rules) > 0
-            assert "https://example.com/sitemap.xml" in parser._sitemaps
-            assert parser.is_loaded is True
+        # Check internal structures
+        assert len(parser._rules) > 0
+        assert "https://example.com/sitemap.xml" in parser._sitemaps
+        assert parser.is_loaded is True
 
     def test_is_allowed(self) -> None:
         """Check if URL is allowed by robots.txt."""
@@ -579,6 +597,7 @@ Sitemap: https://example.com/sitemap2.xml
 # DomainMapper
 # ══════════════════════════════════════════════════════════════
 
+
 class TestDomainMapper:
     """Tests for DomainMapper."""
 
@@ -602,6 +621,7 @@ class TestDomainMapper:
 # ══════════════════════════════════════════════════════════════
 # URL Deduplication
 # ══════════════════════════════════════════════════════════════
+
 
 class TestURLDeduplication:
     """Tests for URL deduplication in crawlers."""

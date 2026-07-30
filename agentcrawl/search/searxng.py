@@ -63,6 +63,7 @@ logger = logging.getLogger("agentcrawl.search.searxng")
 # SearXNG Provider
 # ══════════════════════════════════════════════════════════════
 
+
 class SearXNGProvider(SearchProvider):
     """
     SearXNG metasearch provider.
@@ -96,9 +97,16 @@ class SearXNGProvider(SearchProvider):
 
     # Available search categories
     CATEGORIES: tuple[str, ...] = (
-        "general", "images", "news", "videos",
-        "it", "science", "files", "music",
-        "map", "social media",
+        "general",
+        "images",
+        "news",
+        "videos",
+        "it",
+        "science",
+        "files",
+        "music",
+        "map",
+        "social media",
     )
 
     # Available time ranges
@@ -331,23 +339,26 @@ class SearXNGProvider(SearchProvider):
             # Extract domain
             domain = ""
             from urllib.parse import urlparse
+
             with contextlib.suppress(Exception):
                 domain = urlparse(url).netloc.replace("www.", "")
 
-            results.append(SearchResult(
-                url=url,
-                title=title,
-                snippet=snippet,
-                position=(page - 1) * max_results + i + 1,
-                domain=domain,
-                published_date=published,
-                score=float(score) if score else 0.0,
-                raw={
-                    "engine": engine,
-                    "category": category,
-                    **item,
-                },
-            ))
+            results.append(
+                SearchResult(
+                    url=url,
+                    title=title,
+                    snippet=snippet,
+                    position=(page - 1) * max_results + i + 1,
+                    domain=domain,
+                    published_date=published,
+                    score=float(score) if score else 0.0,
+                    raw={
+                        "engine": engine,
+                        "category": category,
+                        **item,
+                    },
+                )
+            )
 
         return results
 

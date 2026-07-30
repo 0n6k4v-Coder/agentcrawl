@@ -67,6 +67,7 @@ DEFAULT_EXCLUDED_PREFIXES: tuple[str, ...] = (
 # Auth Context
 # ══════════════════════════════════════════════════════════════
 
+
 class AuthContext:
     """
     Authentication context attached to the request.
@@ -118,6 +119,7 @@ class AuthContext:
 # ══════════════════════════════════════════════════════════════
 # Middleware
 # ══════════════════════════════════════════════════════════════
+
 
 class AuthMiddleware(BaseHTTPMiddleware):
     """
@@ -364,6 +366,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 # Scope Enforcement Middleware
 # ══════════════════════════════════════════════════════════════
 
+
 class ScopeMiddleware(BaseHTTPMiddleware):
     """
     Middleware that enforces scope requirements per path.
@@ -444,6 +447,7 @@ class ScopeMiddleware(BaseHTTPMiddleware):
 # ══════════════════════════════════════════════════════════════
 # Request Logging Middleware
 # ══════════════════════════════════════════════════════════════
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """

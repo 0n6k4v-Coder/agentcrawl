@@ -55,6 +55,7 @@ logger = logging.getLogger("agentcrawl.search")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class SearchResult:
     """
@@ -70,6 +71,7 @@ class SearchResult:
         score: Relevance score (provider-specific).
         raw: Raw result data from the provider.
     """
+
     url: str = ""
     title: str = ""
     snippet: str = ""
@@ -82,6 +84,7 @@ class SearchResult:
     def __post_init__(self) -> None:
         if not self.domain and self.url:
             from urllib.parse import urlparse
+
             with contextlib.suppress(Exception):
                 self.domain = urlparse(self.url).netloc.replace("www.", "")
 
@@ -111,6 +114,7 @@ class SearchResponse:
         duration_ms: Search duration in milliseconds.
         error: Error message (if failed).
     """
+
     query: str = ""
     results: list[SearchResult] = field(default_factory=list)
     total_results: int = 0
@@ -138,6 +142,7 @@ class SearchResponse:
 # ══════════════════════════════════════════════════════════════
 # Search Providers
 # ══════════════════════════════════════════════════════════════
+
 
 class SearchProvider:
     """Base class for search providers."""
@@ -209,17 +214,20 @@ class DuckDuckGoProvider(SearchProvider):
                     # DuckDuckGo wraps URLs in a redirect
                     if "uddg=" in url:
                         from urllib.parse import parse_qs, urlparse
+
                         parsed = urlparse(url)
                         params = parse_qs(parsed.query)
                         if "uddg" in params:
                             url = params["uddg"][0]
 
-                    results.append(SearchResult(
-                        url=url,
-                        title=title,
-                        snippet=snippet,
-                        position=i + 1,
-                    ))
+                    results.append(
+                        SearchResult(
+                            url=url,
+                            title=title,
+                            snippet=snippet,
+                            position=i + 1,
+                        )
+                    )
 
         except Exception as e:
             logger.warning("DuckDuckGo search failed: %s", e)
@@ -275,14 +283,16 @@ class TavilyProvider(SearchProvider):
                 data = resp.json()
 
                 for i, item in enumerate(data.get("results", [])):
-                    results.append(SearchResult(
-                        url=item.get("url", ""),
-                        title=item.get("title", ""),
-                        snippet=item.get("content", ""),
-                        position=i + 1,
-                        score=item.get("score", 0.0),
-                        raw=item,
-                    ))
+                    results.append(
+                        SearchResult(
+                            url=item.get("url", ""),
+                            title=item.get("title", ""),
+                            snippet=item.get("content", ""),
+                            position=i + 1,
+                            score=item.get("score", 0.0),
+                            raw=item,
+                        )
+                    )
 
         except Exception as e:
             logger.warning("Tavily search failed: %s", e)
@@ -330,17 +340,17 @@ class BraveProvider(SearchProvider):
 
                 data = resp.json()
 
-                for i, item in enumerate(
-                    data.get("web", {}).get("results", [])
-                ):
-                    results.append(SearchResult(
-                        url=item.get("url", ""),
-                        title=item.get("title", ""),
-                        snippet=item.get("description", ""),
-                        position=i + 1,
-                        published_date=item.get("age", ""),
-                        raw=item,
-                    ))
+                for i, item in enumerate(data.get("web", {}).get("results", [])):
+                    results.append(
+                        SearchResult(
+                            url=item.get("url", ""),
+                            title=item.get("title", ""),
+                            snippet=item.get("description", ""),
+                            position=i + 1,
+                            published_date=item.get("age", ""),
+                            raw=item,
+                        )
+                    )
 
         except Exception as e:
             logger.warning("Brave search failed: %s", e)
@@ -397,15 +407,17 @@ class ExaProvider(SearchProvider):
                 data = resp.json()
 
                 for i, item in enumerate(data.get("results", [])):
-                    results.append(SearchResult(
-                        url=item.get("url", ""),
-                        title=item.get("title", ""),
-                        snippet=item.get("text", "")[:300],
-                        position=i + 1,
-                        score=item.get("score", 0.0),
-                        published_date=item.get("publishedDate", ""),
-                        raw=item,
-                    ))
+                    results.append(
+                        SearchResult(
+                            url=item.get("url", ""),
+                            title=item.get("title", ""),
+                            snippet=item.get("text", "")[:300],
+                            position=i + 1,
+                            score=item.get("score", 0.0),
+                            published_date=item.get("publishedDate", ""),
+                            raw=item,
+                        )
+                    )
 
         except Exception as e:
             logger.warning("Exa search failed: %s", e)
@@ -428,6 +440,7 @@ PROVIDERS: dict[str, type[SearchProvider]] = {
 # ══════════════════════════════════════════════════════════════
 # Search Engine
 # ══════════════════════════════════════════════════════════════
+
 
 class SearchEngine:
     """
@@ -635,6 +648,7 @@ class SearchEngine:
         if crawl_engine is None:
             # Return search results without scraping
             from agentcrawl.core.engine import CrawlResult
+
             return [
                 CrawlResult(
                     url=r.get("url", ""),
@@ -672,16 +686,11 @@ class SearchEngine:
             "provider": self._provider_name,
             "total_searches": self._total_searches,
             "total_results": self._total_results,
-            "avg_results_per_search": round(
-                self._total_results / max(self._total_searches, 1), 1
-            ),
+            "avg_results_per_search": round(self._total_results / max(self._total_searches, 1), 1),
             "default_max_results": self._default_max_results,
             "timeout": self._timeout,
             "rate_limit_delay": self._rate_limit_delay,
         }
 
     def __repr__(self) -> str:
-        return (
-            f"SearchEngine(provider={self._provider_name!r}, "
-            f"searches={self._total_searches})"
-        )
+        return f"SearchEngine(provider={self._provider_name!r}, searches={self._total_searches})"

@@ -79,6 +79,7 @@ from agentcrawl.cache.memory import MemoryCacheBackend
 
 try:
     from agentcrawl.cache.redis import RedisCacheBackend
+
     _HAS_REDIS = True
 except ImportError:
     RedisCacheBackend = None  # type: ignore[assignment,misc]
@@ -130,6 +131,7 @@ __all__ = [
 # ──────────────────────────────────────────────────────────────
 # Feature Detection Helpers
 # ──────────────────────────────────────────────────────────────
+
 
 def has_redis() -> bool:
     """Check if the redis package is installed and RedisCacheBackend is available."""

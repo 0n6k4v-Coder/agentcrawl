@@ -82,6 +82,7 @@ _RETRY_DELAY = 1.0
 # Redis Cache Backend
 # ══════════════════════════════════════════════════════════════
 
+
 class RedisCacheBackend(CacheBackend):
     """
     Redis-backed cache backend with native TTL and atomic operations.
@@ -347,8 +348,10 @@ class RedisCacheBackend(CacheBackend):
             if keys:
                 # Filter out tag keys (they'll be cleaned separately)
                 data_keys = [
-                    k for k in keys
-                    if _TAG_PREFIX not in (k.decode("utf-8", errors="replace") if isinstance(k, bytes) else k)
+                    k
+                    for k in keys
+                    if _TAG_PREFIX
+                    not in (k.decode("utf-8", errors="replace") if isinstance(k, bytes) else k)
                 ]
                 if data_keys:
                     await self._redis.delete(*data_keys)
@@ -648,7 +651,11 @@ class RedisCacheBackend(CacheBackend):
             for tag_key in batch:
                 is_member = await self._redis.sismember(tag_key, full_key)
                 if is_member:
-                    tag_str = tag_key.decode("utf-8", errors="replace") if isinstance(tag_key, bytes) else tag_key
+                    tag_str = (
+                        tag_key.decode("utf-8", errors="replace")
+                        if isinstance(tag_key, bytes)
+                        else tag_key
+                    )
                     # Extract tag name
                     tag_name = tag_str.split(f"{_TAG_PREFIX}")[-1]
                     tags.append(tag_name)

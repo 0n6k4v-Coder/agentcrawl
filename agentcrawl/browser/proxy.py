@@ -76,8 +76,10 @@ logger = logging.getLogger("agentcrawl.browser.proxy")
 # Types & Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class ProxyProtocol(str, Enum):
     """Supported proxy protocols."""
+
     HTTP = "http"
     HTTPS = "https"
     SOCKS5 = "socks5"
@@ -86,6 +88,7 @@ class ProxyProtocol(str, Enum):
 
 class ProxyStatus(str, Enum):
     """Health status of a proxy server."""
+
     UNKNOWN = "unknown"
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
@@ -95,6 +98,7 @@ class ProxyStatus(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Proxy Server Model
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ProxyServer:
@@ -118,6 +122,7 @@ class ProxyServer:
         last_checked_at: Unix timestamp of last health check.
         tags: Arbitrary tags for filtering.
     """
+
     host: str
     port: int
     protocol: ProxyProtocol = ProxyProtocol.HTTP
@@ -299,6 +304,7 @@ class ProxyServer:
 # ══════════════════════════════════════════════════════════════
 # Proxy Manager
 # ══════════════════════════════════════════════════════════════
+
 
 class ProxyManager:
     """
@@ -624,10 +630,7 @@ class ProxyManager:
         proxy.mark_used(success=False)
 
         # Mark unhealthy if failure rate is too high
-        if (
-            proxy.total_requests >= 5
-            and proxy.success_rate < self._unhealthy_threshold
-        ):
+        if proxy.total_requests >= 5 and proxy.success_rate < self._unhealthy_threshold:
             proxy.status = ProxyStatus.UNHEALTHY
             logger.warning(
                 "Proxy %s marked unhealthy (success_rate=%.2f, failures=%d)",
@@ -690,9 +693,7 @@ class ProxyManager:
             True if the proxy was found and removed.
         """
         for i, existing in enumerate(self._proxies):
-            if existing is proxy or (
-                existing.host == proxy.host and existing.port == proxy.port
-            ):
+            if existing is proxy or (existing.host == proxy.host and existing.port == proxy.port):
                 self._proxies.pop(i)
                 logger.info("Removed proxy: %s (total=%d)", proxy, len(self._proxies))
                 return True
@@ -711,8 +712,7 @@ class ProxyManager:
         """
         before = len(self._proxies)
         self._proxies = [
-            p for p in self._proxies
-            if not (p.host == host and (port is None or p.port == port))
+            p for p in self._proxies if not (p.host == host and (port is None or p.port == port))
         ]
         removed = before - len(self._proxies)
         if removed > 0:
@@ -778,7 +778,9 @@ class ProxyManager:
                     proxy.last_checked_at = time.time()
                     logger.debug(
                         "Proxy %s:%d healthy (%.0fms)",
-                        proxy.host, proxy.port, latency,
+                        proxy.host,
+                        proxy.port,
+                        latency,
                     )
                     return True
                 else:
@@ -786,7 +788,9 @@ class ProxyManager:
                     proxy.last_checked_at = time.time()
                     logger.warning(
                         "Proxy %s:%d returned status %d",
-                        proxy.host, proxy.port, response.status_code,
+                        proxy.host,
+                        proxy.port,
+                        response.status_code,
                     )
                     return False
 
@@ -795,7 +799,9 @@ class ProxyManager:
             proxy.last_checked_at = time.time()
             logger.warning(
                 "Proxy %s:%d validation failed: %s",
-                proxy.host, proxy.port, str(e)[:100],
+                proxy.host,
+                proxy.port,
+                str(e)[:100],
             )
             return False
 
@@ -876,10 +882,7 @@ class ProxyManager:
 
         # Filter by tags
         if tags:
-            candidates = [
-                p for p in candidates
-                if all(tag in p.tags for tag in tags)
-            ]
+            candidates = [p for p in candidates if all(tag in p.tags for tag in tags)]
 
         # Exclude specific proxies
         if exclude:
@@ -996,9 +999,7 @@ class ProxyManager:
             "total_requests": self.total_requests,
             "total_failures": self.total_failures,
             "overall_success_rate": (
-                round(
-                    (self.total_requests - self.total_failures) / self.total_requests, 3
-                )
+                round((self.total_requests - self.total_failures) / self.total_requests, 3)
                 if self.total_requests > 0
                 else 1.0
             ),

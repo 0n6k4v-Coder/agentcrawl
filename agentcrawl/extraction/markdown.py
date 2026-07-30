@@ -51,6 +51,7 @@ logger = logging.getLogger("agentcrawl.extraction.markdown")
 # Markdown Extractor
 # ══════════════════════════════════════════════════════════════
 
+
 class MarkdownExtractor(ExtractionStrategy):
     """
     Standard Markdown extraction from HTML.
@@ -246,19 +247,21 @@ class MarkdownExtractor(ExtractionStrategy):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "include_links": self._include_links,
-            "include_images": self._include_images,
-            "only_main_content": self._only_main_content,
-            "include_tables": self._include_tables,
-            "include_code_blocks": self._include_code_blocks,
-            "code_block_style": self._code_block_style,
-            "heading_style": self._heading_style,
-            "bullet_marker": self._bullet_marker,
-            "content_filter": self._content_filter,
-            "selectors": self._selectors,
-            "exclude_selectors": self._exclude_selectors,
-        })
+        d.update(
+            {
+                "include_links": self._include_links,
+                "include_images": self._include_images,
+                "only_main_content": self._only_main_content,
+                "include_tables": self._include_tables,
+                "include_code_blocks": self._include_code_blocks,
+                "code_block_style": self._code_block_style,
+                "heading_style": self._heading_style,
+                "bullet_marker": self._bullet_marker,
+                "content_filter": self._content_filter,
+                "selectors": self._selectors,
+                "exclude_selectors": self._exclude_selectors,
+            }
+        )
         return d
 
     def __repr__(self) -> str:

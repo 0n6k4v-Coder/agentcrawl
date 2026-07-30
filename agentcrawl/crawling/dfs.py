@@ -68,9 +68,11 @@ logger = logging.getLogger("agentcrawl.crawling.dfs")
 # DFS Stack Entry
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class _DFSEntry:
     """Internal DFS stack entry."""
+
     url: str
     depth: int = 0
     source_url: str = ""
@@ -83,6 +85,7 @@ class _DFSEntry:
 # ══════════════════════════════════════════════════════════════
 # DFS Crawler
 # ══════════════════════════════════════════════════════════════
+
 
 class DFSCrawler(CrawlStrategy):
     """
@@ -442,25 +445,27 @@ class DFSCrawler(CrawlStrategy):
         for entry in self._stack:
             stack_depths[entry.depth] = stack_depths.get(entry.depth, 0) + 1
 
-        base.update({
-            "stack_size": len(self._stack),
-            "max_depth_reached": self._max_depth_reached,
-            "backtrack_count": self._backtrack_count,
-            "branches_explored": self._branches_explored,
-            "depth_stats": self._depth_stats,
-            "stack_depth_distribution": stack_depths,
-            "current_path_length": len(self._current_path),
-            "deepest_path_length": len(self._deepest_path),
-            "deepest_path": self._deepest_path[:10],
-            "crawl_order_length": len(self._crawl_order),
-            "config": {
-                **base.get("config", {}),
-                "max_concurrent": self._max_concurrent,
-                "max_backtracks": self._max_backtracks,
-                "push_order": self._push_order,
-                "prioritize_deep": self._prioritize_deep,
-            },
-        })
+        base.update(
+            {
+                "stack_size": len(self._stack),
+                "max_depth_reached": self._max_depth_reached,
+                "backtrack_count": self._backtrack_count,
+                "branches_explored": self._branches_explored,
+                "depth_stats": self._depth_stats,
+                "stack_depth_distribution": stack_depths,
+                "current_path_length": len(self._current_path),
+                "deepest_path_length": len(self._deepest_path),
+                "deepest_path": self._deepest_path[:10],
+                "crawl_order_length": len(self._crawl_order),
+                "config": {
+                    **base.get("config", {}),
+                    "max_concurrent": self._max_concurrent,
+                    "max_backtracks": self._max_backtracks,
+                    "push_order": self._push_order,
+                    "prioritize_deep": self._prioritize_deep,
+                },
+            }
+        )
 
         return base
 

@@ -78,8 +78,10 @@ logger = logging.getLogger("agentcrawl.browser.actions")
 # Types & Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class ActionType(str, Enum):
     """All supported page action types."""
+
     # Mouse
     CLICK = "click"
     DOUBLE_CLICK = "double_click"
@@ -140,6 +142,7 @@ class ActionType(str, Enum):
 
 class ScrollDirection(str, Enum):
     """Scroll direction."""
+
     UP = "up"
     DOWN = "down"
     LEFT = "left"
@@ -148,6 +151,7 @@ class ScrollDirection(str, Enum):
 
 class WaitCondition(str, Enum):
     """Wait condition type."""
+
     SELECTOR = "selector"
     TIMEOUT = "timeout"
     NAVIGATION = "navigation"
@@ -158,6 +162,7 @@ class WaitCondition(str, Enum):
 
 class ActionStatus(str, Enum):
     """Result status of an executed action."""
+
     SUCCESS = "success"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -166,6 +171,7 @@ class ActionStatus(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Action Data Model
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class Action:
@@ -195,6 +201,7 @@ class Action:
         optional: If True, failure won't stop the action chain.
         delay_after: Milliseconds to wait after this action completes.
     """
+
     type: ActionType | str
     selector: str | None = None
     text: str | None = None
@@ -236,7 +243,9 @@ class Action:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
-        result: dict[str, Any] = {"type": self.type.value if isinstance(self.type, ActionType) else self.type}
+        result: dict[str, Any] = {
+            "type": self.type.value if isinstance(self.type, ActionType) else self.type
+        }
         for f in self.__dataclass_fields__:  # type: ignore[attr-defined]
             if f == "type":
                 continue
@@ -249,6 +258,7 @@ class Action:
 @dataclass
 class ActionResult:
     """Result of executing a single action."""
+
     action: Action
     status: ActionStatus
     data: Any = None
@@ -274,6 +284,7 @@ class ActionResult:
 # ══════════════════════════════════════════════════════════════
 # PageActions — Action Chain
 # ══════════════════════════════════════════════════════════════
+
 
 class PageActions:
     """
@@ -351,7 +362,9 @@ class PageActions:
         return iter(self._actions)
 
     def __repr__(self) -> str:
-        types = [a.type.value if isinstance(a.type, ActionType) else str(a.type) for a in self._actions]
+        types = [
+            a.type.value if isinstance(a.type, ActionType) else str(a.type) for a in self._actions
+        ]
         return f"PageActions({types})"
 
     # ──────────────────────────────────────────────────────────
@@ -419,12 +432,14 @@ class PageActions:
                         result.error,
                     )
                     # Mark remaining actions as skipped
-                    for remaining in self._actions[i + 1:]:
-                        results.append(ActionResult(
-                            action=remaining,
-                            status=ActionStatus.SKIPPED,
-                            error=f"Skipped due to failure of action {i + 1}",
-                        ))
+                    for remaining in self._actions[i + 1 :]:
+                        results.append(
+                            ActionResult(
+                                action=remaining,
+                                status=ActionStatus.SKIPPED,
+                                error=f"Skipped due to failure of action {i + 1}",
+                            )
+                        )
                     break
 
             # Post-action delay
@@ -437,7 +452,9 @@ class PageActions:
 
         logger.info(
             "Action chain complete: %d succeeded, %d failed, %d skipped",
-            succeeded, failed, skipped,
+            succeeded,
+            failed,
+            skipped,
         )
 
         return results
@@ -454,11 +471,7 @@ class PageActions:
             List of base64-encoded screenshot strings.
         """
         results = await self.execute(page)
-        return [
-            r.screenshot_base64
-            for r in results
-            if r.screenshot_base64 is not None
-        ]
+        return [r.screenshot_base64 for r in results if r.screenshot_base64 is not None]
 
     # ──────────────────────────────────────────────────────────
     # Serialization
@@ -476,12 +489,14 @@ class PageActions:
     def to_json(self) -> str:
         """Serialize to JSON string."""
         import json
+
         return json.dumps(self.to_list(), ensure_ascii=False)
 
     @classmethod
     def from_json(cls, json_str: str, **kwargs: Any) -> PageActions:
         """Create from a JSON string."""
         import json
+
         data = json.loads(json_str)
         return cls.from_list(data, **kwargs)
 
@@ -489,6 +504,7 @@ class PageActions:
 # ══════════════════════════════════════════════════════════════
 # PageActionsBuilder — Fluent Interface
 # ══════════════════════════════════════════════════════════════
+
 
 class PageActionsBuilder:
     """
@@ -526,14 +542,16 @@ class PageActionsBuilder:
         description: str | None = None,
     ) -> PageActionsBuilder:
         """Click an element."""
-        self._actions.append(Action(
-            type=ActionType.CLICK,
-            selector=selector,
-            timeout=timeout or self._default_timeout,
-            optional=optional,
-            delay_after=delay_after,
-            description=description or f"Click '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.CLICK,
+                selector=selector,
+                timeout=timeout or self._default_timeout,
+                optional=optional,
+                delay_after=delay_after,
+                description=description or f"Click '{selector}'",
+            )
+        )
         return self
 
     def double_click(
@@ -543,13 +561,15 @@ class PageActionsBuilder:
         optional: bool = False,
     ) -> PageActionsBuilder:
         """Double-click an element."""
-        self._actions.append(Action(
-            type=ActionType.DOUBLE_CLICK,
-            selector=selector,
-            timeout=timeout or self._default_timeout,
-            optional=optional,
-            description=f"Double-click '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.DOUBLE_CLICK,
+                selector=selector,
+                timeout=timeout or self._default_timeout,
+                optional=optional,
+                description=f"Double-click '{selector}'",
+            )
+        )
         return self
 
     def right_click(
@@ -559,13 +579,15 @@ class PageActionsBuilder:
         optional: bool = False,
     ) -> PageActionsBuilder:
         """Right-click an element."""
-        self._actions.append(Action(
-            type=ActionType.RIGHT_CLICK,
-            selector=selector,
-            timeout=timeout or self._default_timeout,
-            optional=optional,
-            description=f"Right-click '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.RIGHT_CLICK,
+                selector=selector,
+                timeout=timeout or self._default_timeout,
+                optional=optional,
+                description=f"Right-click '{selector}'",
+            )
+        )
         return self
 
     def hover(
@@ -575,13 +597,15 @@ class PageActionsBuilder:
         optional: bool = False,
     ) -> PageActionsBuilder:
         """Hover over an element."""
-        self._actions.append(Action(
-            type=ActionType.HOVER,
-            selector=selector,
-            timeout=timeout or self._default_timeout,
-            optional=optional,
-            description=f"Hover '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.HOVER,
+                selector=selector,
+                timeout=timeout or self._default_timeout,
+                optional=optional,
+                description=f"Hover '{selector}'",
+            )
+        )
         return self
 
     def drag_and_drop(
@@ -591,13 +615,15 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Drag an element to another element."""
-        self._actions.append(Action(
-            type=ActionType.DRAG_AND_DROP,
-            selector=source,
-            value=target,
-            timeout=timeout or self._default_timeout,
-            description=f"Drag '{source}' to '{target}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.DRAG_AND_DROP,
+                selector=source,
+                value=target,
+                timeout=timeout or self._default_timeout,
+                description=f"Drag '{source}' to '{target}'",
+            )
+        )
         return self
 
     # ── Keyboard Actions ──────────────────────────────────────
@@ -611,15 +637,17 @@ class PageActionsBuilder:
         optional: bool = False,
     ) -> PageActionsBuilder:
         """Type text character by character into an element."""
-        self._actions.append(Action(
-            type=ActionType.TYPE,
-            selector=selector,
-            text=text,
-            amount=delay,
-            timeout=timeout or self._default_timeout,
-            optional=optional,
-            description=f"Type '{text[:30]}...' into '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.TYPE,
+                selector=selector,
+                text=text,
+                amount=delay,
+                timeout=timeout or self._default_timeout,
+                optional=optional,
+                description=f"Type '{text[:30]}...' into '{selector}'",
+            )
+        )
         return self
 
     def fill(
@@ -630,14 +658,16 @@ class PageActionsBuilder:
         optional: bool = False,
     ) -> PageActionsBuilder:
         """Fill an input field (faster than type, no key events)."""
-        self._actions.append(Action(
-            type=ActionType.FILL,
-            selector=selector,
-            text=text,
-            timeout=timeout or self._default_timeout,
-            optional=optional,
-            description=f"Fill '{selector}' with '{text[:30]}...'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.FILL,
+                selector=selector,
+                text=text,
+                timeout=timeout or self._default_timeout,
+                optional=optional,
+                description=f"Fill '{selector}' with '{text[:30]}...'",
+            )
+        )
         return self
 
     def press_key(
@@ -647,13 +677,15 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Press a keyboard key (e.g., 'Enter', 'Tab', 'Control+a')."""
-        self._actions.append(Action(
-            type=ActionType.PRESS,
-            key=key,
-            selector=selector,
-            timeout=timeout or self._default_timeout,
-            description=f"Press '{key}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.PRESS,
+                key=key,
+                selector=selector,
+                timeout=timeout or self._default_timeout,
+                description=f"Press '{key}'",
+            )
+        )
         return self
 
     # ── Scroll Actions ────────────────────────────────────────
@@ -665,13 +697,15 @@ class PageActionsBuilder:
         selector: str | None = None,
     ) -> PageActionsBuilder:
         """Scroll the page or a specific element."""
-        self._actions.append(Action(
-            type=ActionType.SCROLL,
-            direction=direction,
-            amount=amount,
-            selector=selector,
-            description=f"Scroll {direction} x{amount}",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.SCROLL,
+                direction=direction,
+                amount=amount,
+                selector=selector,
+                description=f"Scroll {direction} x{amount}",
+            )
+        )
         return self
 
     def scroll_down(self, amount: int = 3) -> PageActionsBuilder:
@@ -684,11 +718,13 @@ class PageActionsBuilder:
 
     def scroll_to_element(self, selector: str) -> PageActionsBuilder:
         """Scroll until an element is visible."""
-        self._actions.append(Action(
-            type=ActionType.SCROLL,
-            selector=selector,
-            description=f"Scroll to '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.SCROLL,
+                selector=selector,
+                description=f"Scroll to '{selector}'",
+            )
+        )
         return self
 
     # ── Wait Actions ──────────────────────────────────────────
@@ -701,33 +737,39 @@ class PageActionsBuilder:
         optional: bool = False,
     ) -> PageActionsBuilder:
         """Wait for an element to appear."""
-        self._actions.append(Action(
-            type=ActionType.WAIT,
-            selector=selector,
-            expected=state,
-            timeout=timeout or self._default_timeout,
-            optional=optional,
-            description=f"Wait for '{selector}' ({state})",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.WAIT,
+                selector=selector,
+                expected=state,
+                timeout=timeout or self._default_timeout,
+                optional=optional,
+                description=f"Wait for '{selector}' ({state})",
+            )
+        )
         return self
 
     def wait_ms(self, milliseconds: int) -> PageActionsBuilder:
         """Wait for a fixed duration."""
-        self._actions.append(Action(
-            type=ActionType.WAIT,
-            milliseconds=milliseconds,
-            description=f"Wait {milliseconds}ms",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.WAIT,
+                milliseconds=milliseconds,
+                description=f"Wait {milliseconds}ms",
+            )
+        )
         return self
 
     def wait_for_navigation(self, timeout: int | None = None) -> PageActionsBuilder:
         """Wait for navigation to complete."""
-        self._actions.append(Action(
-            type=ActionType.WAIT,
-            expected="navigation",
-            timeout=timeout or self._default_timeout,
-            description="Wait for navigation",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.WAIT,
+                expected="navigation",
+                timeout=timeout or self._default_timeout,
+                description="Wait for navigation",
+            )
+        )
         return self
 
     def wait_for_load_state(
@@ -736,12 +778,14 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Wait for page load state ('load', 'domcontentloaded', 'networkidle')."""
-        self._actions.append(Action(
-            type=ActionType.WAIT,
-            expected=f"load_state:{state}",
-            timeout=timeout or self._default_timeout,
-            description=f"Wait for load state '{state}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.WAIT,
+                expected=f"load_state:{state}",
+                timeout=timeout or self._default_timeout,
+                description=f"Wait for load state '{state}'",
+            )
+        )
         return self
 
     def wait_for_url(
@@ -750,12 +794,14 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Wait for URL to match a pattern."""
-        self._actions.append(Action(
-            type=ActionType.WAIT,
-            url=url,
-            timeout=timeout or self._default_timeout,
-            description=f"Wait for URL '{url}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.WAIT,
+                url=url,
+                timeout=timeout or self._default_timeout,
+                description=f"Wait for URL '{url}'",
+            )
+        )
         return self
 
     def wait_for_function(
@@ -764,13 +810,15 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Wait for a JavaScript function to return truthy."""
-        self._actions.append(Action(
-            type=ActionType.WAIT,
-            expression=expression,
-            expected="function",
-            timeout=timeout or self._default_timeout,
-            description=f"Wait for function: {expression[:50]}...",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.WAIT,
+                expression=expression,
+                expected="function",
+                timeout=timeout or self._default_timeout,
+                description=f"Wait for function: {expression[:50]}...",
+            )
+        )
         return self
 
     # ── Screenshot Actions ────────────────────────────────────
@@ -786,14 +834,16 @@ class PageActionsBuilder:
         desc = "Screenshot (full page)" if full_page else "Screenshot (viewport)"
         if selector:
             desc = f"Screenshot of '{selector}'"
-        self._actions.append(Action(
-            type=ActionType.SCREENSHOT,
-            full_page=full_page,
-            format=image_format,
-            quality=quality,
-            selector=selector,
-            description=desc,
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.SCREENSHOT,
+                full_page=full_page,
+                format=image_format,
+                quality=quality,
+                selector=selector,
+                description=desc,
+            )
+        )
         return self
 
     # ── Form Actions ──────────────────────────────────────────
@@ -805,13 +855,15 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Select option(s) in a <select> dropdown."""
-        self._actions.append(Action(
-            type=ActionType.SELECT,
-            selector=selector,
-            value=value,
-            timeout=timeout or self._default_timeout,
-            description=f"Select '{value}' in '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.SELECT,
+                selector=selector,
+                value=value,
+                timeout=timeout or self._default_timeout,
+                description=f"Select '{value}' in '{selector}'",
+            )
+        )
         return self
 
     def check(
@@ -820,12 +872,14 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Check a checkbox or radio button."""
-        self._actions.append(Action(
-            type=ActionType.CHECK,
-            selector=selector,
-            timeout=timeout or self._default_timeout,
-            description=f"Check '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.CHECK,
+                selector=selector,
+                timeout=timeout or self._default_timeout,
+                description=f"Check '{selector}'",
+            )
+        )
         return self
 
     def uncheck(
@@ -834,12 +888,14 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Uncheck a checkbox."""
-        self._actions.append(Action(
-            type=ActionType.UNCHECK,
-            selector=selector,
-            timeout=timeout or self._default_timeout,
-            description=f"Uncheck '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.UNCHECK,
+                selector=selector,
+                timeout=timeout or self._default_timeout,
+                description=f"Uncheck '{selector}'",
+            )
+        )
         return self
 
     def upload_file(
@@ -849,45 +905,53 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Upload file(s) via a file input."""
-        self._actions.append(Action(
-            type=ActionType.UPLOAD_FILE,
-            selector=selector,
-            value=file_path if isinstance(file_path, list) else [file_path],
-            timeout=timeout or self._default_timeout,
-            description=f"Upload file to '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.UPLOAD_FILE,
+                selector=selector,
+                value=file_path if isinstance(file_path, list) else [file_path],
+                timeout=timeout or self._default_timeout,
+                description=f"Upload file to '{selector}'",
+            )
+        )
         return self
 
     # ── Focus Actions ─────────────────────────────────────────
 
     def focus(self, selector: str) -> PageActionsBuilder:
         """Focus an element."""
-        self._actions.append(Action(
-            type=ActionType.FOCUS,
-            selector=selector,
-            description=f"Focus '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.FOCUS,
+                selector=selector,
+                description=f"Focus '{selector}'",
+            )
+        )
         return self
 
     def blur(self, selector: str) -> PageActionsBuilder:
         """Remove focus from an element."""
-        self._actions.append(Action(
-            type=ActionType.BLUR,
-            selector=selector,
-            description=f"Blur '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.BLUR,
+                selector=selector,
+                description=f"Blur '{selector}'",
+            )
+        )
         return self
 
     # ── Navigation Actions ────────────────────────────────────
 
     def goto(self, url: str, timeout: int | None = None) -> PageActionsBuilder:
         """Navigate to a URL."""
-        self._actions.append(Action(
-            type=ActionType.GOTO,
-            url=url,
-            timeout=timeout or self._default_timeout,
-            description=f"Navigate to '{url}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.GOTO,
+                url=url,
+                timeout=timeout or self._default_timeout,
+                description=f"Navigate to '{url}'",
+            )
+        )
         return self
 
     def go_back(self) -> PageActionsBuilder:
@@ -909,42 +973,50 @@ class PageActionsBuilder:
 
     def evaluate(self, expression: str) -> PageActionsBuilder:
         """Execute JavaScript in the page context."""
-        self._actions.append(Action(
-            type=ActionType.EVALUATE,
-            expression=expression,
-            description=f"Evaluate: {expression[:50]}...",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.EVALUATE,
+                expression=expression,
+                description=f"Evaluate: {expression[:50]}...",
+            )
+        )
         return self
 
     # ── Viewport Actions ──────────────────────────────────────
 
     def set_viewport(self, width: int, height: int) -> PageActionsBuilder:
         """Set the browser viewport size."""
-        self._actions.append(Action(
-            type=ActionType.SET_VIEWPORT,
-            width=width,
-            height=height,
-            description=f"Set viewport {width}x{height}",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.SET_VIEWPORT,
+                width=width,
+                height=height,
+                description=f"Set viewport {width}x{height}",
+            )
+        )
         return self
 
     # ── Frame Actions ─────────────────────────────────────────
 
     def switch_frame(self, selector: str) -> PageActionsBuilder:
         """Switch into an iframe."""
-        self._actions.append(Action(
-            type=ActionType.SWITCH_FRAME,
-            frame_selector=selector,
-            description=f"Switch to frame '{selector}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.SWITCH_FRAME,
+                frame_selector=selector,
+                description=f"Switch to frame '{selector}'",
+            )
+        )
         return self
 
     def switch_to_main_frame(self) -> PageActionsBuilder:
         """Switch back to the main frame."""
-        self._actions.append(Action(
-            type=ActionType.SWITCH_TO_MAIN_FRAME,
-            description="Switch to main frame",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.SWITCH_TO_MAIN_FRAME,
+                description="Switch to main frame",
+            )
+        )
         return self
 
     # ── Assertion Actions ─────────────────────────────────────
@@ -956,13 +1028,15 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Assert an element's state ('visible', 'hidden', 'attached', 'detached')."""
-        self._actions.append(Action(
-            type=ActionType.ASSERT_SELECTOR,
-            selector=selector,
-            expected=expected,
-            timeout=timeout or self._default_timeout,
-            description=f"Assert '{selector}' is {expected}",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.ASSERT_SELECTOR,
+                selector=selector,
+                expected=expected,
+                timeout=timeout or self._default_timeout,
+                description=f"Assert '{selector}' is {expected}",
+            )
+        )
         return self
 
     def assert_text(
@@ -972,22 +1046,26 @@ class PageActionsBuilder:
         timeout: int | None = None,
     ) -> PageActionsBuilder:
         """Assert an element contains specific text."""
-        self._actions.append(Action(
-            type=ActionType.ASSERT_TEXT,
-            selector=selector,
-            text=text,
-            timeout=timeout or self._default_timeout,
-            description=f"Assert '{selector}' contains '{text[:30]}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.ASSERT_TEXT,
+                selector=selector,
+                text=text,
+                timeout=timeout or self._default_timeout,
+                description=f"Assert '{selector}' contains '{text[:30]}'",
+            )
+        )
         return self
 
     def assert_url(self, url: str) -> PageActionsBuilder:
         """Assert the current URL matches a pattern."""
-        self._actions.append(Action(
-            type=ActionType.ASSERT_URL,
-            url=url,
-            description=f"Assert URL matches '{url}'",
-        ))
+        self._actions.append(
+            Action(
+                type=ActionType.ASSERT_URL,
+                url=url,
+                description=f"Assert URL matches '{url}'",
+            )
+        )
         return self
 
     # ── Debug Actions ─────────────────────────────────────────
@@ -1030,6 +1108,7 @@ class PageActionsBuilder:
 # Action Executor (Internal)
 # ══════════════════════════════════════════════════════════════
 
+
 class ActionExecutionError(Exception):
     """Raised when a page action fails to execute."""
 
@@ -1054,6 +1133,7 @@ class _ActionExecutor:
     async def execute(self, action: Action) -> ActionResult:
         """Execute a single action and return the result."""
         import time
+
         start = time.perf_counter()
 
         handler = self._get_handler(action.type)
@@ -1123,7 +1203,9 @@ class _ActionExecutor:
             ActionType.ASSERT_URL: self._handle_assert_url,
             ActionType.PAUSE: self._handle_pause,
         }
-        return handlers.get(ActionType(action_type) if isinstance(action_type, str) else action_type)
+        return handlers.get(
+            ActionType(action_type) if isinstance(action_type, str) else action_type
+        )
 
     # ── Mouse Handlers ────────────────────────────────────────
 
@@ -1258,7 +1340,7 @@ class _ActionExecutor:
                 f"""(selector) => {{
                     const el = document.querySelector(selector);
                     if (el) {{
-                        const delta = {pixels if direction in ('down', 'right') else -pixels};
+                        const delta = {pixels if direction in ("down", "right") else -pixels};
                         if ('{direction}' === 'down' || '{direction}' === 'up') {{
                             el.scrollBy(0, delta);
                         }} else {{
@@ -1392,9 +1474,7 @@ class _ActionExecutor:
 
     async def _handle_blur(self, action: Action) -> dict[str, Any]:
         self._require_selector(action)
-        await self._current_frame.evaluate(
-            f"document.querySelector('{action.selector}')?.blur()"
-        )
+        await self._current_frame.evaluate(f"document.querySelector('{action.selector}')?.blur()")
         return {"blurred": action.selector}
 
     # ── Navigation Handlers ───────────────────────────────────
@@ -1469,6 +1549,7 @@ class _ActionExecutor:
         if action.text is None:
             raise ActionExecutionError(action, "assert_text requires 'text'")
         from playwright.async_api import expect
+
         locator = self._current_frame.locator(action.selector)
         await expect(locator).to_contain_text(action.text, timeout=action.timeout)
         return {"asserted_text": action.text[:50], "in": action.selector}
@@ -1478,6 +1559,7 @@ class _ActionExecutor:
             raise ActionExecutionError(action, "assert_url requires 'url'")
         current_url = self._page.url
         import fnmatch
+
         if not fnmatch.fnmatch(current_url, action.url):
             raise ActionExecutionError(
                 action,

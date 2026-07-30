@@ -60,6 +60,7 @@ logger = logging.getLogger("agentcrawl.cache.memory")
 # Internal Entry Model
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass(slots=True)
 class _MemEntry:
     """
@@ -77,6 +78,7 @@ class _MemEntry:
         size_bytes: Approximate memory size of the value.
         tags: Tags for grouped invalidation.
     """
+
     value: bytes
     created_at: float = field(default_factory=time.time)
     expires_at: float | None = None
@@ -108,6 +110,7 @@ class _MemEntry:
 # ══════════════════════════════════════════════════════════════
 # Memory Cache Backend
 # ══════════════════════════════════════════════════════════════
+
 
 class MemoryCacheBackend(CacheBackend):
     """
@@ -160,10 +163,7 @@ class MemoryCacheBackend(CacheBackend):
     def active_count(self) -> int:
         """Number of non-expired entries."""
         now = time.time()
-        return sum(
-            1 for e in self._store.values()
-            if e.expires_at is None or e.expires_at > now
-        )
+        return sum(1 for e in self._store.values() if e.expires_at is None or e.expires_at > now)
 
     @property
     def total_bytes(self) -> int:
@@ -186,9 +186,7 @@ class MemoryCacheBackend(CacheBackend):
 
     async def _start_impl(self) -> None:
         """Start the background cleanup task."""
-        self._cleanup_task = asyncio.create_task(
-            self._cleanup_loop()
-        )
+        self._cleanup_task = asyncio.create_task(self._cleanup_loop())
         logger.info(
             "Memory cache started (max_size=%d, ttl=%ds, cleanup_interval=%ds)",
             self._config.max_size,
@@ -292,10 +290,7 @@ class MemoryCacheBackend(CacheBackend):
         """Clear all entries with the configured prefix."""
         async with self._lock:
             prefix = f"{self._config.prefix}:"
-            keys_to_remove = [
-                k for k in self._store
-                if k.startswith(prefix)
-            ]
+            keys_to_remove = [k for k in self._store if k.startswith(prefix)]
 
             for key in keys_to_remove:
                 entry = self._store[key]
@@ -312,10 +307,7 @@ class MemoryCacheBackend(CacheBackend):
             if pattern == "*":
                 return list(self._store.keys())
 
-            return [
-                key for key in self._store
-                if fnmatch.fnmatch(key, pattern)
-            ]
+            return [key for key in self._store if fnmatch.fnmatch(key, pattern)]
 
     async def _size_raw(self) -> int:
         """Get the number of non-expired entries."""
@@ -423,10 +415,7 @@ class MemoryCacheBackend(CacheBackend):
             Number of deleted entries.
         """
         async with self._lock:
-            keys_to_remove = [
-                key for key, entry in self._store.items()
-                if tag in entry.tags
-            ]
+            keys_to_remove = [key for key, entry in self._store.items() if tag in entry.tags]
 
             for key in keys_to_remove:
                 entry = self._store[key]
@@ -447,8 +436,7 @@ class MemoryCacheBackend(CacheBackend):
         tag_set = set(tags)
         async with self._lock:
             keys_to_remove = [
-                key for key, entry in self._store.items()
-                if tag_set.intersection(entry.tags)
+                key for key, entry in self._store.items() if tag_set.intersection(entry.tags)
             ]
 
             for key in keys_to_remove:
@@ -599,10 +587,7 @@ class MemoryCacheBackend(CacheBackend):
         Returns:
             Number of entries removed.
         """
-        expired_keys = [
-            key for key, entry in self._store.items()
-            if entry.is_expired
-        ]
+        expired_keys = [key for key, entry in self._store.items() if entry.is_expired]
 
         for key in expired_keys:
             entry = self._store[key]
@@ -656,15 +641,19 @@ class MemoryCacheBackend(CacheBackend):
             for i, (key, entry) in enumerate(self._store.items()):
                 if i >= 20:
                     break
-                sample.append({
-                    "key": key[:80],
-                    "size_bytes": entry.size_bytes,
-                    "is_expired": entry.is_expired,
-                    "ttl_remaining": round(entry.ttl_remaining, 1) if entry.ttl_remaining is not None else None,
-                    "access_count": entry.access_count,
-                    "age_seconds": round(time.time() - entry.created_at, 1),
-                    "tags": entry.tags,
-                })
+                sample.append(
+                    {
+                        "key": key[:80],
+                        "size_bytes": entry.size_bytes,
+                        "is_expired": entry.is_expired,
+                        "ttl_remaining": round(entry.ttl_remaining, 1)
+                        if entry.ttl_remaining is not None
+                        else None,
+                        "access_count": entry.access_count,
+                        "age_seconds": round(time.time() - entry.created_at, 1),
+                        "tags": entry.tags,
+                    }
+                )
 
             return {
                 "backend": "memory",

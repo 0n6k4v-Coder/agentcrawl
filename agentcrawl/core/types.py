@@ -57,7 +57,7 @@ RequestId: TypeAlias = str
 # Composite types
 JsonDict: TypeAlias = dict[str, Any]
 JsonList: TypeAlias = list[Any]
-JsonValue: TypeAlias = str | int | float | bool | None | JsonDict | JsonList
+JsonValue: TypeAlias = str | int | float | bool | JsonDict | JsonList | None
 Headers: TypeAlias = dict[str, str]
 Cookies: TypeAlias = list[dict[str, Any]]
 Metadata: TypeAlias = dict[str, Any]
@@ -76,8 +76,10 @@ ProgressCallback: TypeAlias = Callable[[int, int, str], None]  # (current, total
 # Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class OutputFormat(str, Enum):
     """Supported output formats for scraped content."""
+
     MARKDOWN = "markdown"
     JSON = "json"
     HTML = "html"
@@ -86,6 +88,7 @@ class OutputFormat(str, Enum):
 
 class CrawlStrategy(str, Enum):
     """Available crawling strategies."""
+
     BFS = "bfs"
     DFS = "dfs"
     BEST_FIRST = "best_first"
@@ -94,6 +97,7 @@ class CrawlStrategy(str, Enum):
 
 class ExtractionMethod(str, Enum):
     """Available extraction methods."""
+
     LLM = "llm"
     CSS = "css"
     XPATH = "xpath"
@@ -103,6 +107,7 @@ class ExtractionMethod(str, Enum):
 
 class ContentFilterType(str, Enum):
     """Available content filter types."""
+
     NONE = "none"
     BM25 = "bm25"
     PRUNING = "pruning"
@@ -111,6 +116,7 @@ class ContentFilterType(str, Enum):
 
 class ChunkerType(str, Enum):
     """Available chunker types."""
+
     NONE = "none"
     FIXED = "fixed"
     SENTENCE = "sentence"
@@ -121,6 +127,7 @@ class ChunkerType(str, Enum):
 
 class JobStatus(str, Enum):
     """Status of an async crawl job."""
+
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -131,6 +138,7 @@ class JobStatus(str, Enum):
 
 class BrowserType(str, Enum):
     """Supported browser engines."""
+
     CHROMIUM = "chromium"
     FIREFOX = "firefox"
     WEBKIT = "webkit"
@@ -138,6 +146,7 @@ class BrowserType(str, Enum):
 
 class CacheBackendType(str, Enum):
     """Available cache backends."""
+
     MEMORY = "memory"
     REDIS = "redis"
     DISK = "disk"
@@ -146,12 +155,14 @@ class CacheBackendType(str, Enum):
 
 class QueueBackendType(str, Enum):
     """Available queue backends."""
+
     MEMORY = "memory"
     REDIS = "redis"
 
 
 class ProxyRotationStrategy(str, Enum):
     """Proxy rotation strategies."""
+
     NONE = "none"
     ROUND_ROBIN = "round_robin"
     RANDOM = "random"
@@ -160,6 +171,7 @@ class ProxyRotationStrategy(str, Enum):
 
 class LogLevel(str, Enum):
     """Logging levels."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -171,8 +183,10 @@ class LogLevel(str, Enum):
 # TypedDicts (for API responses and structured data)
 # ══════════════════════════════════════════════════════════════
 
+
 class ScrapeRequestDict(TypedDict, total=False):
     """Typed dictionary for scrape API requests."""
+
     url: str
     output_format: str
     include_links: bool
@@ -195,6 +209,7 @@ class ScrapeRequestDict(TypedDict, total=False):
 
 class ScrapeResponseDict(TypedDict, total=False):
     """Typed dictionary for scrape API responses."""
+
     url: str
     success: bool
     status_code: int
@@ -218,6 +233,7 @@ class ScrapeResponseDict(TypedDict, total=False):
 
 class CrawlRequestDict(TypedDict, total=False):
     """Typed dictionary for crawl API requests."""
+
     url: str
     strategy: str
     max_depth: int
@@ -231,6 +247,7 @@ class CrawlRequestDict(TypedDict, total=False):
 
 class CrawlJobResponseDict(TypedDict, total=False):
     """Typed dictionary for crawl job responses."""
+
     job_id: str
     status: str
     start_url: str
@@ -245,6 +262,7 @@ class CrawlJobResponseDict(TypedDict, total=False):
 
 class SearchRequestDict(TypedDict, total=False):
     """Typed dictionary for search API requests."""
+
     query: str
     max_results: int
     scrape_results: bool
@@ -254,6 +272,7 @@ class SearchRequestDict(TypedDict, total=False):
 
 class MapRequestDict(TypedDict, total=False):
     """Typed dictionary for map API requests."""
+
     url: str
     max_urls: int
     use_sitemap: bool
@@ -264,6 +283,7 @@ class MapRequestDict(TypedDict, total=False):
 
 class ExtractRequestDict(TypedDict, total=False):
     """Typed dictionary for extract API requests."""
+
     url: str
     schema: dict[str, Any]
     method: str
@@ -272,6 +292,7 @@ class ExtractRequestDict(TypedDict, total=False):
 
 class HealthResponseDict(TypedDict, total=False):
     """Typed dictionary for health check responses."""
+
     status: str
     version: str
     uptime_seconds: float
@@ -284,6 +305,7 @@ class HealthResponseDict(TypedDict, total=False):
 
 class ErrorResponseDict(TypedDict, total=False):
     """Typed dictionary for error responses."""
+
     error: str
     detail: str
     status_code: int
@@ -293,6 +315,7 @@ class ErrorResponseDict(TypedDict, total=False):
 # ══════════════════════════════════════════════════════════════
 # Protocols (Structural Typing)
 # ══════════════════════════════════════════════════════════════
+
 
 @runtime_checkable
 class Scrapable(Protocol):
@@ -385,6 +408,7 @@ class Startable(Protocol):
 # Type Guards
 # ══════════════════════════════════════════════════════════════
 
+
 def is_crawl_result(obj: Any) -> TypeGuard[Any]:
     """Check if an object is a CrawlResult."""
     return (
@@ -447,11 +471,7 @@ def is_chunk(obj: Any) -> TypeGuard[Any]:
 
 def is_citation(obj: Any) -> TypeGuard[Any]:
     """Check if an object is a Citation."""
-    return (
-        hasattr(obj, "number")
-        and hasattr(obj, "url")
-        and hasattr(obj, "display_title")
-    )
+    return hasattr(obj, "number") and hasattr(obj, "url") and hasattr(obj, "display_title")
 
 
 def is_json_dict(obj: Any) -> TypeGuard[JsonDict]:
@@ -479,13 +499,14 @@ def is_html(text: str) -> bool:
 def is_markdown(text: str) -> bool:
     """Check if a string looks like Markdown (heuristic)."""
     import re
+
     md_patterns = [
-        r"^#{1,6}\s",       # Headings
-        r"^\*\*.+\*\*",     # Bold
-        r"^\[.+\]\(.+\)",   # Links
-        r"^```",            # Code blocks
-        r"^\s*[-*+]\s",     # List items
-        r"^>",              # Blockquotes
+        r"^#{1,6}\s",  # Headings
+        r"^\*\*.+\*\*",  # Bold
+        r"^\[.+\]\(.+\)",  # Links
+        r"^```",  # Code blocks
+        r"^\s*[-*+]\s",  # List items
+        r"^>",  # Blockquotes
     ]
     return any(re.search(pattern, text, re.MULTILINE) for pattern in md_patterns)
 
@@ -497,37 +518,48 @@ def is_markdown(text: str) -> bool:
 # These are imported lazily to avoid circular dependencies.
 # Use direct imports from the source modules for type checking.
 
+
 def __getattr__(name: str) -> Any:
     """Lazy import for core types to avoid circular dependencies."""
     if name == "CrawlResult":
         from agentcrawl.core.engine import CrawlResult
+
         return CrawlResult
     if name == "CrawlJobResult":
         from agentcrawl.core.engine import CrawlJobResult
+
         return CrawlJobResult
     if name == "EngineStats":
         from agentcrawl.core.engine import EngineStats
+
         return EngineStats
     if name == "PipelineContext":
         from agentcrawl.core.pipeline import PipelineContext
+
         return PipelineContext
     if name == "StageResult":
         from agentcrawl.core.pipeline import StageResult
+
         return StageResult
     if name == "PipelineStage":
         from agentcrawl.core.pipeline import PipelineStage
+
         return PipelineStage
     if name == "Pipeline":
         from agentcrawl.core.pipeline import Pipeline
+
         return Pipeline
     if name == "CrawlSession":
         from agentcrawl.core.session import CrawlSession
+
         return CrawlSession
     if name == "PageVisit":
         from agentcrawl.core.session import PageVisit
+
         return PageVisit
     if name == "SessionState":
         from agentcrawl.core.session import SessionState
+
         return SessionState
     raise AttributeError(f"module 'agentcrawl.core.types' has no attribute {name!r}")
 

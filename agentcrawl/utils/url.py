@@ -67,13 +67,31 @@ from urllib.parse import (
 
 # Tracking parameters to remove during normalization
 TRACKING_PARAMS: set[str] = {
-    "utm_source", "utm_medium", "utm_campaign", "utm_term",
-    "utm_content", "utm_id", "utm_cid", "utm_reader",
-    "fbclid", "gclid", "gclsrc", "dclid", "msclkid",
-    "mc_cid", "mc_eid", "yclid", "twclid",
-    "ref", "referrer", "source",
-    "_ga", "_gid", "_gl",
-    "igshid", "s_kwcid",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "utm_id",
+    "utm_cid",
+    "utm_reader",
+    "fbclid",
+    "gclid",
+    "gclsrc",
+    "dclid",
+    "msclkid",
+    "mc_cid",
+    "mc_eid",
+    "yclid",
+    "twclid",
+    "ref",
+    "referrer",
+    "source",
+    "_ga",
+    "_gid",
+    "_gl",
+    "igshid",
+    "s_kwcid",
 }
 
 
@@ -179,12 +197,10 @@ def _normalize_query(
 
     if remove_tracking:
         params = {
-            k: v for k, v in params.items()
+            k: v
+            for k, v in params.items()
             if k.lower() not in TRACKING_PARAMS
-            and not any(
-                k.lower().startswith(p)
-                for p in ("utm_", "_ga", "fb")
-            )
+            and not any(k.lower().startswith(p) for p in ("utm_", "_ga", "fb"))
         }
 
     if not params:
@@ -198,6 +214,7 @@ def _normalize_query(
 # ══════════════════════════════════════════════════════════════
 # Validation
 # ══════════════════════════════════════════════════════════════
+
 
 def is_valid_url(url: str, require_http: bool = True) -> bool:
     """
@@ -274,6 +291,7 @@ def is_same_domain(url_a: str, url_b: str) -> bool:
 # Domain Extraction
 # ══════════════════════════════════════════════════════════════
 
+
 def get_domain(url: str) -> str:
     """
     Extract the full domain (including subdomain) from a URL.
@@ -325,11 +343,31 @@ def get_base_domain(url: str) -> str:
 
     # Handle two-part TLDs
     two_part_tlds = {
-        "co.uk", "co.jp", "co.kr", "co.in", "co.nz", "co.za",
-        "com.au", "com.br", "com.cn", "com.mx", "com.sg",
-        "com.tw", "com.hk", "com.ar", "com.co", "com.pe",
-        "org.uk", "org.au", "net.au", "ac.uk", "gov.uk",
-        "ne.jp", "or.jp", "go.jp", "ac.jp",
+        "co.uk",
+        "co.jp",
+        "co.kr",
+        "co.in",
+        "co.nz",
+        "co.za",
+        "com.au",
+        "com.br",
+        "com.cn",
+        "com.mx",
+        "com.sg",
+        "com.tw",
+        "com.hk",
+        "com.ar",
+        "com.co",
+        "com.pe",
+        "org.uk",
+        "org.au",
+        "net.au",
+        "ac.uk",
+        "gov.uk",
+        "ne.jp",
+        "or.jp",
+        "go.jp",
+        "ac.jp",
     }
 
     if len(parts) >= 3:
@@ -397,6 +435,7 @@ def get_tld(url: str) -> str:
 # ══════════════════════════════════════════════════════════════
 # URL Manipulation
 # ══════════════════════════════════════════════════════════════
+
 
 def join_url(base: str, path: str) -> str:
     """
@@ -516,6 +555,7 @@ def remove_fragment(url: str) -> str:
 # Pattern Matching
 # ══════════════════════════════════════════════════════════════
 
+
 def url_matches_pattern(url: str, pattern: str) -> bool:
     """
     Check if a URL matches a glob pattern.
@@ -584,7 +624,7 @@ def filter_urls(
     for url in urls:
         # Include check
         if include_patterns and not any(url_matches_pattern(url, p) for p in include_patterns):
-                continue
+            continue
 
         # Exclude check
         if exclude_patterns and any(url_matches_pattern(url, p) for p in exclude_patterns):
@@ -598,6 +638,7 @@ def filter_urls(
 # ══════════════════════════════════════════════════════════════
 # Special URLs
 # ══════════════════════════════════════════════════════════════
+
 
 def get_robots_url(url: str) -> str:
     """
@@ -679,6 +720,7 @@ def get_origin(url: str) -> str:
 # Encoding
 # ══════════════════════════════════════════════════════════════
 
+
 def encode_url(url: str) -> str:
     """
     Percent-encode special characters in a URL.
@@ -716,6 +758,7 @@ def decode_url(url: str) -> str:
 # ══════════════════════════════════════════════════════════════
 # Comparison & Deduplication
 # ══════════════════════════════════════════════════════════════
+
 
 def urls_equal(url_a: str, url_b: str) -> bool:
     """
@@ -756,6 +799,7 @@ def deduplicate_urls(urls: list[str]) -> list[str]:
 # ══════════════════════════════════════════════════════════════
 # Path Utilities
 # ══════════════════════════════════════════════════════════════
+
 
 def get_path(url: str) -> str:
     """
@@ -846,11 +890,36 @@ def is_file_url(url: str) -> bool:
     """
     ext = get_file_extension(url)
     file_extensions = {
-        ".pdf", ".zip", ".tar", ".gz", ".doc", ".docx",
-        ".xls", ".xlsx", ".ppt", ".pptx", ".csv",
-        ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp",
-        ".mp3", ".mp4", ".avi", ".mov", ".webm",
-        ".css", ".js", ".json", ".xml", ".txt",
-        ".exe", ".dmg", ".iso", ".apk",
+        ".pdf",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".csv",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".svg",
+        ".webp",
+        ".mp3",
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".webm",
+        ".css",
+        ".js",
+        ".json",
+        ".xml",
+        ".txt",
+        ".exe",
+        ".dmg",
+        ".iso",
+        ".apk",
     }
     return ext in file_extensions

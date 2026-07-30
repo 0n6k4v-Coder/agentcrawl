@@ -50,8 +50,10 @@ logger = logging.getLogger("agentcrawl.server.monitoring")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 class HealthStatus(str, Enum):
     """Health status levels."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -70,6 +72,7 @@ class ComponentHealth:
         latency_ms: Check latency.
         details: Additional details.
     """
+
     name: str
     status: HealthStatus = HealthStatus.UNKNOWN
     message: str = ""
@@ -100,6 +103,7 @@ class HealthReport:
         resources: Resource usage info.
         stats: Operational statistics.
     """
+
     status: HealthStatus = HealthStatus.UNKNOWN
     version: str = ""
     uptime_seconds: float = 0.0
@@ -144,6 +148,7 @@ class HealthReport:
 # ══════════════════════════════════════════════════════════════
 # Health Checker
 # ══════════════════════════════════════════════════════════════
+
 
 class HealthChecker:
     """
@@ -525,6 +530,7 @@ class HealthChecker:
         """Get application version."""
         try:
             import agentcrawl
+
             return agentcrawl.__version__
         except Exception:
             return "unknown"

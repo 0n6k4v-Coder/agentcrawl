@@ -34,6 +34,7 @@ logger = logging.getLogger("agentcrawl.server.interact")
 # Session Management
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class InteractionSession:
     """
@@ -42,6 +43,7 @@ class InteractionSession:
     Maintains a browser context with cookies and state
     across multiple interaction requests.
     """
+
     session_id: str
     created_at: float = field(default_factory=time.time)
     last_active: float = field(default_factory=time.time)
@@ -76,7 +78,7 @@ def _create_session() -> InteractionSession:
     # Cleanup old sessions (keep last 50)
     if len(_sessions) > 50:
         sorted_sessions = sorted(_sessions.values(), key=lambda s: s.last_active)
-        for old in sorted_sessions[:len(_sessions) - 50]:
+        for old in sorted_sessions[: len(_sessions) - 50]:
             old.is_active = False
             del _sessions[old.session_id]
 
@@ -94,6 +96,7 @@ def _get_session(session_id: str) -> InteractionSession | None:
 # ══════════════════════════════════════════════════════════════
 # Request / Response Models
 # ══════════════════════════════════════════════════════════════
+
 
 class ActionStep(BaseModel):
     """A single browser action."""
@@ -160,6 +163,7 @@ class SessionCreateRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Handlers
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_interact(
     engine: Any,
@@ -395,6 +399,7 @@ async def handle_destroy_session(session_id: str) -> JSONResponse:
 # Action Execution
 # ══════════════════════════════════════════════════════════════
 
+
 async def _execute_interaction(
     engine: Any,
     session: InteractionSession,
@@ -446,10 +451,12 @@ async def _execute_interaction(
 
     # Screenshot action
     if request.screenshot:
-        actions.append({
-            "type": "screenshot",
-            "full_page": request.full_page,
-        })
+        actions.append(
+            {
+                "type": "screenshot",
+                "full_page": request.full_page,
+            }
+        )
 
     # Build config
     config = CrawlerConfig(

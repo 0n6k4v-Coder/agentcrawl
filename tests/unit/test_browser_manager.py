@@ -31,6 +31,7 @@ import pytest
 # Fixtures
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def mock_playwright() -> MagicMock:
     """Mock Playwright instance."""
@@ -95,6 +96,7 @@ def default_config() -> Any:
 # Initialization
 # ══════════════════════════════════════════════════════════════
 
+
 class TestBrowserManagerInit:
     """Tests for BrowserManager initialization."""
 
@@ -139,6 +141,7 @@ class TestBrowserManagerInit:
 # ══════════════════════════════════════════════════════════════
 # Launch & Shutdown
 # ══════════════════════════════════════════════════════════════
+
 
 class TestBrowserLaunchShutdown:
     """Tests for browser launch and shutdown."""
@@ -202,6 +205,7 @@ class TestBrowserLaunchShutdown:
 # ══════════════════════════════════════════════════════════════
 # Context & Page Management
 # ══════════════════════════════════════════════════════════════
+
 
 class TestContextPageManagement:
     """Tests for context and page management."""
@@ -297,6 +301,7 @@ class TestContextPageManagement:
 # Stealth Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 class TestStealthConfig:
     """Tests for stealth configuration."""
 
@@ -329,6 +334,7 @@ class TestStealthConfig:
 # ══════════════════════════════════════════════════════════════
 # Viewport Configuration
 # ══════════════════════════════════════════════════════════════
+
 
 class TestViewportConfig:
     """Tests for viewport configuration."""
@@ -390,6 +396,7 @@ class TestViewportConfig:
 # User-Agent Configuration
 # ══════════════════════════════════════════════════════════════
 
+
 class TestUserAgentConfig:
     """Tests for user-agent configuration."""
 
@@ -421,6 +428,7 @@ class TestUserAgentConfig:
 # ══════════════════════════════════════════════════════════════
 # Pool Configuration
 # ══════════════════════════════════════════════════════════════
+
 
 class TestPoolConfig:
     """Tests for browser pool configuration."""
@@ -455,6 +463,7 @@ class TestPoolConfig:
 # ══════════════════════════════════════════════════════════════
 # Error Handling
 # ══════════════════════════════════════════════════════════════
+
 
 class TestErrorHandling:
     """Tests for error handling."""
@@ -500,6 +509,7 @@ class TestErrorHandling:
 # ══════════════════════════════════════════════════════════════
 # Stats & Properties
 # ══════════════════════════════════════════════════════════════
+
 
 class TestStatsProperties:
     """Tests for stats and properties."""

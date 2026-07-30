@@ -34,6 +34,7 @@ logger = logging.getLogger("agentcrawl.server.search")
 # Request / Response Models
 # ══════════════════════════════════════════════════════════════
 
+
 class SearchRequest(BaseModel):
     """Request body for POST /search."""
 
@@ -107,6 +108,7 @@ class SearchResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Handler
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_search(body: dict[str, Any]) -> JSONResponse:
     """
@@ -231,7 +233,7 @@ async def handle_search(body: dict[str, Any]) -> JSONResponse:
     }
 
     logger.info(
-        "Search: \"%s\" (%s) → %d results (%.0fms)",
+        'Search: "%s" (%s) → %d results (%.0fms)',
         request.query[:50],
         request.provider,
         len(result_items),
@@ -244,6 +246,7 @@ async def handle_search(body: dict[str, Any]) -> JSONResponse:
 # ══════════════════════════════════════════════════════════════
 # Result Scraping
 # ══════════════════════════════════════════════════════════════
+
 
 async def _scrape_search_results(
     results: list[dict[str, Any]],

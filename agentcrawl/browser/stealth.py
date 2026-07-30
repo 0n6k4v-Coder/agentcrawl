@@ -60,6 +60,7 @@ logger = logging.getLogger("agentcrawl.browser.stealth")
 # Fingerprint Data Model
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class BrowserFingerprint:
     """
@@ -94,6 +95,7 @@ class BrowserFingerprint:
         os_name: Operating system name.
         browser_name: Browser name.
     """
+
     user_agent: str = ""
     platform: str = "Win32"
     language: str = "en-US"
@@ -228,8 +230,12 @@ class BrowserFingerprint:
         # Screen resolution
         if platform_category == "desktop":
             resolutions = [
-                (1920, 1080), (2560, 1440), (1366, 768),
-                (1536, 864), (1440, 900), (1680, 1050),
+                (1920, 1080),
+                (2560, 1440),
+                (1366, 768),
+                (1536, 864),
+                (1440, 900),
+                (1680, 1050),
             ]
             screen_w, screen_h = rng.choice(resolutions)
             avail_h = screen_h - rng.choice([40, 48, 80])
@@ -237,8 +243,11 @@ class BrowserFingerprint:
             touch_points = 0
         elif platform_category == "mobile":
             resolutions = [
-                (375, 812), (390, 844), (414, 896),
-                (360, 780), (412, 915),
+                (375, 812),
+                (390, 844),
+                (414, 896),
+                (360, 780),
+                (412, 915),
             ]
             screen_w, screen_h = rng.choice(resolutions)
             avail_h = screen_h
@@ -246,7 +255,9 @@ class BrowserFingerprint:
             touch_points = rng.choice([1, 5, 10])
         else:  # tablet
             resolutions = [
-                (768, 1024), (810, 1080), (834, 1194),
+                (768, 1024),
+                (810, 1080),
+                (834, 1194),
                 (800, 1280),
             ]
             screen_w, screen_h = rng.choice(resolutions)
@@ -265,10 +276,22 @@ class BrowserFingerprint:
         # WebGL
         if os_name == "Windows":
             gpus = [
-                ("Google Inc. (NVIDIA)", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
-                ("Google Inc. (NVIDIA)", "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
-                ("Google Inc. (AMD)", "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
-                ("Google Inc. (Intel)", "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                (
+                    "Google Inc. (NVIDIA)",
+                    "ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                ),
+                (
+                    "Google Inc. (NVIDIA)",
+                    "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                ),
+                (
+                    "Google Inc. (AMD)",
+                    "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                ),
+                (
+                    "Google Inc. (Intel)",
+                    "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                ),
             ]
         elif os_name == "macOS":
             gpus = [
@@ -279,7 +302,10 @@ class BrowserFingerprint:
             ]
         else:
             gpus = [
-                ("Google Inc. (Intel)", "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630, OpenGL 4.6)"),
+                (
+                    "Google Inc. (Intel)",
+                    "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630, OpenGL 4.6)",
+                ),
                 ("Google Inc. (NVIDIA)", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650, OpenGL 4.5)"),
             ]
         webgl_vendor, webgl_renderer = rng.choice(gpus)
@@ -334,6 +360,7 @@ class BrowserFingerprint:
 # JavaScript Injection Scripts
 # ══════════════════════════════════════════════════════════════
 
+
 def _build_stealth_script(fp: BrowserFingerprint) -> str:
     """
     Build the complete stealth injection script for a fingerprint.
@@ -360,7 +387,9 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("  });")
     parts.append("")
     parts.append("  // Also patch the prototype")
-    parts.append("  const originalDesc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'webdriver');")
+    parts.append(
+        "  const originalDesc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'webdriver');"
+    )
     parts.append("  if (originalDesc) {")
     parts.append("    Object.defineProperty(Navigator.prototype, 'webdriver', {")
     parts.append("      get: () => undefined,")
@@ -375,8 +404,12 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("    window.chrome = {")
     parts.append("      app: {")
     parts.append("        isInstalled: false,")
-    parts.append("        InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' },")
-    parts.append("        RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' },")
+    parts.append(
+        "        InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' },"
+    )
+    parts.append(
+        "        RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' },"
+    )
     parts.append("        getDetails: () => null,")
     parts.append("        getIsInstalled: () => false,")
     parts.append("      },")
@@ -392,14 +425,28 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("          OS_UPDATE: 'os_update',")
     parts.append("          PERIODIC: 'periodic',")
     parts.append("        },")
-    parts.append("        PlatformArch: { ARM: 'arm', ARM64: 'arm64', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },")
-    parts.append("        PlatformNaclArch: { ARM: 'arm', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },")
-    parts.append("        PlatformOs: { ANDROID: 'android', CROS: 'cros', LINUX: 'linux', MAC: 'mac', OPENBSD: 'openbsd', WIN: 'win' },")
-    parts.append("        RequestUpdateCheckStatus: { NO_UPDATE: 'no_update', THROTTLED: 'throttled', UPDATE_AVAILABLE: 'update_available' },")
-    parts.append("        connect: function() { return { onDisconnect: { addListener: function() {} }, onMessage: { addListener: function() {} }, postMessage: function() {} }; },")
-    parts.append("        sendMessage: function() { if (arguments.length > 0 && typeof arguments[arguments.length - 1] === 'function') { arguments[arguments.length - 1](); } },")
+    parts.append(
+        "        PlatformArch: { ARM: 'arm', ARM64: 'arm64', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },"
+    )
+    parts.append(
+        "        PlatformNaclArch: { ARM: 'arm', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },"
+    )
+    parts.append(
+        "        PlatformOs: { ANDROID: 'android', CROS: 'cros', LINUX: 'linux', MAC: 'mac', OPENBSD: 'openbsd', WIN: 'win' },"
+    )
+    parts.append(
+        "        RequestUpdateCheckStatus: { NO_UPDATE: 'no_update', THROTTLED: 'throttled', UPDATE_AVAILABLE: 'update_available' },"
+    )
+    parts.append(
+        "        connect: function() { return { onDisconnect: { addListener: function() {} }, onMessage: { addListener: function() {} }, postMessage: function() {} }; },"
+    )
+    parts.append(
+        "        sendMessage: function() { if (arguments.length > 0 && typeof arguments[arguments.length - 1] === 'function') { arguments[arguments.length - 1](); } },"
+    )
     parts.append("      },")
-    parts.append("      csi: function() { return { startE: Date.now(), onloadT: Date.now() + 100, pageT: Date.now() + 100, tran: 15 }; },")
+    parts.append(
+        "      csi: function() { return { startE: Date.now(), onloadT: Date.now() + 100, pageT: Date.now() + 100, tran: 15 }; },"
+    )
     parts.append("      loadTimes: function() {")
     parts.append("        return {")
     parts.append("          commitLoadTime: Date.now() / 1000,")
@@ -485,11 +532,21 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("  });")
     parts.append("")
     parts.append("  const chromePlugins = [")
-    parts.append("    makePlugin('PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
-    parts.append("    makePlugin('Chrome PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
-    parts.append("    makePlugin('Chromium PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
-    parts.append("    makePlugin('Microsoft Edge PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
-    parts.append("    makePlugin('WebKit built-in PDF', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),")
+    parts.append(
+        "    makePlugin('PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),"
+    )
+    parts.append(
+        "    makePlugin('Chrome PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),"
+    )
+    parts.append(
+        "    makePlugin('Chromium PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),"
+    )
+    parts.append(
+        "    makePlugin('Microsoft Edge PDF Viewer', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),"
+    )
+    parts.append(
+        "    makePlugin('WebKit built-in PDF', 'Portable Document Format', 'internal-pdf-viewer', [pdfMime]),"
+    )
     parts.append("  ];")
     parts.append("")
     parts.append("  Object.defineProperty(navigator, 'plugins', {")
@@ -498,7 +555,9 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("      chromePlugins.forEach((p, i) => {")
     parts.append("        Object.defineProperty(list, i, { get: () => p, enumerable: true });")
     parts.append("      });")
-    parts.append("      Object.defineProperty(list, 'length', { get: () => chromePlugins.length, enumerable: true });")
+    parts.append(
+        "      Object.defineProperty(list, 'length', { get: () => chromePlugins.length, enumerable: true });"
+    )
     parts.append("      list.item = (i) => chromePlugins[i] || null;")
     parts.append("      list.namedItem = (n) => chromePlugins.find(p => p.name === n) || null;")
     parts.append("      return list;")
@@ -513,7 +572,9 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("      mimes.forEach((m, i) => {")
     parts.append("        Object.defineProperty(list, i, { get: () => m, enumerable: true });")
     parts.append("      });")
-    parts.append("      Object.defineProperty(list, 'length', { get: () => mimes.length, enumerable: true });")
+    parts.append(
+        "      Object.defineProperty(list, 'length', { get: () => mimes.length, enumerable: true });"
+    )
     parts.append("      list.item = (i) => mimes[i] || null;")
     parts.append("      list.namedItem = (n) => mimes.find(m => m.type === n) || null;")
     parts.append("      return list;")
@@ -593,7 +654,9 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("      const ctx = this.getContext('2d');")
     parts.append("      if (ctx) {")
     parts.append("        // Generate deterministic noise based on seed")
-    parts.append("        const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;")
+    parts.append(
+        "        const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;"
+    )
     parts.append("        canvasNoiseCounter++;")
     parts.append("        const opacity = (noise / 233280) * 0.01; // 0-1% opacity noise")
     parts.append("        ctx.save();")
@@ -611,7 +674,9 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("    if (this.width > 0 && this.height > 0) {")
     parts.append("      const ctx = this.getContext('2d');")
     parts.append("      if (ctx) {")
-    parts.append("        const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;")
+    parts.append(
+        "        const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;"
+    )
     parts.append("        canvasNoiseCounter++;")
     parts.append("        const opacity = (noise / 233280) * 0.01;")
     parts.append("        ctx.save();")
@@ -628,15 +693,21 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("  CanvasRenderingContext2D.prototype.getImageData = function(sx, sy, sw, sh) {")
     parts.append("    const imageData = originalGetImageData.call(this, sx, sy, sw, sh);")
     parts.append("    if (imageData && imageData.data.length > 0) {")
-    parts.append("      const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;")
+    parts.append(
+        "      const noise = ((canvasNoiseSeed + canvasNoiseCounter) * 9301 + 49297) % 233280;"
+    )
     parts.append("      canvasNoiseCounter++;")
     parts.append("      const noiseValue = Math.floor((noise / 233280) * 2); // 0 or 1")
     parts.append("      // Apply subtle noise to a few random pixels")
     parts.append("      for (let i = 0; i < Math.min(4, imageData.data.length / 4); i++) {")
     parts.append("        const idx = Math.floor(Math.random() * (imageData.data.length / 4)) * 4;")
     parts.append("        imageData.data[idx] = Math.min(255, imageData.data[idx] + noiseValue);")
-    parts.append("        imageData.data[idx + 1] = Math.min(255, imageData.data[idx + 1] + noiseValue);")
-    parts.append("        imageData.data[idx + 2] = Math.min(255, imageData.data[idx + 2] + noiseValue);")
+    parts.append(
+        "        imageData.data[idx + 1] = Math.min(255, imageData.data[idx + 1] + noiseValue);"
+    )
+    parts.append(
+        "        imageData.data[idx + 2] = Math.min(255, imageData.data[idx + 2] + noiseValue);"
+    )
     parts.append("      }")
     parts.append("    }")
     parts.append("    return imageData;")
@@ -697,14 +768,18 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("  // 11. Function.toString() protection")
     parts.append("  // ──────────────────────────────────────────────────────────")
     parts.append("  const originalToString = Function.prototype.toString;")
-    parts.append("  const nativeCodeRegex = /^function\\\\s+\\\\w+\\\\(\\\\)\\\\s*\\\\{\\\\s*\\\\[native code\\\\]\\\\s*\\\\}$/;")
+    parts.append(
+        "  const nativeCodeRegex = /^function\\\\s+\\\\w+\\\\(\\\\)\\\\s*\\\\{\\\\s*\\\\[native code\\\\]\\\\s*\\\\}$/;"
+    )
     parts.append("")
     parts.append("  const patchedFunctions = new Map();")
     parts.append("")
     parts.append("  const registerNative = (obj, prop, originalName) => {")
     parts.append("    const fn = obj[prop];")
     parts.append("    if (typeof fn === 'function') {")
-    parts.append("      patchedFunctions.set(fn, `function ${originalName || prop}() { [native code] }`);")
+    parts.append(
+        "      patchedFunctions.set(fn, `function ${originalName || prop}() { [native code] }`);"
+    )
     parts.append("    }")
     parts.append("  };")
     parts.append("")
@@ -715,9 +790,11 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("    return originalToString.call(this);")
     parts.append("  };")
     parts.append("")
-    parts.append("  patchedFunctions.set(Function.prototype.toString, 'function toString() { [native code] }');")
+    parts.append(
+        "  patchedFunctions.set(Function.prototype.toString, 'function toString() { [native code] }');"
+    )
     parts.append("")
-    parts.append("  // Register key patched functions as \"native\"")
+    parts.append('  // Register key patched functions as "native"')
     parts.append("  registerNative(navigator, 'webdriver', 'get webdriver');")
     parts.append("  registerNative(navigator, 'plugins', 'get plugins');")
     parts.append("  registerNative(navigator, 'mimeTypes', 'get mimeTypes');")
@@ -753,10 +830,18 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
     parts.append("    const originalGetBattery = navigator.getBattery;")
     parts.append("    navigator.getBattery = function() {")
     parts.append("      return originalGetBattery.call(this).then(battery => {")
-    parts.append("        Object.defineProperty(battery, 'charging', { get: () => true, configurable: true });")
-    parts.append("        Object.defineProperty(battery, 'chargingTime', { get: () => 0, configurable: true });")
-    parts.append("        Object.defineProperty(battery, 'dischargingTime', { get: () => Infinity, configurable: true });")
-    parts.append("        Object.defineProperty(battery, 'level', { get: () => 1.0, configurable: true });")
+    parts.append(
+        "        Object.defineProperty(battery, 'charging', { get: () => true, configurable: true });"
+    )
+    parts.append(
+        "        Object.defineProperty(battery, 'chargingTime', { get: () => 0, configurable: true });"
+    )
+    parts.append(
+        "        Object.defineProperty(battery, 'dischargingTime', { get: () => Infinity, configurable: true });"
+    )
+    parts.append(
+        "        Object.defineProperty(battery, 'level', { get: () => 1.0, configurable: true });"
+    )
     parts.append("        return battery;")
     parts.append("      });")
     parts.append("    };")
@@ -827,6 +912,7 @@ def _build_stealth_script(fp: BrowserFingerprint) -> str:
 # ══════════════════════════════════════════════════════════════
 # Stealth Adapter
 # ══════════════════════════════════════════════════════════════
+
 
 class StealthAdapter:
     """
@@ -969,6 +1055,7 @@ class StealthAdapter:
 # ══════════════════════════════════════════════════════════════
 # Convenience Functions
 # ══════════════════════════════════════════════════════════════
+
 
 async def apply_stealth(
     target: BrowserContext | Page | Browser,

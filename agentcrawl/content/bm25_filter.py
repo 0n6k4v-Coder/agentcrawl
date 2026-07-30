@@ -62,6 +62,7 @@ logger = logging.getLogger("agentcrawl.content.bm25")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class TextBlock:
     """
@@ -77,6 +78,7 @@ class TextBlock:
         score: BM25 relevance score (computed after filtering).
         kept: Whether this block passed the filter.
     """
+
     text: str
     block_type: str = "paragraph"
     level: int = 0
@@ -110,6 +112,7 @@ class FilterResult:
         max_score: Maximum BM25 score.
         min_score: Minimum BM25 score of kept blocks.
     """
+
     filtered_text: str
     original_text: str
     blocks: list[TextBlock] = field(default_factory=list)
@@ -144,6 +147,7 @@ class FilterResult:
 # Tokenizer
 # ══════════════════════════════════════════════════════════════
 
+
 class BM25Tokenizer:
     """
     Simple tokenizer for BM25 scoring.
@@ -157,23 +161,128 @@ class BM25Tokenizer:
     """
 
     # Common English stop words
-    STOP_WORDS: frozenset[str] = frozenset({
-        "a", "an", "the", "and", "or", "but", "in", "on", "at", "to",
-        "for", "of", "with", "by", "from", "is", "are", "was", "were",
-        "be", "been", "being", "have", "has", "had", "do", "does", "did",
-        "will", "would", "could", "should", "may", "might", "shall",
-        "can", "need", "dare", "ought", "used", "it", "its", "this",
-        "that", "these", "those", "i", "me", "my", "myself", "we",
-        "our", "ours", "you", "your", "he", "him", "his", "she", "her",
-        "they", "them", "their", "what", "which", "who", "whom",
-        "when", "where", "why", "how", "not", "no", "nor", "as",
-        "if", "then", "than", "too", "very", "just", "about", "above",
-        "after", "again", "all", "also", "am", "any", "because",
-        "before", "between", "both", "each", "few", "more", "most",
-        "other", "some", "such", "only", "own", "same", "so", "into",
-        "over", "under", "until", "up", "out", "off", "down", "here",
-        "there", "once", "during", "while", "through",
-    })
+    STOP_WORDS: frozenset[str] = frozenset(
+        {
+            "a",
+            "an",
+            "the",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "from",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "shall",
+            "can",
+            "need",
+            "dare",
+            "ought",
+            "used",
+            "it",
+            "its",
+            "this",
+            "that",
+            "these",
+            "those",
+            "i",
+            "me",
+            "my",
+            "myself",
+            "we",
+            "our",
+            "ours",
+            "you",
+            "your",
+            "he",
+            "him",
+            "his",
+            "she",
+            "her",
+            "they",
+            "them",
+            "their",
+            "what",
+            "which",
+            "who",
+            "whom",
+            "when",
+            "where",
+            "why",
+            "how",
+            "not",
+            "no",
+            "nor",
+            "as",
+            "if",
+            "then",
+            "than",
+            "too",
+            "very",
+            "just",
+            "about",
+            "above",
+            "after",
+            "again",
+            "all",
+            "also",
+            "am",
+            "any",
+            "because",
+            "before",
+            "between",
+            "both",
+            "each",
+            "few",
+            "more",
+            "most",
+            "other",
+            "some",
+            "such",
+            "only",
+            "own",
+            "same",
+            "so",
+            "into",
+            "over",
+            "under",
+            "until",
+            "up",
+            "out",
+            "off",
+            "down",
+            "here",
+            "there",
+            "once",
+            "during",
+            "while",
+            "through",
+        }
+    )
 
     def __init__(
         self,
@@ -219,12 +328,37 @@ class BM25Tokenizer:
             return word
 
         suffixes = [
-            "ational", "tional", "encies", "ancies", "izers",
-            "ations", "iveness", "fulness", "ousness", "iveness",
-            "ing", "edly", "edly", "tion", "sion", "ment",
-            "ness", "able", "ible", "ful", "less", "ous",
-            "ive", "ize", "ise", "ity", "ly", "er", "ed",
-            "es", "s",
+            "ational",
+            "tional",
+            "encies",
+            "ancies",
+            "izers",
+            "ations",
+            "iveness",
+            "fulness",
+            "ousness",
+            "iveness",
+            "ing",
+            "edly",
+            "edly",
+            "tion",
+            "sion",
+            "ment",
+            "ness",
+            "able",
+            "ible",
+            "ful",
+            "less",
+            "ous",
+            "ive",
+            "ize",
+            "ise",
+            "ity",
+            "ly",
+            "er",
+            "ed",
+            "es",
+            "s",
         ]
 
         for suffix in suffixes:
@@ -237,6 +371,7 @@ class BM25Tokenizer:
 # ══════════════════════════════════════════════════════════════
 # BM25 Scorer
 # ══════════════════════════════════════════════════════════════
+
 
 class BM25Scorer:
     """
@@ -305,9 +440,7 @@ class BM25Scorer:
         # Compute IDF for all terms
         self._idf = {}
         for term, df in self._doc_freqs.items():
-            idf = math.log(
-                (self._doc_count - df + 0.5) / (df + 0.5) + 1.0
-            )
+            idf = math.log((self._doc_count - df + 0.5) / (df + 0.5) + 1.0)
             self._idf[term] = max(idf, self._epsilon)
 
         self._fitted = True
@@ -356,10 +489,7 @@ class BM25Scorer:
         Returns:
             List of BM25 scores, one per document.
         """
-        return [
-            self.score(query_tokens, i)
-            for i in range(self._doc_count)
-        ]
+        return [self.score(query_tokens, i) for i in range(self._doc_count)]
 
     @property
     def vocabulary_size(self) -> int:
@@ -375,6 +505,7 @@ class BM25Scorer:
 # ══════════════════════════════════════════════════════════════
 # BM25 Content Filter
 # ══════════════════════════════════════════════════════════════
+
 
 class BM25ContentFilter:
     """
@@ -506,9 +637,7 @@ class BM25ContentFilter:
             )
 
         # Tokenize all blocks
-        tokenized_blocks = [
-            self._tokenizer.tokenize(block.text) for block in blocks
-        ]
+        tokenized_blocks = [self._tokenizer.tokenize(block.text) for block in blocks]
 
         # Fit BM25 scorer on all blocks
         self._scorer.fit(tokenized_blocks)
@@ -632,12 +761,14 @@ class BM25ContentFilter:
             if current_block:
                 block_text = "\n".join(current_block).strip()
                 if block_text:
-                    blocks.append(TextBlock(
-                        text=block_text,
-                        block_type=current_type,
-                        level=current_level,
-                        index=index,
-                    ))
+                    blocks.append(
+                        TextBlock(
+                            text=block_text,
+                            block_type=current_type,
+                            level=current_level,
+                            index=index,
+                        )
+                    )
                     index += 1
                 current_block = []
                 current_type = "paragraph"
@@ -682,12 +813,14 @@ class BM25ContentFilter:
             if heading_match:
                 _flush()
                 level = len(heading_match.group(1))
-                blocks.append(TextBlock(
-                    text=stripped,
-                    block_type="heading",
-                    level=level,
-                    index=index,
-                ))
+                blocks.append(
+                    TextBlock(
+                        text=stripped,
+                        block_type="heading",
+                        level=level,
+                        index=index,
+                    )
+                )
                 index += 1
                 continue
 

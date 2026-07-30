@@ -27,6 +27,7 @@ logger = logging.getLogger("agentcrawl.server.batch")
 # Request / Response Models
 # ══════════════════════════════════════════════════════════════
 
+
 class BatchScrapeRequest(BaseModel):
     """Request body for POST /batch/scrape."""
 
@@ -116,6 +117,7 @@ class BatchScrapeResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Handler
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_batch_scrape(
     engine: Any,

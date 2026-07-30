@@ -62,6 +62,7 @@ logger = logging.getLogger("agentcrawl.server.auth.jwt")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class TokenPair:
     """
@@ -73,6 +74,7 @@ class TokenPair:
         token_type: Token type (always "bearer").
         expires_in: Access token TTL in seconds.
     """
+
     access_token: str
     refresh_token: str
     # Using private field to avoid S105 false positive (token_type is OAuth2 standard field name)
@@ -112,6 +114,7 @@ class TokenClaims:
         name: Human-readable name.
         extra: Additional custom claims.
     """
+
     sub: str = ""
     scopes: list[str] = field(default_factory=list)
     iat: float = 0.0
@@ -152,6 +155,7 @@ class ValidationResult:
         claims: Decoded claims (if valid).
         error: Error message (if invalid).
     """
+
     valid: bool
     claims: TokenClaims | None = None
     error: str = ""
@@ -160,6 +164,7 @@ class ValidationResult:
 # ══════════════════════════════════════════════════════════════
 # JWT Manager
 # ══════════════════════════════════════════════════════════════
+
 
 class JWTManager:
     """
@@ -357,7 +362,8 @@ class JWTManager:
                 token_type=token_type,
                 name=payload.get("name", ""),
                 extra={
-                    k: v for k, v in payload.items()
+                    k: v
+                    for k, v in payload.items()
                     if k not in ("sub", "scopes", "iat", "exp", "jti", "iss", "token_type", "name")
                 },
             )
@@ -469,9 +475,7 @@ class JWTManager:
         """
         # In-memory implementation cannot track all tokens by subject
         # Production: use Redis SET per subject
-        logger.warning(
-            "revoke_all_for_subject requires Redis for production use"
-        )
+        logger.warning("revoke_all_for_subject requires Redis for production use")
         return 0
 
     def _is_blacklisted(self, jti: str) -> bool:
@@ -481,10 +485,7 @@ class JWTManager:
     def _cleanup_blacklist(self) -> None:
         """Remove expired entries from the blacklist."""
         now = time.time()
-        expired = [
-            jti for jti, exp in self._blacklist_expiry.items()
-            if exp < now
-        ]
+        expired = [jti for jti, exp in self._blacklist_expiry.items() if exp < now]
         for jti in expired:
             self._blacklist.discard(jti)
             del self._blacklist_expiry[jti]
@@ -546,10 +547,7 @@ class JWTManager:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"JWTManager(algorithm={self._algorithm!r}, "
-            f"issuer={self._issuer!r})"
-        )
+        return f"JWTManager(algorithm={self._algorithm!r}, issuer={self._issuer!r})"
 
 
 # ══════════════════════════════════════════════════════════════
@@ -584,6 +582,7 @@ def get_jwt_manager() -> JWTManager:
             secret = os.environ.get("AGENTCRAWL_API_KEY", "")
             if not secret:
                 import secrets
+
                 secret = secrets.token_urlsafe(32)
                 logger.warning(
                     "No JWT secret configured. Using random secret. "
@@ -603,6 +602,7 @@ def get_jwt_manager() -> JWTManager:
 # ══════════════════════════════════════════════════════════════
 # FastAPI Dependencies
 # ══════════════════════════════════════════════════════════════
+
 
 async def require_jwt(
     authorization: str = "",

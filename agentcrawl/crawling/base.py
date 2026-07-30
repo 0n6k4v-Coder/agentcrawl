@@ -60,6 +60,7 @@ logger = logging.getLogger("agentcrawl.crawling")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class CrawlConfig:
     """
@@ -84,6 +85,7 @@ class CrawlConfig:
         similarity_threshold: Content similarity threshold for dedup.
         progress_callback: Callback for progress updates.
     """
+
     max_depth: int = 3
     max_pages: int = 50
     max_concurrent: int = 3
@@ -91,11 +93,30 @@ class CrawlConfig:
     include_patterns: list[str] = field(default_factory=list)
     exclude_patterns: list[str] = field(default_factory=list)
     include_extensions: list[str] = field(default_factory=list)
-    exclude_extensions: list[str] = field(default_factory=lambda: [
-        ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
-        ".ico", ".woff", ".woff2", ".ttf", ".eot", ".pdf",
-        ".zip", ".tar", ".gz", ".mp3", ".mp4", ".avi", ".mov",
-    ])
+    exclude_extensions: list[str] = field(
+        default_factory=lambda: [
+            ".css",
+            ".js",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".ico",
+            ".woff",
+            ".woff2",
+            ".ttf",
+            ".eot",
+            ".pdf",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".mp3",
+            ".mp4",
+            ".avi",
+            ".mov",
+        ]
+    )
     respect_robots: bool = True
     delay_between_requests: float = 0.3
     timeout_per_page: int = 30
@@ -135,6 +156,7 @@ class DiscoveredURL:
         score: Relevance/priority score.
         discovered_at: Unix timestamp of discovery.
     """
+
     url: str
     depth: int = 0
     source_url: str = ""
@@ -168,6 +190,7 @@ class CrawlProgress:
         elapsed_ms: Elapsed time in milliseconds.
         is_complete: Whether the crawl is finished.
     """
+
     pages_discovered: int = 0
     pages_crawled: int = 0
     pages_failed: int = 0
@@ -203,6 +226,7 @@ class CrawlProgress:
 # ══════════════════════════════════════════════════════════════
 # URL Filter
 # ══════════════════════════════════════════════════════════════
+
 
 class URLFilter:
     """
@@ -248,12 +272,8 @@ class URLFilter:
         self._same_domain = same_domain
         self._base_domain = base_domain.replace("www.", "")
         self._max_depth = max_depth
-        self._exclude_extensions = {
-            ext.lower() for ext in (exclude_extensions or [])
-        }
-        self._include_extensions = {
-            ext.lower() for ext in (include_extensions or [])
-        }
+        self._exclude_extensions = {ext.lower() for ext in (exclude_extensions or [])}
+        self._include_extensions = {ext.lower() for ext in (include_extensions or [])}
         self._exclude_query_params = set(exclude_query_params or [])
         self._allow_fragments = allow_fragments
 
@@ -306,15 +326,16 @@ class URLFilter:
                 if path_lower.endswith(ext):
                     return False
 
-        if self._include_extensions and not any(path_lower.endswith(ext) for ext in self._include_extensions):
-                return False
+        if self._include_extensions and not any(
+            path_lower.endswith(ext) for ext in self._include_extensions
+        ):
+            return False
 
         # Include patterns
         if self._include_patterns:
             path = parsed.path
             if not any(
-                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
-                for p in self._include_patterns
+                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p) for p in self._include_patterns
             ):
                 return False
 
@@ -322,8 +343,7 @@ class URLFilter:
         if self._exclude_patterns:
             path = parsed.path
             if any(
-                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
-                for p in self._exclude_patterns
+                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p) for p in self._exclude_patterns
             ):
                 return False
 
@@ -348,11 +368,9 @@ class URLFilter:
         # Remove excluded query params
         if self._exclude_query_params and parsed.query:
             from urllib.parse import parse_qs, urlencode
+
             params = parse_qs(parsed.query)
-            filtered = {
-                k: v for k, v in params.items()
-                if k not in self._exclude_query_params
-            }
+            filtered = {k: v for k, v in params.items() if k not in self._exclude_query_params}
             new_query = urlencode(filtered, doseq=True)
             parsed = parsed._replace(query=new_query)
 
@@ -398,6 +416,7 @@ class URLFilter:
 # URL Scorer
 # ══════════════════════════════════════════════════════════════
 
+
 class URLScorer:
     """
     Scores URLs by predicted content value.
@@ -422,20 +441,65 @@ class URLScorer:
     """
 
     DEFAULT_CONTENT_KEYWORDS: tuple[str, ...] = (
-        "guide", "tutorial", "docs", "documentation", "reference",
-        "api", "manual", "help", "faq", "wiki", "blog", "post",
-        "article", "news", "learn", "how-to", "howto", "getting-started",
-        "quickstart", "overview", "introduction", "setup", "install",
-        "configuration", "examples", "sample", "demo",
+        "guide",
+        "tutorial",
+        "docs",
+        "documentation",
+        "reference",
+        "api",
+        "manual",
+        "help",
+        "faq",
+        "wiki",
+        "blog",
+        "post",
+        "article",
+        "news",
+        "learn",
+        "how-to",
+        "howto",
+        "getting-started",
+        "quickstart",
+        "overview",
+        "introduction",
+        "setup",
+        "install",
+        "configuration",
+        "examples",
+        "sample",
+        "demo",
     )
 
     DEFAULT_NOISE_KEYWORDS: tuple[str, ...] = (
-        "login", "signin", "signup", "register", "auth",
-        "cart", "checkout", "payment", "billing", "pricing",
-        "search", "filter", "sort", "tag", "category",
-        "page", "feed", "rss", "atom", "sitemap",
-        "about", "contact", "privacy", "terms", "legal",
-        "careers", "jobs", "press", "media",
+        "login",
+        "signin",
+        "signup",
+        "register",
+        "auth",
+        "cart",
+        "checkout",
+        "payment",
+        "billing",
+        "pricing",
+        "search",
+        "filter",
+        "sort",
+        "tag",
+        "category",
+        "page",
+        "feed",
+        "rss",
+        "atom",
+        "sitemap",
+        "about",
+        "contact",
+        "privacy",
+        "terms",
+        "legal",
+        "careers",
+        "jobs",
+        "press",
+        "media",
     )
 
     def __init__(
@@ -446,10 +510,16 @@ class URLScorer:
         link_text_weight: float = 0.2,
     ):
         self._content_keywords = {
-            kw.lower() for kw in (content_keywords if content_keywords is not None else self.DEFAULT_CONTENT_KEYWORDS)
+            kw.lower()
+            for kw in (
+                content_keywords if content_keywords is not None else self.DEFAULT_CONTENT_KEYWORDS
+            )
         }
         self._noise_keywords = {
-            kw.lower() for kw in (noise_keywords if noise_keywords is not None else self.DEFAULT_NOISE_KEYWORDS)
+            kw.lower()
+            for kw in (
+                noise_keywords if noise_keywords is not None else self.DEFAULT_NOISE_KEYWORDS
+            )
         }
         self._depth_penalty = depth_penalty
         self._link_text_weight = link_text_weight
@@ -552,6 +622,7 @@ class URLScorer:
 # ══════════════════════════════════════════════════════════════
 # Crawl Strategy ABC
 # ══════════════════════════════════════════════════════════════
+
 
 class CrawlStrategy(ABC):
     """
@@ -719,7 +790,7 @@ class CrawlStrategy(ABC):
             reverse=True,
         )
 
-        result = [u.url for u in sorted_urls[:self._config.max_pages]]
+        result = [u.url for u in sorted_urls[: self._config.max_pages]]
 
         logger.info(
             "%s crawl complete: %d discovered, %d visited, %.0fms",
@@ -895,6 +966,7 @@ class CrawlStrategy(ABC):
             robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
 
             import httpx
+
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.get(robots_url)
                 if resp.status_code == 200:

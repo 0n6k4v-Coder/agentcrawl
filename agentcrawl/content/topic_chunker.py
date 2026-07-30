@@ -78,6 +78,7 @@ logger = logging.getLogger("agentcrawl.content.topic_chunker")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class HeadingNode:
     """
@@ -95,6 +96,7 @@ class HeadingNode:
         word_count: Word count of section content.
         breadcrumb: Full heading path (e.g., "Guide > Setup > Installation").
     """
+
     text: str
     level: int
     index: int = 0
@@ -154,6 +156,7 @@ class TopicSection:
         sub_sections: Child sections.
         similarity_score: Topic similarity to adjacent sections.
     """
+
     heading: str = ""
     heading_level: int = 0
     breadcrumb: str = ""
@@ -186,6 +189,7 @@ class TopicSection:
 # ══════════════════════════════════════════════════════════════
 # Heading Hierarchy
 # ══════════════════════════════════════════════════════════════
+
 
 class HeadingHierarchy:
     """
@@ -227,7 +231,7 @@ class HeadingHierarchy:
             end = matches[i + 1].start() if i + 1 < len(matches) else len(self._text)
 
             # Extract content preview
-            content = self._text[match.end():end].strip()
+            content = self._text[match.end() : end].strip()
             preview = content[:100] if content else ""
             wc = len(content.split())
 
@@ -260,6 +264,7 @@ class HeadingHierarchy:
 
     def _compute_breadcrumbs(self) -> None:
         """Compute breadcrumb paths for all nodes."""
+
         def _walk(node: HeadingNode, path: list[str]) -> None:
             if node.level > 0:
                 current_path = [*path, node.text]
@@ -316,7 +321,7 @@ class HeadingHierarchy:
                 continue
 
             # Extract section content
-            content = self._text[node.start_char:node.end_char].strip()
+            content = self._text[node.start_char : node.end_char].strip()
 
             section = TopicSection(
                 heading=node.text,
@@ -333,6 +338,7 @@ class HeadingHierarchy:
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the hierarchy."""
+
         def _node_to_dict(node: HeadingNode) -> dict[str, Any]:
             return {
                 **node.to_dict(),
@@ -346,15 +352,13 @@ class HeadingHierarchy:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"HeadingHierarchy(headings={self.heading_count}, "
-            f"max_depth={self.max_depth})"
-        )
+        return f"HeadingHierarchy(headings={self.heading_count}, max_depth={self.max_depth})"
 
 
 # ══════════════════════════════════════════════════════════════
 # Topic Similarity Detector
 # ══════════════════════════════════════════════════════════════
+
 
 class TopicSimilarityDetector:
     """
@@ -382,12 +386,54 @@ class TopicSimilarityDetector:
         self._min_words = min_words
         self._top_n_terms = top_n_terms
         self._stop_words = {
-            "the", "a", "an", "and", "or", "but", "in", "on", "at",
-            "to", "for", "of", "with", "by", "from", "is", "are",
-            "was", "were", "be", "been", "it", "its", "this", "that",
-            "these", "those", "i", "we", "you", "he", "she", "they",
-            "not", "no", "do", "does", "did", "will", "would", "can",
-            "could", "should", "may", "might", "has", "have", "had",
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "from",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "it",
+            "its",
+            "this",
+            "that",
+            "these",
+            "those",
+            "i",
+            "we",
+            "you",
+            "he",
+            "she",
+            "they",
+            "not",
+            "no",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "can",
+            "could",
+            "should",
+            "may",
+            "might",
+            "has",
+            "have",
+            "had",
         }
 
     def tokenize(self, text: str) -> list[str]:
@@ -468,8 +514,8 @@ class TopicSimilarityDetector:
         dot = sum(vec_a[t] * vec_b[t] for t in common_terms)
 
         # Magnitudes
-        mag_a = math.sqrt(sum(v ** 2 for v in vec_a.values()))
-        mag_b = math.sqrt(sum(v ** 2 for v in vec_b.values()))
+        mag_a = math.sqrt(sum(v**2 for v in vec_a.values()))
+        mag_b = math.sqrt(sum(v**2 for v in vec_b.values()))
 
         if mag_a == 0 or mag_b == 0:
             return 0.0
@@ -546,6 +592,7 @@ class TopicSimilarityDetector:
 # Advanced Topic Chunker
 # ══════════════════════════════════════════════════════════════
 
+
 class AdvancedTopicChunker(Chunker):
     """
     Hierarchy-aware topic chunker with section merging/splitting.
@@ -607,9 +654,7 @@ class AdvancedTopicChunker(Chunker):
         self._similarity_threshold = similarity_threshold
         self._include_breadcrumb = include_breadcrumb
 
-        self._similarity_detector = (
-            TopicSimilarityDetector() if detect_similar_topics else None
-        )
+        self._similarity_detector = TopicSimilarityDetector() if detect_similar_topics else None
 
     # ──────────────────────────────────────────────────────────
     # Chunker Implementation
@@ -623,13 +668,15 @@ class AdvancedTopicChunker(Chunker):
 
         if not sections:
             # No headings — treat as single segment
-            return [{
-                "text": text.strip(),
-                "start": 0,
-                "end": len(text),
-                "heading": "",
-                "heading_level": 0,
-            }]
+            return [
+                {
+                    "text": text.strip(),
+                    "start": 0,
+                    "end": len(text),
+                    "heading": "",
+                    "heading_level": 0,
+                }
+            ]
 
         # Convert sections to segments
         segments: list[dict[str, Any]] = []
@@ -639,20 +686,21 @@ class AdvancedTopicChunker(Chunker):
                 continue
 
             # Check if section needs splitting
-            if (
-                self._split_large_sections
-                and section.token_count > self._max_section_tokens
-            ):
+            if self._split_large_sections and section.token_count > self._max_section_tokens:
                 sub_segments = self._split_section(section)
                 segments.extend(sub_segments)
             else:
-                segments.append({
-                    "text": section.content,
-                    "start": section.start_char,
-                    "end": section.end_char,
-                    "heading": section.breadcrumb if self._include_breadcrumb else section.heading,
-                    "heading_level": section.heading_level,
-                })
+                segments.append(
+                    {
+                        "text": section.content,
+                        "start": section.start_char,
+                        "end": section.end_char,
+                        "heading": section.breadcrumb
+                        if self._include_breadcrumb
+                        else section.heading,
+                        "heading_level": section.heading_level,
+                    }
+                )
 
         # Merge small sections
         if self._merge_small_sections:
@@ -683,15 +731,19 @@ class AdvancedTopicChunker(Chunker):
 
             if chunk_text:
                 sub_heading = match.group(2).strip()
-                breadcrumb = f"{section.breadcrumb} > {sub_heading}" if section.breadcrumb else sub_heading
+                breadcrumb = (
+                    f"{section.breadcrumb} > {sub_heading}" if section.breadcrumb else sub_heading
+                )
 
-                segments.append({
-                    "text": chunk_text,
-                    "start": section.start_char + start,
-                    "end": section.start_char + end,
-                    "heading": breadcrumb if self._include_breadcrumb else sub_heading,
-                    "heading_level": len(match.group(1)),
-                })
+                segments.append(
+                    {
+                        "text": chunk_text,
+                        "start": section.start_char + start,
+                        "end": section.start_char + end,
+                        "heading": breadcrumb if self._include_breadcrumb else sub_heading,
+                        "heading_level": len(match.group(1)),
+                    }
+                )
 
         return segments
 
@@ -712,13 +764,17 @@ class AdvancedTopicChunker(Chunker):
 
             if current_tokens + para_tokens > self._max_section_tokens and current:
                 chunk_text = "\n\n".join(current)
-                segments.append({
-                    "text": chunk_text,
-                    "start": pos,
-                    "end": pos + len(chunk_text),
-                    "heading": section.breadcrumb if self._include_breadcrumb else section.heading,
-                    "heading_level": section.heading_level,
-                })
+                segments.append(
+                    {
+                        "text": chunk_text,
+                        "start": pos,
+                        "end": pos + len(chunk_text),
+                        "heading": section.breadcrumb
+                        if self._include_breadcrumb
+                        else section.heading,
+                        "heading_level": section.heading_level,
+                    }
+                )
                 current = []
                 current_tokens = 0
 
@@ -727,13 +783,15 @@ class AdvancedTopicChunker(Chunker):
 
         if current:
             chunk_text = "\n\n".join(current)
-            segments.append({
-                "text": chunk_text,
-                "start": pos,
-                "end": pos + len(chunk_text),
-                "heading": section.breadcrumb if self._include_breadcrumb else section.heading,
-                "heading_level": section.heading_level,
-            })
+            segments.append(
+                {
+                    "text": chunk_text,
+                    "start": pos,
+                    "end": pos + len(chunk_text),
+                    "heading": section.breadcrumb if self._include_breadcrumb else section.heading,
+                    "heading_level": section.heading_level,
+                }
+            )
 
         return segments
 
@@ -785,9 +843,7 @@ class AdvancedTopicChunker(Chunker):
             return
 
         texts = [seg["text"] for seg in segments]
-        pairs = self._similarity_detector.find_similar_pairs(
-            texts, self._similarity_threshold
-        )
+        pairs = self._similarity_detector.find_similar_pairs(texts, self._similarity_threshold)
 
         for i, j, score in pairs:
             segments[i]["similar_to"] = j
@@ -796,7 +852,9 @@ class AdvancedTopicChunker(Chunker):
             segments[j]["similarity_score"] = score
             logger.debug(
                 "Similar topics detected: segment %d ↔ %d (score=%.2f)",
-                i, j, score,
+                i,
+                j,
+                score,
             )
 
     # ──────────────────────────────────────────────────────────
@@ -805,17 +863,19 @@ class AdvancedTopicChunker(Chunker):
 
     def to_dict(self) -> dict[str, Any]:
         d = super().to_dict()
-        d.update({
-            "min_heading_level": self._min_heading_level,
-            "max_heading_level": self._max_heading_level,
-            "merge_small_sections": self._merge_small_sections,
-            "min_section_tokens": self._min_section_tokens,
-            "split_large_sections": self._split_large_sections,
-            "max_section_tokens": self._max_section_tokens,
-            "detect_similar_topics": self._detect_similar_topics,
-            "similarity_threshold": self._similarity_threshold,
-            "include_breadcrumb": self._include_breadcrumb,
-        })
+        d.update(
+            {
+                "min_heading_level": self._min_heading_level,
+                "max_heading_level": self._max_heading_level,
+                "merge_small_sections": self._merge_small_sections,
+                "min_section_tokens": self._min_section_tokens,
+                "split_large_sections": self._split_large_sections,
+                "max_section_tokens": self._max_section_tokens,
+                "detect_similar_topics": self._detect_similar_topics,
+                "similarity_threshold": self._similarity_threshold,
+                "include_breadcrumb": self._include_breadcrumb,
+            }
+        )
         return d
 
     @classmethod
@@ -847,6 +907,7 @@ class AdvancedTopicChunker(Chunker):
 # Table of Contents Generator
 # ══════════════════════════════════════════════════════════════
 
+
 def generate_toc(
     text: str,
     max_level: int = 3,
@@ -875,10 +936,7 @@ def generate_toc(
           - [Configuration](#configuration)
     """
     hierarchy = HeadingHierarchy(text)
-    headings = [
-        h for h in hierarchy.headings
-        if h.level <= max_level
-    ]
+    headings = [h for h in hierarchy.headings if h.level <= max_level]
 
     if not headings:
         return ""
@@ -913,9 +971,7 @@ def generate_toc(
         if style == "markdown":
             lines.append(f"{indent}- [{number}{heading.text}](#{anchor})")
         elif style == "html":
-            lines.append(
-                f'{indent}<li><a href="#{anchor}">{number}{heading.text}</a></li>'
-            )
+            lines.append(f'{indent}<li><a href="#{anchor}">{number}{heading.text}</a></li>')
         else:  # plain
             lines.append(f"{indent}{number}{heading.text}")
 
@@ -925,6 +981,7 @@ def generate_toc(
 # ══════════════════════════════════════════════════════════════
 # Convenience Functions
 # ══════════════════════════════════════════════════════════════
+
 
 def chunk_by_topics(
     text: str,

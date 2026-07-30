@@ -53,8 +53,10 @@ logger = logging.getLogger("agentcrawl.content.citation")
 # Types & Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class BibliographyFormat(str, Enum):
     """Supported bibliography output formats."""
+
     MARKDOWN = "markdown"
     APA = "apa"
     PLAIN = "plain"
@@ -64,16 +66,18 @@ class BibliographyFormat(str, Enum):
 
 class CitationSource(str, Enum):
     """How a citation was discovered."""
-    INLINE_LINK = "inline_link"       # [text](url) in markdown
-    NUMBERED_REF = "numbered_ref"     # [1] style reference in text
-    RAW_URL = "raw_url"              # Bare URL in text
-    FOOTNOTE = "footnote"            # [^1] style footnote
-    MANUAL = "manual"                # Manually added
+
+    INLINE_LINK = "inline_link"  # [text](url) in markdown
+    NUMBERED_REF = "numbered_ref"  # [1] style reference in text
+    RAW_URL = "raw_url"  # Bare URL in text
+    FOOTNOTE = "footnote"  # [^1] style footnote
+    MANUAL = "manual"  # Manually added
 
 
 # ══════════════════════════════════════════════════════════════
 # Data Models
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class Citation:
@@ -92,6 +96,7 @@ class Citation:
         first_occurrence: Character offset of first occurrence.
         markers: List of marker positions in the text [(start, end), ...].
     """
+
     number: int = 0
     url: str = ""
     title: str = ""
@@ -186,6 +191,7 @@ class CitationResult:
         total_citations: Number of unique citations.
         total_references: Total reference occurrences (including duplicates).
     """
+
     citations: list[Citation] = field(default_factory=list)
     text_with_citations: str = ""
     clean_text: str = ""
@@ -197,7 +203,9 @@ class CitationResult:
     def __post_init__(self) -> None:
         self.total_citations = len(self.citations)
 
-    def format_bibliography(self, fmt: str | BibliographyFormat = BibliographyFormat.MARKDOWN) -> str:
+    def format_bibliography(
+        self, fmt: str | BibliographyFormat = BibliographyFormat.MARKDOWN
+    ) -> str:
         """
         Format the bibliography in a specific style.
 
@@ -234,6 +242,7 @@ class CitationResult:
 
         if fmt == BibliographyFormat.JSON:
             import json
+
             return json.dumps(
                 [c.to_dict() for c in self.citations],
                 ensure_ascii=False,
@@ -265,6 +274,7 @@ class CitationResult:
 # ══════════════════════════════════════════════════════════════
 # Citation Extractor
 # ══════════════════════════════════════════════════════════════
+
 
 class CitationExtractor:
     """
@@ -301,21 +311,11 @@ class CitationExtractor:
     """
 
     # Regex patterns
-    _INLINE_LINK_PATTERN = re.compile(
-        r"\[([^\]]*)\]\(([^)]+)\)"
-    )
-    _NUMBERED_REF_PATTERN = re.compile(
-        r"\[(\d+)\]"
-    )
-    _RAW_URL_PATTERN = re.compile(
-        r"(?<!\()(?<!\[)(https?://[^\s\)\]>\"']+)"
-    )
-    _FOOTNOTE_PATTERN = re.compile(
-        r"\[\^(\d+)\]:\s*(.+)"
-    )
-    _IMAGE_PATTERN = re.compile(
-        r"!\[([^\]]*)\]\(([^)]+)\)"
-    )
+    _INLINE_LINK_PATTERN = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
+    _NUMBERED_REF_PATTERN = re.compile(r"\[(\d+)\]")
+    _RAW_URL_PATTERN = re.compile(r"(?<!\()(?<!\[)(https?://[^\s\)\]>\"']+)")
+    _FOOTNOTE_PATTERN = re.compile(r"\[\^(\d+)\]:\s*(.+)")
+    _IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 
     def __init__(
         self,
@@ -339,9 +339,7 @@ class CitationExtractor:
         self._context_window = context_window
         self._min_url_length = min_url_length
         self._exclude_domains = set(exclude_domains or [])
-        self._exclude_patterns = [
-            re.compile(p) for p in (exclude_patterns or [])
-        ]
+        self._exclude_patterns = [re.compile(p) for p in (exclude_patterns or [])]
 
     # ──────────────────────────────────────────────────────────
     # Main API
@@ -454,15 +452,17 @@ class CitationExtractor:
                 end = min(len(text_no_images), match.end() + self._context_window)
                 context = text_no_images[start:end].strip()
 
-            citations.append(Citation(
-                url=url,
-                title=link_text,
-                text=link_text,
-                context=context,
-                source=CitationSource.INLINE_LINK,
-                first_occurrence=match.start(),
-                markers=[(match.start(), match.end())],
-            ))
+            citations.append(
+                Citation(
+                    url=url,
+                    title=link_text,
+                    text=link_text,
+                    context=context,
+                    source=CitationSource.INLINE_LINK,
+                    first_occurrence=match.start(),
+                    markers=[(match.start(), match.end())],
+                )
+            )
 
         return citations
 
@@ -484,14 +484,16 @@ class CitationExtractor:
             if len(url) < self._min_url_length:
                 continue
 
-            citations.append(Citation(
-                number=number,
-                url=url,
-                title=title,
-                text=title,
-                source=CitationSource.NUMBERED_REF,
-                first_occurrence=match.start(),
-            ))
+            citations.append(
+                Citation(
+                    number=number,
+                    url=url,
+                    title=title,
+                    text=title,
+                    source=CitationSource.NUMBERED_REF,
+                    first_occurrence=match.start(),
+                )
+            )
 
         return citations
 
@@ -515,14 +517,16 @@ class CitationExtractor:
                 end = min(len(text_clean), match.end() + self._context_window)
                 context = text_clean[start:end].strip()
 
-            citations.append(Citation(
-                url=url,
-                text=url,
-                context=context,
-                source=CitationSource.RAW_URL,
-                first_occurrence=match.start(),
-                markers=[(match.start(), match.end())],
-            ))
+            citations.append(
+                Citation(
+                    url=url,
+                    text=url,
+                    context=context,
+                    source=CitationSource.RAW_URL,
+                    first_occurrence=match.start(),
+                    markers=[(match.start(), match.end())],
+                )
+            )
 
         return citations
 
@@ -539,13 +543,15 @@ class CitationExtractor:
                 url = url_match.group(1).rstrip(".,;:!?")
                 title = content.replace(url, "").strip().strip("-\u2013\u2014")
 
-                citations.append(Citation(
-                    url=url,
-                    title=title or url,
-                    text=content,
-                    source=CitationSource.FOOTNOTE,
-                    first_occurrence=match.start(),
-                ))
+                citations.append(
+                    Citation(
+                        url=url,
+                        title=title or url,
+                        text=content,
+                        source=CitationSource.FOOTNOTE,
+                        first_occurrence=match.start(),
+                    )
+                )
 
         return citations
 
@@ -623,6 +629,7 @@ class CitationExtractor:
 
         Transforms: [text](url) → text [N]
         """
+
         def _replace_link(match: re.Match) -> str:
             link_text = match.group(1).strip()
             url = match.group(2).strip()
@@ -661,6 +668,7 @@ class CitationExtractor:
         Transforms: [text](url) → text [N]
         Removes: raw URLs (replaced by [N])
         """
+
         def _replace_link(match: re.Match) -> str:
             link_text = match.group(1).strip()
             url = match.group(2).strip()
@@ -721,15 +729,13 @@ class CitationExtractor:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"CitationExtractor(dedup={self._deduplicate}, "
-            f"context={self._include_context})"
-        )
+        return f"CitationExtractor(dedup={self._deduplicate}, context={self._include_context})"
 
 
 # ══════════════════════════════════════════════════════════════
 # Citation Manager
 # ══════════════════════════════════════════════════════════════
+
 
 class CitationManager:
     """
@@ -908,6 +914,7 @@ class CitationManager:
 
         if fmt == BibliographyFormat.JSON:
             import json
+
             return json.dumps(
                 [c.to_dict() for c in self._citations],
                 ensure_ascii=False,

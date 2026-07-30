@@ -52,6 +52,7 @@ logger = logging.getLogger("agentcrawl.output.markdown")
 # Markdown Output Formatter
 # ══════════════════════════════════════════════════════════════
 
+
 class MarkdownOutputFormatter:
     """
     Formats crawl results as structured Markdown output.
@@ -111,7 +112,11 @@ class MarkdownOutputFormatter:
         self._citation_format = citation_format
         self._link_format = link_format
         self._front_matter_fields = front_matter_fields or [
-            "title", "url", "description", "author", "date",
+            "title",
+            "url",
+            "description",
+            "author",
+            "date",
         ]
         self._separator = separator
 
@@ -514,6 +519,4 @@ class MarkdownOutputFormatter:
         if self._include_stats:
             sections.append("stats")
 
-        return (
-            f"MarkdownOutputFormatter(sections=[{', '.join(sections) or 'content_only'}])"
-        )
+        return f"MarkdownOutputFormatter(sections=[{', '.join(sections) or 'content_only'}])"

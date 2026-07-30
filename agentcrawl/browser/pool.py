@@ -68,8 +68,10 @@ logger = logging.getLogger("agentcrawl.browser.pool")
 # Types & Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class PageState(str, Enum):
     """Lifecycle state of a pooled page."""
+
     CREATING = "creating"
     IDLE = "idle"
     IN_USE = "in_use"
@@ -79,6 +81,7 @@ class PageState(str, Enum):
 
 class AcquirePriority(int, Enum):
     """Priority levels for page acquisition."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -87,6 +90,7 @@ class AcquirePriority(int, Enum):
 
 class PoolEventType(str, Enum):
     """Pool lifecycle events for monitoring."""
+
     PAGE_CREATED = "page_created"
     PAGE_ACQUIRED = "page_acquired"
     PAGE_RELEASED = "page_released"
@@ -101,6 +105,7 @@ class PoolEventType(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Data Models
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class PooledPage:
@@ -121,6 +126,7 @@ class PooledPage:
         session_id: Optional session binding.
         metadata: Arbitrary metadata attached to this page.
     """
+
     page: Any
     context: Any
     page_id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
@@ -210,6 +216,7 @@ class PoolStats:
 
     All counters are cumulative since pool creation.
     """
+
     pages_created: int = 0
     pages_acquired: int = 0
     pages_released: int = 0
@@ -253,6 +260,7 @@ class PoolStats:
 @dataclass
 class _AcquireRequest:
     """Internal: a pending page acquisition request."""
+
     future: asyncio.Future[PooledPage]
     priority: AcquirePriority = AcquirePriority.NORMAL
     requested_at: float = field(default_factory=time.time)
@@ -270,6 +278,7 @@ PoolEventCallback = Callable[[PoolEventType, dict[str, Any]], Coroutine[Any, Any
 # ══════════════════════════════════════════════════════════════
 # Browser Pool
 # ══════════════════════════════════════════════════════════════
+
 
 class BrowserPool:
     """
@@ -544,11 +553,14 @@ class BrowserPool:
             self._mark_acquired(pooled)
             wait_ms = (time.time() - wait_start) * 1000
             self._stats.total_acquire_wait_ms += wait_ms
-            await self._emit_event(PoolEventType.PAGE_ACQUIRED, {
-                "page_id": pooled.page_id,
-                "wait_ms": round(wait_ms, 2),
-                "from": "idle",
-            })
+            await self._emit_event(
+                PoolEventType.PAGE_ACQUIRED,
+                {
+                    "page_id": pooled.page_id,
+                    "wait_ms": round(wait_ms, 2),
+                    "from": "idle",
+                },
+            )
             return pooled
 
         # Try to create a new page if under capacity
@@ -563,11 +575,14 @@ class BrowserPool:
                     self._mark_acquired(pooled)
                     wait_ms = (time.time() - wait_start) * 1000
                     self._stats.total_acquire_wait_ms += wait_ms
-                    await self._emit_event(PoolEventType.PAGE_ACQUIRED, {
-                        "page_id": pooled.page_id,
-                        "wait_ms": round(wait_ms, 2),
-                        "from": "new",
-                    })
+                    await self._emit_event(
+                        PoolEventType.PAGE_ACQUIRED,
+                        {
+                            "page_id": pooled.page_id,
+                            "wait_ms": round(wait_ms, 2),
+                            "from": "new",
+                        },
+                    )
                     return pooled
                 except Exception:
                     self._semaphore.release()
@@ -595,28 +610,32 @@ class BrowserPool:
         async with self._waiting_lock:
             self._waiting_requests.append(request)
             # Sort by priority (highest first), then by request time (FIFO)
-            self._waiting_requests.sort(
-                key=lambda r: (-r.priority.value, r.requested_at)
-            )
+            self._waiting_requests.sort(key=lambda r: (-r.priority.value, r.requested_at))
 
         try:
             pooled = await asyncio.wait_for(future, timeout=timeout)
             wait_ms = (time.time() - wait_start) * 1000
             self._stats.total_acquire_wait_ms += wait_ms
-            await self._emit_event(PoolEventType.PAGE_ACQUIRED, {
-                "page_id": pooled.page_id,
-                "wait_ms": round(wait_ms, 2),
-                "from": "wait",
-            })
+            await self._emit_event(
+                PoolEventType.PAGE_ACQUIRED,
+                {
+                    "page_id": pooled.page_id,
+                    "wait_ms": round(wait_ms, 2),
+                    "from": "wait",
+                },
+            )
             return pooled
         except asyncio.TimeoutError as err:
             self._stats.acquire_timeouts += 1
-            await self._emit_event(PoolEventType.POOL_EXHAUSTED, {
-                "timeout": timeout,
-                "active_pages": self.active_pages,
-                "max_pages": self.max_pages,
-                "waiting_requests": len(self._waiting_requests),
-            })
+            await self._emit_event(
+                PoolEventType.POOL_EXHAUSTED,
+                {
+                    "timeout": timeout,
+                    "active_pages": self.active_pages,
+                    "max_pages": self.max_pages,
+                    "waiting_requests": len(self._waiting_requests),
+                },
+            )
             raise asyncio.TimeoutError(
                 f"Could not acquire page within {timeout}s. "
                 f"Pool: {self.active_pages}/{self.max_pages} active, "
@@ -624,9 +643,7 @@ class BrowserPool:
             ) from err
         finally:
             async with self._waiting_lock:
-                self._waiting_requests = [
-                    r for r in self._waiting_requests if r is not request
-                ]
+                self._waiting_requests = [r for r in self._waiting_requests if r is not request]
 
     async def release(self, pooled_or_page: PooledPage | Any) -> None:
         """
@@ -685,11 +702,14 @@ class BrowserPool:
         # Release semaphore slot
         self._semaphore.release()
 
-        await self._emit_event(PoolEventType.PAGE_RELEASED, {
-            "page_id": pooled.page_id,
-            "use_ms": round(use_ms, 2),
-            "navigation_count": pooled.navigation_count,
-        })
+        await self._emit_event(
+            PoolEventType.PAGE_RELEASED,
+            {
+                "page_id": pooled.page_id,
+                "use_ms": round(use_ms, 2),
+                "navigation_count": pooled.navigation_count,
+            },
+        )
 
     async def acquire_batch(
         self,
@@ -782,10 +802,13 @@ class BrowserPool:
                 except asyncio.QueueEmpty:
                     break
 
-        await self._emit_event(PoolEventType.POOL_RESIZED, {
-            "old_max": old_max,
-            "new_max": max_pages,
-        })
+        await self._emit_event(
+            PoolEventType.POOL_RESIZED,
+            {
+                "old_max": old_max,
+                "new_max": max_pages,
+            },
+        )
 
         logger.info("Pool resized: %d → %d max pages", old_max, max_pages)
 
@@ -850,10 +873,13 @@ class BrowserPool:
         self._all_pages[pooled.page_id] = pooled
         self._stats.pages_created += 1
 
-        await self._emit_event(PoolEventType.PAGE_CREATED, {
-            "page_id": pooled.page_id,
-            "total_pages": self.total_pages,
-        })
+        await self._emit_event(
+            PoolEventType.PAGE_CREATED,
+            {
+                "page_id": pooled.page_id,
+                "total_pages": self.total_pages,
+            },
+        )
 
         return pooled
 
@@ -865,13 +891,16 @@ class BrowserPool:
         self._active_pages.pop(pooled.page_id, None)
         self._stats.pages_recycled += 1
 
-        await self._emit_event(PoolEventType.PAGE_RECYCLED, {
-            "page_id": pooled.page_id,
-            "age_seconds": round(pooled.age_seconds, 1),
-            "acquisition_count": pooled.acquisition_count,
-            "navigation_count": pooled.navigation_count,
-            "reason": self._get_recycle_reason(pooled),
-        })
+        await self._emit_event(
+            PoolEventType.PAGE_RECYCLED,
+            {
+                "page_id": pooled.page_id,
+                "age_seconds": round(pooled.age_seconds, 1),
+                "acquisition_count": pooled.acquisition_count,
+                "navigation_count": pooled.navigation_count,
+                "reason": self._get_recycle_reason(pooled),
+            },
+        )
 
     async def _close_page(self, pooled: PooledPage) -> None:
         """Close the underlying Playwright page."""
@@ -884,9 +913,12 @@ class BrowserPool:
         pooled.mark_closed()
         self._stats.pages_closed += 1
 
-        await self._emit_event(PoolEventType.PAGE_CLOSED, {
-            "page_id": pooled.page_id,
-        })
+        await self._emit_event(
+            PoolEventType.PAGE_CLOSED,
+            {
+                "page_id": pooled.page_id,
+            },
+        )
 
     async def _clean_page(self, pooled: PooledPage) -> None:
         """Reset page state for reuse."""
@@ -1010,10 +1042,13 @@ class BrowserPool:
                 logger.warning("Pre-warm page %d failed: %s", i + 1, e)
                 self._semaphore.release()
 
-        await self._emit_event(PoolEventType.PRE_WARM_COMPLETE, {
-            "requested": count,
-            "created": created,
-        })
+        await self._emit_event(
+            PoolEventType.PRE_WARM_COMPLETE,
+            {
+                "requested": count,
+                "created": created,
+            },
+        )
 
         logger.info("Pre-warm complete: %d/%d pages created", created, count)
 
@@ -1027,12 +1062,8 @@ class BrowserPool:
         if interval <= 0:
             return
 
-        self._health_check_task = asyncio.create_task(
-            self._health_check_loop(interval)
-        )
-        self._recycler_task = asyncio.create_task(
-            self._recycler_loop(interval)
-        )
+        self._health_check_task = asyncio.create_task(self._health_check_loop(interval))
+        self._recycler_task = asyncio.create_task(self._recycler_loop(interval))
 
     async def _stop_maintenance_tasks(self) -> None:
         """Cancel background maintenance tasks."""
@@ -1070,9 +1101,12 @@ class BrowserPool:
                         # Remove from idle queue
                         await self._recycle_page(pooled)
 
-                    await self._emit_event(PoolEventType.HEALTH_CHECK_FAILED, {
-                        "unhealthy_count": len(unhealthy),
-                    })
+                    await self._emit_event(
+                        PoolEventType.HEALTH_CHECK_FAILED,
+                        {
+                            "unhealthy_count": len(unhealthy),
+                        },
+                    )
 
                     # Replenish pool
                     for _ in unhealthy:

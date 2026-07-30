@@ -62,6 +62,7 @@ logger = logging.getLogger("agentcrawl.crawling.domain_mapper")
 # Data Models
 # ══════════════════════════════════════════════════════════════
 
+
 @dataclass
 class MapResult:
     """
@@ -78,6 +79,7 @@ class MapResult:
         sources: Which sources were used.
         errors: Errors encountered during discovery.
     """
+
     urls: list[str] = field(default_factory=list)
     total_urls: int = 0
     sitemap_urls: int = 0
@@ -108,6 +110,7 @@ class MapResult:
 @dataclass
 class URLPatternInfo:
     """Information about a detected URL pattern."""
+
     template: str
     count: int
     examples: list[str] = field(default_factory=list)
@@ -125,6 +128,7 @@ class URLPatternInfo:
 # ══════════════════════════════════════════════════════════════
 # Domain Mapper
 # ══════════════════════════════════════════════════════════════
+
 
 class DomainMapper:
     """
@@ -165,12 +169,36 @@ class DomainMapper:
     )
 
     # File extensions to exclude by default
-    DEFAULT_EXCLUDE_EXTENSIONS: frozenset[str] = frozenset({
-        ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
-        ".ico", ".woff", ".woff2", ".ttf", ".eot", ".pdf",
-        ".zip", ".tar", ".gz", ".mp3", ".mp4", ".avi", ".mov",
-        ".xml", ".json", ".txt", ".csv", ".rss", ".atom",
-    })
+    DEFAULT_EXCLUDE_EXTENSIONS: frozenset[str] = frozenset(
+        {
+            ".css",
+            ".js",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".ico",
+            ".woff",
+            ".woff2",
+            ".ttf",
+            ".eot",
+            ".pdf",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".mp3",
+            ".mp4",
+            ".avi",
+            ".mov",
+            ".xml",
+            ".json",
+            ".txt",
+            ".csv",
+            ".rss",
+            ".atom",
+        }
+    )
 
     def __init__(
         self,
@@ -260,8 +288,7 @@ class DomainMapper:
         duration = (time.perf_counter() - start_time) * 1000
 
         logger.info(
-            "Domain mapping complete: %d URLs found in %.0fms "
-            "(sitemap=%d, robots=%d, crawl=%d)",
+            "Domain mapping complete: %d URLs found in %.0fms (sitemap=%d, robots=%d, crawl=%d)",
             len(urls),
             duration,
             self._sitemap_count,
@@ -269,7 +296,7 @@ class DomainMapper:
             self._crawl_count,
         )
 
-        return urls[:self._max_urls]
+        return urls[: self._max_urls]
 
     async def discover_with_result(self, url: str) -> MapResult:
         """
@@ -311,9 +338,7 @@ class DomainMapper:
         semaphore = asyncio.Semaphore(self._max_concurrent)
 
         # Try common sitemap locations
-        sitemap_urls_to_try = [
-            f"{self._base_url}{path}" for path in self.SITEMAP_PATHS
-        ]
+        sitemap_urls_to_try = [f"{self._base_url}{path}" for path in self.SITEMAP_PATHS]
 
         # Also try sitemap referenced in robots.txt (done later)
         async with httpx.AsyncClient(
@@ -330,9 +355,7 @@ class DomainMapper:
                         if resp.status_code == 200:
                             content_type = resp.headers.get("content-type", "")
                             if "xml" in content_type or "text/xml" in content_type:
-                                await self._parse_sitemap(
-                                    resp.text, client, semaphore
-                                )
+                                await self._parse_sitemap(resp.text, client, semaphore)
                                 logger.debug(
                                     "Parsed sitemap: %s (%d URLs total)",
                                     sitemap_url,
@@ -355,9 +378,7 @@ class DomainMapper:
         """
         try:
             # Remove XML declaration issues
-            xml_content = re.sub(
-                r'<\?xml[^?]*\?>', '', xml_content
-            ).strip()
+            xml_content = re.sub(r"<\?xml[^?]*\?>", "", xml_content).strip()
 
             root = DefusedElementTree.fromstring(xml_content)
         except DefusedElementTree.ParseError as e:
@@ -382,8 +403,7 @@ class DomainMapper:
 
             # Fetch child sitemaps concurrently
             tasks = [
-                self._fetch_and_parse_child_sitemap(url, client, semaphore)
-                for url in child_urls
+                self._fetch_and_parse_child_sitemap(url, client, semaphore) for url in child_urls
             ]
             await asyncio.gather(*tasks, return_exceptions=True)
             return
@@ -446,13 +466,12 @@ class DomainMapper:
                                 sem = asyncio.Semaphore(self._max_concurrent)
                                 sitemap_resp = await client.get(sitemap_url)
                                 if sitemap_resp.status_code == 200:
-                                    await self._parse_sitemap(
-                                        sitemap_resp.text, client, sem
-                                    )
+                                    await self._parse_sitemap(sitemap_resp.text, client, sem)
                             except Exception as e:
                                 logger.debug(
                                     "Robots sitemap fetch failed %s: %s",
-                                    sitemap_url, e,
+                                    sitemap_url,
+                                    e,
                                 )
 
                 # Extract allowed paths as URL hints
@@ -631,15 +650,13 @@ class DomainMapper:
 
             # Include patterns
             if self._include_patterns and not any(
-                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
-                for p in self._include_patterns
+                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p) for p in self._include_patterns
             ):
                 continue
 
             # Exclude patterns
             if self._exclude_patterns and any(
-                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p)
-                for p in self._exclude_patterns
+                fnmatch.fnmatch(path, p) or fnmatch.fnmatch(url, p) for p in self._exclude_patterns
             ):
                 continue
 
@@ -694,12 +711,14 @@ class DomainMapper:
 
             avg_depth = sum(depths) / max(len(depths), 1)
 
-            patterns.append(URLPatternInfo(
-                template=template,
-                count=len(group_urls),
-                examples=group_urls[:3],
-                avg_depth=avg_depth,
-            ))
+            patterns.append(
+                URLPatternInfo(
+                    template=template,
+                    count=len(group_urls),
+                    examples=group_urls[:3],
+                    avg_depth=avg_depth,
+                )
+            )
 
         patterns.sort(key=lambda p: p.count, reverse=True)
         return patterns
@@ -723,7 +742,8 @@ class DomainMapper:
                 template_segments.append("{num}")
             elif re.match(
                 r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-                seg, re.I,
+                seg,
+                re.I,
             ):
                 template_segments.append("{uuid}")
             elif re.match(r"^[0-9a-f]{16,}$", seg, re.I):

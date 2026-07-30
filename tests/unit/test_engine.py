@@ -32,6 +32,7 @@ import pytest
 # Fixtures
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def settings() -> Any:
     """Test settings."""
@@ -64,6 +65,7 @@ def config() -> Any:
 # ══════════════════════════════════════════════════════════════
 # Engine Creation
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineCreation:
     """Tests for CrawlEngine creation."""
@@ -110,6 +112,7 @@ class TestEngineCreation:
 # ══════════════════════════════════════════════════════════════
 # Lifecycle
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineLifecycle:
     """Tests for engine startup and shutdown."""
@@ -196,6 +199,7 @@ class TestEngineLifecycle:
 # ══════════════════════════════════════════════════════════════
 # Scrape
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineScrape:
     """Tests for engine.scrape() method."""
@@ -289,6 +293,7 @@ class TestEngineScrape:
 # Batch Scrape
 # ══════════════════════════════════════════════════════════════
 
+
 class TestEngineBatchScrape:
     """Tests for engine.batch_scrape() method."""
 
@@ -373,6 +378,7 @@ class TestEngineBatchScrape:
 # Crawl
 # ══════════════════════════════════════════════════════════════
 
+
 class TestEngineCrawl:
     """Tests for engine.crawl() method."""
 
@@ -405,6 +411,7 @@ class TestEngineCrawl:
 
             # Mock the crawl's internal methods
             from agentcrawl.crawling.bfs import BFSCrawler
+
             with patch.object(BFSCrawler, "discover", new_callable=AsyncMock) as mock_discover:
                 mock_discover.return_value = ["https://example.com"]
 
@@ -419,6 +426,7 @@ class TestEngineCrawl:
 # ══════════════════════════════════════════════════════════════
 # Map
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineMap:
     """Tests for engine.map() method."""
@@ -438,10 +446,12 @@ class TestEngineMap:
 
             with patch("agentcrawl.crawling.bfs.BFSCrawler") as mock_crawler:
                 mock_instance = MagicMock()
-                mock_instance.discover = AsyncMock(return_value=[
-                    "https://example.com/page1",
-                    "https://example.com/page2",
-                ])
+                mock_instance.discover = AsyncMock(
+                    return_value=[
+                        "https://example.com/page1",
+                        "https://example.com/page2",
+                    ]
+                )
                 mock_crawler.return_value = mock_instance
 
                 await engine.startup()
@@ -454,6 +464,7 @@ class TestEngineMap:
 # ══════════════════════════════════════════════════════════════
 # Search
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineSearch:
     """Tests for engine.search() convenience method."""
@@ -485,6 +496,7 @@ class TestEngineSearch:
 # ══════════════════════════════════════════════════════════════
 # Extract
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineExtract:
     """Tests for engine.extract() method."""
@@ -527,7 +539,9 @@ class TestEngineExtract:
                 # Also patch the extractor to avoid LLM calls
                 with patch("agentcrawl.extraction.base.create_extractor") as mock_create:
                     mock_extractor = AsyncMock()
-                    mock_extractor.extract = AsyncMock(return_value={"title": "Test", "price": "$10"})
+                    mock_extractor.extract = AsyncMock(
+                        return_value={"title": "Test", "price": "$10"}
+                    )
                     mock_create.return_value = mock_extractor
 
                     result = await engine.extract(
@@ -543,6 +557,7 @@ class TestEngineExtract:
 # ══════════════════════════════════════════════════════════════
 # State Management
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineState:
     """Tests for engine state management."""
@@ -592,6 +607,7 @@ class TestEngineState:
 # ══════════════════════════════════════════════════════════════
 # Error Handling
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEngineErrors:
     """Tests for engine error handling."""

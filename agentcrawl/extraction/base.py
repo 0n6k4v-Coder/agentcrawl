@@ -52,8 +52,10 @@ logger = logging.getLogger("agentcrawl.extraction")
 # Types & Enums
 # ══════════════════════════════════════════════════════════════
 
+
 class ExtractionMethod(str, Enum):
     """Available extraction methods."""
+
     LLM = "llm"
     CSS = "css"
     XPATH = "xpath"
@@ -63,6 +65,7 @@ class ExtractionMethod(str, Enum):
 
 class ExtractionStatus(str, Enum):
     """Status of an extraction operation."""
+
     SUCCESS = "success"
     PARTIAL = "partial"
     FAILED = "failed"
@@ -73,6 +76,7 @@ class ExtractionStatus(str, Enum):
 # ══════════════════════════════════════════════════════════════
 # Data Models
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class ExtractionConfig:
@@ -93,6 +97,7 @@ class ExtractionConfig:
         base_url: Base URL for resolving relative selectors.
         extra: Additional method-specific parameters.
     """
+
     method: ExtractionMethod | str = ExtractionMethod.LLM
     schema: Any = None
     prompt: str | None = None
@@ -115,7 +120,9 @@ class ExtractionConfig:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "method": self.method.value if isinstance(self.method, ExtractionMethod) else self.method,
+            "method": self.method.value
+            if isinstance(self.method, ExtractionMethod)
+            else self.method,
             "schema": type(self.schema).__name__ if self.schema else None,
             "prompt": self.prompt[:100] if self.prompt else None,
             "timeout": self.timeout,
@@ -143,6 +150,7 @@ class ExtractionResult:
         error: Error message (if failed).
         metadata: Additional metadata.
     """
+
     data: Any = None
     status: ExtractionStatus = ExtractionStatus.SUCCESS
     method: str = ""
@@ -210,6 +218,7 @@ class ExtractionResult:
 # ══════════════════════════════════════════════════════════════
 # Schema Utilities
 # ══════════════════════════════════════════════════════════════
+
 
 class SchemaResolver:
     """
@@ -386,6 +395,7 @@ class SchemaResolver:
 # Extraction Strategy ABC
 # ══════════════════════════════════════════════════════════════
 
+
 class ExtractionStrategy(ABC):
     """
     Abstract base class for all extraction strategies.
@@ -530,9 +540,7 @@ class ExtractionStrategy(ABC):
                 )
 
             except asyncio.TimeoutError:
-                last_error = TimeoutError(
-                    f"Extraction timed out after {self._config.timeout}s"
-                )
+                last_error = TimeoutError(f"Extraction timed out after {self._config.timeout}s")
                 logger.warning(
                     "Extraction timeout (attempt %d/%d)",
                     attempt + 1,
@@ -550,7 +558,7 @@ class ExtractionStrategy(ABC):
 
             # Retry delay with exponential backoff
             if attempt < self._config.max_retries:
-                delay = self._config.retry_delay * (2 ** attempt)
+                delay = self._config.retry_delay * (2**attempt)
                 await asyncio.sleep(delay)
 
         # All retries exhausted
@@ -685,7 +693,8 @@ class ExtractionStrategy(ABC):
             try:
                 return [
                     self._schema_resolver.parse_to_model(item, self._schema)
-                    if isinstance(item, dict) else item
+                    if isinstance(item, dict)
+                    else item
                     for item in data
                 ]
             except Exception:
@@ -707,14 +716,14 @@ class ExtractionStrategy(ABC):
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}(schema={self._schema_name!r}, "
-            f"method={self.method_name!r})"
+            f"{self.__class__.__name__}(schema={self._schema_name!r}, method={self.method_name!r})"
         )
 
 
 # ══════════════════════════════════════════════════════════════
 # Factory
 # ══════════════════════════════════════════════════════════════
+
 
 def create_extractor(
     method: str | ExtractionMethod = ExtractionMethod.LLM,
@@ -750,22 +759,27 @@ def create_extractor(
 
     if method == ExtractionMethod.LLM:
         from agentcrawl.extraction.llm import LLMExtractor
+
         return LLMExtractor(schema=schema, **kwargs)
 
     if method == ExtractionMethod.CSS:
         from agentcrawl.extraction.json_css import JsonCssExtractor
+
         return JsonCssExtractor(schema=schema, **kwargs)
 
     if method == ExtractionMethod.XPATH:
         from agentcrawl.extraction.json_xpath import JsonXPathExtractor
+
         return JsonXPathExtractor(schema=schema, **kwargs)
 
     if method == ExtractionMethod.COSINE:
         from agentcrawl.extraction.cosine import CosineExtractor
+
         return CosineExtractor(schema=schema, **kwargs)
 
     if method == ExtractionMethod.REGEX:
         from agentcrawl.extraction.regex import RegexExtractor
+
         return RegexExtractor(schema=schema, **kwargs)
 
     raise ValueError(f"Unknown extraction method: {method}")

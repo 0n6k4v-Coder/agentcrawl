@@ -31,6 +31,7 @@ from agentcrawl.content.html_to_markdown import HTMLToMarkdown, MarkdownOptions
 # Fixtures
 # ══════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def converter() -> HTMLToMarkdown:
     """Default HTMLToMarkdown converter."""
@@ -40,7 +41,11 @@ def converter() -> HTMLToMarkdown:
 @pytest.fixture
 def main_content_converter() -> HTMLToMarkdown:
     """Converter with only_main_content via options."""
-    return HTMLToMarkdown(options=MarkdownOptions(strip_tags=["nav", "footer", "aside", "header", ".advertisement", ".ads", ".sidebar"]))
+    return HTMLToMarkdown(
+        options=MarkdownOptions(
+            strip_tags=["nav", "footer", "aside", "header", ".advertisement", ".ads", ".sidebar"]
+        )
+    )
 
 
 @pytest.fixture
@@ -58,6 +63,7 @@ def no_link_converter() -> HTMLToMarkdown:
 # ══════════════════════════════════════════════════════════════
 # Basic Conversion
 # ══════════════════════════════════════════════════════════════
+
 
 class TestBasicConversion:
     """Tests for basic HTML to Markdown conversion."""
@@ -112,6 +118,7 @@ class TestBasicConversion:
 # Headings
 # ══════════════════════════════════════════════════════════════
 
+
 class TestHeadings:
     """Tests for heading conversion."""
 
@@ -158,6 +165,7 @@ class TestHeadings:
 # ══════════════════════════════════════════════════════════════
 # Links
 # ══════════════════════════════════════════════════════════════
+
 
 class TestLinks:
     """Tests for link conversion."""
@@ -218,6 +226,7 @@ class TestLinks:
 # Images
 # ══════════════════════════════════════════════════════════════
 
+
 class TestImages:
     """Tests for image conversion."""
 
@@ -246,6 +255,7 @@ class TestImages:
 # ══════════════════════════════════════════════════════════════
 # Lists
 # ══════════════════════════════════════════════════════════════
+
 
 class TestLists:
     """Tests for list conversion."""
@@ -297,6 +307,7 @@ class TestLists:
 # Tables
 # ══════════════════════════════════════════════════════════════
 
+
 class TestTables:
     """Tests for table conversion."""
 
@@ -339,6 +350,7 @@ class TestTables:
 # Code Blocks
 # ══════════════════════════════════════════════════════════════
 
+
 class TestCodeBlocks:
     """Tests for code block conversion."""
 
@@ -370,6 +382,7 @@ class TestCodeBlocks:
 # Blockquotes
 # ══════════════════════════════════════════════════════════════
 
+
 class TestBlockquotes:
     """Tests for blockquote conversion."""
 
@@ -397,6 +410,7 @@ class TestBlockquotes:
 # ══════════════════════════════════════════════════════════════
 # Text Formatting
 # ══════════════════════════════════════════════════════════════
+
 
 class TestTextFormatting:
     """Tests for text formatting conversion."""
@@ -440,6 +454,7 @@ class TestTextFormatting:
 # ══════════════════════════════════════════════════════════════
 # Noise Removal
 # ══════════════════════════════════════════════════════════════
+
 
 class TestNoiseRemoval:
     """Tests for noise removal (scripts, styles, etc.)."""
@@ -495,6 +510,7 @@ class TestNoiseRemoval:
 # Selector Filtering
 # ══════════════════════════════════════════════════════════════
 
+
 class TestSelectorFiltering:
     """Tests for CSS selector filtering via options."""
 
@@ -529,6 +545,7 @@ class TestSelectorFiltering:
 # Options
 # ══════════════════════════════════════════════════════════════
 
+
 class TestOptions:
     """Tests for converter options."""
 
@@ -561,6 +578,7 @@ class TestOptions:
 # ══════════════════════════════════════════════════════════════
 # Edge Cases
 # ══════════════════════════════════════════════════════════════
+
 
 class TestEdgeCases:
     """Tests for edge cases."""
@@ -625,6 +643,7 @@ class TestEdgeCases:
 # ══════════════════════════════════════════════════════════════
 # MarkdownOptions Dataclass
 # ══════════════════════════════════════════════════════════════
+
 
 class TestMarkdownOptions:
     """Tests for MarkdownOptions configuration."""

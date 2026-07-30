@@ -46,8 +46,10 @@ logger = logging.getLogger("agentcrawl.server.queue.worker")
 # Worker State
 # ══════════════════════════════════════════════════════════════
 
+
 class WorkerState(str, Enum):
     """Worker lifecycle state."""
+
     IDLE = "idle"
     RUNNING = "running"
     PROCESSING = "processing"
@@ -71,6 +73,7 @@ class WorkerInfo:
         last_active: Last activity timestamp.
         uptime_seconds: Worker uptime.
     """
+
     worker_id: str
     state: WorkerState = WorkerState.IDLE
     current_job: str = ""
@@ -108,6 +111,7 @@ JobHandler = Callable[
 # ══════════════════════════════════════════════════════════════
 # Single Worker
 # ══════════════════════════════════════════════════════════════
+
 
 class QueueWorker:
     """
@@ -312,6 +316,7 @@ class QueueWorker:
 # Worker Pool
 # ══════════════════════════════════════════════════════════════
 
+
 class WorkerPool:
     """
     Pool of queue workers for concurrent job processing.
@@ -469,10 +474,7 @@ class WorkerPool:
         """Get aggregate pool statistics."""
         total_processed = sum(w.info.jobs_processed for w in self._workers)
         total_failed = sum(w.info.jobs_failed for w in self._workers)
-        active = sum(
-            1 for w in self._workers
-            if w.info.state == WorkerState.PROCESSING
-        )
+        active = sum(1 for w in self._workers if w.info.state == WorkerState.PROCESSING)
 
         return {
             "num_workers": len(self._workers),
@@ -488,15 +490,13 @@ class WorkerPool:
         return self._started
 
     def __repr__(self) -> str:
-        return (
-            f"WorkerPool(workers={len(self._workers)}, "
-            f"started={self._started})"
-        )
+        return f"WorkerPool(workers={len(self._workers)}, started={self._started})"
 
 
 # ══════════════════════════════════════════════════════════════
 # Default Job Handlers
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_crawl_job(engine: Any, item: Any) -> dict[str, Any]:
     """

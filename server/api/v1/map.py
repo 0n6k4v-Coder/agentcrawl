@@ -32,6 +32,7 @@ logger = logging.getLogger("agentcrawl.server.map")
 # Request / Response Models
 # ══════════════════════════════════════════════════════════════
 
+
 class MapRequest(BaseModel):
     """Request body for POST /map."""
 
@@ -93,6 +94,7 @@ class MapResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════
 # Handler
 # ══════════════════════════════════════════════════════════════
+
 
 async def handle_map(
     engine: Any,
@@ -184,6 +186,7 @@ async def handle_map(
 # Discovery Logic
 # ══════════════════════════════════════════════════════════════
 
+
 async def _discover_urls(
     engine: Any,
     request: MapRequest,
@@ -226,10 +229,7 @@ async def _discover_urls(
         from agentcrawl.utils.url import get_base_domain
 
         base_domain = get_base_domain(request.url)
-        urls = [
-            u for u in urls
-            if get_base_domain(u) == base_domain
-        ]
+        urls = [u for u in urls if get_base_domain(u) == base_domain]
 
     # Deduplicate and normalize
     seen: set[str] = set()
@@ -241,7 +241,7 @@ async def _discover_urls(
             unique_urls.append(url)
 
     # Limit
-    unique_urls = unique_urls[:request.max_urls]
+    unique_urls = unique_urls[: request.max_urls]
 
     # Determine sources
     sources: list[str] = []
