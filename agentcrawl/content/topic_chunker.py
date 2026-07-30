@@ -224,10 +224,7 @@ class HeadingHierarchy:
             start = match.start()
 
             # Determine section end
-            if i + 1 < len(matches):
-                end = matches[i + 1].start()
-            else:
-                end = len(self._text)
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(self._text)
 
             # Extract content preview
             content = self._text[match.end():end].strip()
@@ -265,7 +262,7 @@ class HeadingHierarchy:
         """Compute breadcrumb paths for all nodes."""
         def _walk(node: HeadingNode, path: list[str]) -> None:
             if node.level > 0:
-                current_path = path + [node.text]
+                current_path = [*path, node.text]
                 node.breadcrumb = " > ".join(current_path)
             else:
                 current_path = path
@@ -752,7 +749,7 @@ class AdvancedTopicChunker(Chunker):
         buffer: dict[str, Any] | None = None
 
         for seg in segments:
-            seg_tokens = max(1, len(seg["text"]) // 4)
+            max(1, len(seg["text"]) // 4)
 
             if buffer is None:
                 buffer = dict(seg)
@@ -987,20 +984,20 @@ def extract_sections(
 # ══════════════════════════════════════════════════════════════
 
 __all__ = [
-    # Base (re-exported)
-    "Chunk",
-    "Chunker",
-    "ChunkResult",
-    "TopicChunker",
-    "create_chunker",
-    "create_chunker_from_config",
     # Extended
     "AdvancedTopicChunker",
+    # Base (re-exported)
+    "Chunk",
+    "ChunkResult",
+    "Chunker",
     "HeadingHierarchy",
     "HeadingNode",
+    "TopicChunker",
     "TopicSection",
     "TopicSimilarityDetector",
-    "generate_toc",
     "chunk_by_topics",
+    "create_chunker",
+    "create_chunker_from_config",
     "extract_sections",
+    "generate_toc",
 ]

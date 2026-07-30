@@ -50,6 +50,7 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from dataclasses import dataclass, field
@@ -331,10 +332,8 @@ class HTMLParser:
         self._base_url = base_url
         self._base_domain = ""
         if base_url:
-            try:
+            with contextlib.suppress(Exception):
                 self._base_domain = urlparse(base_url).netloc.replace("www.", "")
-            except Exception:
-                pass
 
         self._tree: Any = None
         self._root: Any = None
@@ -347,7 +346,6 @@ class HTMLParser:
         """Parse HTML using lxml."""
         try:
             from lxml import html as lxml_html
-            from lxml.html import HtmlElement
 
             if not self._raw_html.strip():
                 self._parsed = False
@@ -365,11 +363,11 @@ class HTMLParser:
             self._root = self._tree
             self._parsed = True
 
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "lxml is required for HTML parsing. "
                 "Install with: pip install lxml"
-            )
+            ) from err
         except Exception as e:
             logger.warning("HTML parsing failed: %s", e)
             self._parsed = False
@@ -692,8 +690,8 @@ class HTMLParser:
                     domain=domain,
                 ))
 
-        internal = [l for l in links if l.is_internal]
-        external = [l for l in links if l.is_external]
+        internal = [link for link in links if link.is_internal]
+        external = [link for link in links if link.is_external]
 
         return {
             "internal": internal,
@@ -929,12 +927,13 @@ class HTMLParser:
             try:
                 from lxml.cssselect import CSSSelector
                 css = CSSSelector(selector)
-                for el in css(element):
-                    parent = el.getparent()
-                    if parent is not None:
-                        parent.remove(el)
+                with contextlib.suppress(Exception):
+                    for el in css(element):
+                        parent = el.getparent()
+                        if parent is not None:
+                            parent.remove(el)
             except Exception:
-                pass
+                logger.debug("Error applying exclude selector")
 
         # Remove hidden elements
         for el in list(element.iter()):

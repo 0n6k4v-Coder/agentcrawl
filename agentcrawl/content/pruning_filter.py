@@ -247,11 +247,7 @@ class BoilerplateDetector:
         if len(text) < self._min_match_length:
             return False
 
-        for pattern in self._patterns:
-            if pattern.search(text):
-                return True
-
-        return False
+        return any(pattern.search(text) for pattern in self._patterns)
 
     def detect(self, text: str) -> list[dict[str, Any]]:
         """
@@ -909,20 +905,20 @@ def create_pruning_filter(
 # ══════════════════════════════════════════════════════════════
 
 __all__ = [
-    # Base (re-exported)
-    "ContentBlock",
-    "ContentFilter",
-    "ContentFilterResult",
-    "PruningContentFilter",
-    "create_content_filter",
-    "create_content_filter_from_config",
+    "BOILERPLATE_CONTAINER_PATTERNS",
+    # Constants
+    "BOILERPLATE_PATTERNS",
     # Extended
     "AdvancedPruningFilter",
     "BoilerplateDetector",
+    # Base (re-exported)
+    "ContentBlock",
     "ContentDensityAnalyzer",
+    "ContentFilter",
+    "ContentFilterResult",
     "DensityReport",
+    "PruningContentFilter",
+    "create_content_filter",
+    "create_content_filter_from_config",
     "create_pruning_filter",
-    # Constants
-    "BOILERPLATE_PATTERNS",
-    "BOILERPLATE_CONTAINER_PATTERNS",
 ]

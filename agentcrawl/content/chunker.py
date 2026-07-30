@@ -671,10 +671,7 @@ class RegexChunker(Chunker):
     def _split(self, text: str) -> list[dict[str, Any]]:
         segments: list[dict[str, Any]] = []
 
-        if self._keep_separator:
-            parts = self._pattern.split(text)
-        else:
-            parts = self._pattern.split(text)
+        parts = self._pattern.split(text)
 
         pos = 0
         for part in parts:
@@ -797,12 +794,9 @@ class TopicChunker(Chunker):
 
             # Section content: from end of heading to start of next heading
             section_start = h_end
-            if i + 1 < len(headings):
-                section_end = headings[i + 1][0]
-            else:
-                section_end = len(text)
+            section_end = headings[i + 1][0] if i + 1 < len(headings) else len(text)
 
-            section_text = text[section_start:section_end].strip()
+            text[section_start:section_end].strip()
 
             # Build heading context path
             heading_path = " > ".join(title for _, title in heading_stack)

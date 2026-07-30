@@ -118,22 +118,22 @@ LANGUAGE_PATTERNS: dict[str, LanguagePattern] = {
     "ja": LanguagePattern(
         code="ja",
         name="Japanese",
-        sentence_endings=r"[。！？.!?\n]+",
-        boundary_pattern=r"(?<=[。！？.!?])\s*(?=[^\s])",
+        sentence_endings=r"[。!?.!?\n]+",
+        boundary_pattern=r"(?<=[。!?.!?])\s*(?=[^\s])",
         abbreviations=[],
     ),
     "zh": LanguagePattern(
         code="zh",
         name="Chinese",
-        sentence_endings=r"[。！？.!?\n]+",
-        boundary_pattern=r"(?<=[。！？.!?])\s*(?=[^\s])",
+        sentence_endings=r"[。!?.!?\n]+",
+        boundary_pattern=r"(?<=[。!?.!?])\s*(?=[^\s])",
         abbreviations=[],
     ),
     "ko": LanguagePattern(
         code="ko",
         name="Korean",
-        sentence_endings=r"[.!?。！？\n]+",
-        boundary_pattern=r"(?<=[.!?。！？])\s*(?=[^\s])",
+        sentence_endings=r"[.!?。!?\n]+",
+        boundary_pattern=r"(?<=[.!?。!?])\s*(?=[^\s])",
         abbreviations=[],
     ),
     "ar": LanguagePattern(
@@ -147,8 +147,8 @@ LANGUAGE_PATTERNS: dict[str, LanguagePattern] = {
         code="ru",
         name="Russian",
         sentence_endings=r"[.!?…]+",
-        boundary_pattern=r"(?<=[.!?…])\s+(?=[A-ZА-ЯЁ\"'])",
-        abbreviations=["г", "гг", "т", "тт", "стр", "руб", "коп"],
+        boundary_pattern=r"(?<=[.!?…])\s+(?=[A-Z\u0410-\u042f\u0401\"'])",
+        abbreviations=["\u0433", "\u0433\u0433", "\u0442", "\u0442\u0442", "\u0441\u0442\u0440", "\u0440\u0443\u0431", "\u043a\u043e\u043f"],
     ),
     "de": LanguagePattern(
         code="de",
@@ -341,9 +341,7 @@ class SentenceTokenizer:
                 continue
 
             # Check abbreviation false positives
-            if self._handle_abbreviations and self._is_abbreviation_end(sent):
-                # Merge with next sentence
-                if sentences:
+            if self._handle_abbreviations and self._is_abbreviation_end(sent) and sentences:
                     sentences[-1] = sentences[-1] + " " + sent
                     continue
 
@@ -525,7 +523,7 @@ class AdvancedSentenceChunker(Chunker):
         max_sentences: int = 5,
         overlap_sentences: int = 1,
         language: str = "auto",
-        token_counter: str = "heuristic",
+        counter_method: str = "heuristic",
         model: str = "gpt-4o",
         respect_paragraphs: bool = True,
         min_chunk_sentences: int = 1,
@@ -544,7 +542,7 @@ class AdvancedSentenceChunker(Chunker):
             handle_abbreviations=True,
         )
         self._token_counter = TokenCounter(
-            method=token_counter,
+            method=counter_method,
             model=model,
         )
 
@@ -590,7 +588,7 @@ class AdvancedSentenceChunker(Chunker):
         current_start = 0
         current_para = -1
 
-        for i, (sent, para_idx, sent_idx) in enumerate(all_sentences):
+        for i, (sent, para_idx, _sent_idx) in enumerate(all_sentences):
             sent_tokens = self._token_counter.count(sent)
 
             # Check if adding this sentence would exceed limits
@@ -843,21 +841,21 @@ def count_tokens(
 # ══════════════════════════════════════════════════════════════
 
 __all__ = [
-    # Base (re-exported)
-    "Chunk",
-    "Chunker",
-    "ChunkResult",
-    "SentenceChunker",
-    "create_chunker",
-    "create_chunker_from_config",
+    "LANGUAGE_PATTERNS",
     # Extended
     "AdvancedSentenceChunker",
+    # Base (re-exported)
+    "Chunk",
+    "ChunkResult",
+    "Chunker",
+    "LanguagePattern",
+    "SentenceChunker",
     "SentenceTokenizer",
     "TokenCounter",
-    "LanguagePattern",
-    "LANGUAGE_PATTERNS",
-    "detect_language",
     "chunk_by_sentences",
-    "split_sentences",
     "count_tokens",
+    "create_chunker",
+    "create_chunker_from_config",
+    "detect_language",
+    "split_sentences",
 ]

@@ -157,7 +157,7 @@ class BM25Tokenizer:
     """
 
     # Common English stop words
-    STOP_WORDS: set[str] = {
+    STOP_WORDS: frozenset[str] = frozenset({
         "a", "an", "the", "and", "or", "but", "in", "on", "at", "to",
         "for", "of", "with", "by", "from", "is", "are", "was", "were",
         "be", "been", "being", "have", "has", "had", "do", "does", "did",
@@ -173,7 +173,7 @@ class BM25Tokenizer:
         "other", "some", "such", "only", "own", "same", "so", "into",
         "over", "under", "until", "up", "out", "off", "down", "here",
         "there", "once", "during", "while", "through",
-    }
+    })
 
     def __init__(
         self,
@@ -520,7 +520,7 @@ class BM25ContentFilter:
         scores = self._scorer.score_all(query_tokens)
 
         # Assign scores to blocks
-        for block, score in zip(blocks, scores):
+        for block, score in zip(blocks, scores, strict=True):
             block.score = score
 
         # Determine which blocks to keep

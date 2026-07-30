@@ -537,7 +537,7 @@ class CitationExtractor:
             url_match = self._RAW_URL_PATTERN.search(content)
             if url_match:
                 url = url_match.group(1).rstrip(".,;:!?")
-                title = content.replace(url, "").strip().strip("-–—")
+                title = content.replace(url, "").strip().strip("-\u2013\u2014")
 
                 citations.append(Citation(
                     url=url,
@@ -864,7 +864,7 @@ class CitationManager:
         Returns:
             Text with citation markers.
         """
-        extractor = CitationExtractor()
+        CitationExtractor()
         pattern = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 
         def _replace(match: re.Match) -> str:

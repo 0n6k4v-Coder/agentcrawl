@@ -232,11 +232,11 @@ class HTMLToMarkdown:
         # Last resort: html2text
         try:
             return self._convert_with_html2text(html)
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "No HTML-to-Markdown library available. "
                 "Install with: pip install lxml markdownify html2text"
-            )
+            ) from err
 
     def convert_element(self, element: Any) -> str:
         """
@@ -297,7 +297,7 @@ class HTMLToMarkdown:
         # Add reference-style links if enabled
         if self._options.link_reference and self._link_refs:
             markdown += "\n\n"
-            for i, (text, url) in enumerate(self._link_refs, 1):
+            for i, (_text, url) in enumerate(self._link_refs, 1):
                 markdown += f"[{i}]: {url}\n"
 
         # Clean up
@@ -514,7 +514,7 @@ class HTMLToMarkdown:
                 if line.strip()
             ]
 
-            items.append("\n".join([first_line] + rest_lines))
+            items.append("\n".join([first_line, *rest_lines]))
 
         if not items:
             return ""

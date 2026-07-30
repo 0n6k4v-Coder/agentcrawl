@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import logging
 import re
+from types import MappingProxyType
 from typing import Any
 
 # Re-export base classes
@@ -120,7 +121,7 @@ class PrebuiltPatterns:
     FAQ: str = r"(?=^(?:Q:|Q\.|Question:|\*\*Q)|^#{1,3}\s*(?:Q:|Question))"
 
     # Preset registry
-    _PRESETS: dict[str, dict[str, Any]] = {
+    _PRESETS: MappingProxyType[str, dict[str, Any]] = MappingProxyType({
         "markdown_sections": {
             "patterns": [MARKDOWN_SECTIONS],
             "description": "Split at Markdown headings (h1-h3)",
@@ -201,7 +202,7 @@ class PrebuiltPatterns:
             "description": "Split at Q&A boundaries",
             "flags": re.MULTILINE | re.IGNORECASE,
         },
-    }
+    })
 
     @classmethod
     def get_preset(cls, name: str) -> dict[str, Any]:
@@ -390,7 +391,7 @@ class AdvancedRegexChunker(Chunker):
             try:
                 self._compiled_patterns.append(re.compile(p, flags))
             except re.error as e:
-                raise ValueError(f"Invalid regex pattern '{p}': {e}")
+                raise ValueError(f"Invalid regex pattern '{p}': {e}") from e
 
         # Heading pattern
         try:
@@ -587,7 +588,7 @@ class AdvancedRegexChunker(Chunker):
         try:
             compiled = re.compile(pattern, self._flags)
         except re.error as e:
-            raise ValueError(f"Invalid regex pattern '{pattern}': {e}")
+            raise ValueError(f"Invalid regex pattern '{pattern}': {e}") from e
 
         self._compiled_patterns.append(compiled)
         self._pattern_strings.append(pattern)
@@ -749,18 +750,18 @@ def chunk_by_preset(
 # ══════════════════════════════════════════════════════════════
 
 __all__ = [
-    # Base (re-exported)
-    "Chunk",
-    "Chunker",
-    "ChunkResult",
-    "RegexChunker",
-    "create_chunker",
-    "create_chunker_from_config",
     # Extended
     "AdvancedRegexChunker",
+    # Base (re-exported)
+    "Chunk",
+    "ChunkResult",
+    "Chunker",
     "PrebuiltPatterns",
-    "validate_pattern",
-    "test_pattern",
-    "chunk_by_regex",
+    "RegexChunker",
     "chunk_by_preset",
+    "chunk_by_regex",
+    "create_chunker",
+    "create_chunker_from_config",
+    "test_pattern",
+    "validate_pattern",
 ]
