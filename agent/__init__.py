@@ -51,13 +51,6 @@ Quick Start:
 from __future__ import annotations
 
 import logging
-from typing import Any
-
-logger = logging.getLogger("agentcrawl.agent")
-
-# ──────────────────────────────────────────────────────────────
-# Core (always available — no external framework required)
-# ──────────────────────────────────────────────────────────────
 
 from agentcrawl.agent.function_schema import (
     TOOL_DEFINITIONS,
@@ -122,18 +115,40 @@ except ImportError:
     CrewAISearchTool = None  # type: ignore[assignment,misc]
     _HAS_CREWAI = False
 
+logger = logging.getLogger("agentcrawl.agent")
 
 # ──────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────
 
 __all__ = [
-    # Core toolkit
-    "AgentCrawlToolkit",
-    "OpenAIFunctionHandler",
-    "create_toolkit",
     # Function schemas
     "TOOL_DEFINITIONS",
+    "AgentCrawlCrawlTool",
+    "AgentCrawlSearchTool",
+    # LangChain (may be None if not installed)
+    "AgentCrawlTool",
+    # Core toolkit
+    "AgentCrawlToolkit",
+    # CrewAI (may be None if not installed)
+    "CrewAICrawlTool",
+    "CrewAISearchTool",
+    # MCP client
+    "MCPClient",
+    "MCPConnectionError",
+    "MCPError",
+    "MCPServerInfo",
+    "MCPTimeoutError",
+    "MCPToolError",
+    "MCPToolInfo",
+    "MCPToolResult",
+    "OpenAIFunctionHandler",
+    "TransportType",
+    "create_sse_client",
+    "create_stdio_client",
+    "create_toolkit",
+    "create_websocket_client",
+    "export_schemas_json",
     "get_all_schemas",
     "get_anthropic_tools_schema",
     "get_crewai_tools",
@@ -143,33 +158,10 @@ __all__ = [
     "get_openai_tools_schema",
     "get_tool_definition",
     "get_tool_names",
-    "export_schemas_json",
-    # MCP client
-    "MCPClient",
-    "MCPConnectionError",
-    "MCPError",
-    "MCPTimeoutError",
-    "MCPToolError",
-    "MCPToolInfo",
-    "MCPToolResult",
-    "MCPServerInfo",
-    "TransportType",
-    "create_sse_client",
-    "create_stdio_client",
-    "create_websocket_client",
-    # LangChain (may be None if not installed)
-    "AgentCrawlTool",
-    "AgentCrawlSearchTool",
-    "AgentCrawlCrawlTool",
-    # CrewAI (may be None if not installed)
-    "CrewAICrawlTool",
-    "CrewAISearchTool",
+    "has_crewai",
     # Feature detection
     "has_langchain",
-    "has_crewai",
-    "get_available_frameworks",
 ]
-
 
 # ──────────────────────────────────────────────────────────────
 # Feature Detection Helpers
@@ -203,3 +195,4 @@ def get_available_frameworks() -> list[str]:
     if _HAS_CREWAI:
         frameworks.append("crewai")
     return frameworks
+
