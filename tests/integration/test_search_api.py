@@ -20,6 +20,7 @@ Run:
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -97,6 +98,10 @@ class TestSearchBasic:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
+        reason="DuckDuckGo returns 0 results in containerized environments"
+    )
     async def test_search_returns_results(self, client: AsyncClient) -> None:
         """Search returns structured results."""
         response = await client.post(
