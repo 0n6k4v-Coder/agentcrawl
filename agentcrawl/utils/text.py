@@ -59,7 +59,8 @@ import re
 import unicodedata
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
+from typing import Literal
 
 # ══════════════════════════════════════════════════════════════
 # Cleaning & Normalization
@@ -114,22 +115,42 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
+_VALID_NORMALIZE_FORMS: tuple[Literal["NFC", "NFD", "NFKC", "NFKD"], ...] = (
+    "NFC",
+    "NFD",
+    "NFKC",
+    "NFKD",
+)
+
+
 def normalize_unicode(text: str, form: str = "NFC") -> str:
     """
-    Normalize Unicode text.
+    Normalize Unicode text to specified form.
 
     Args:
-        text: Input text.
-        form: Normalization form ('NFC', 'NFKC', 'NFD', 'NFKD').
+        text: Input text to normalize.
+        form: Normalization form ('NFC', 'NFD', 'NFKC', 'NFKD').
 
     Returns:
         Normalized text.
+
+    Raises:
+        ValueError: If form is not one of the valid normalization forms.
 
     Example:
         >>> normalize_unicode("café", "NFC")  # Composed form
         >>> normalize_unicode("ﬁle", "NFKC")  # → "file"
     """
-    return unicodedata.normalize(form, text)  # type: ignore[arg-type]
+    # Runtime validation ensures form is valid before cast
+    if form not in _VALID_NORMALIZE_FORMS:
+        raise ValueError(
+            f"Invalid normalization form: {form!r}. "
+            f"Must be one of: {_VALID_NORMALIZE_FORMS}"
+        )
+
+    # cast is safe because runtime validation above ensures form is valid
+    typed_form = cast(Literal["NFC", "NFD", "NFKC", "NFKD"], form)
+    return unicodedata.normalize(typed_form, text)
 
 
 def remove_accents(text: str) -> str:
