@@ -143,8 +143,7 @@ def normalize_unicode(text: str, form: str = "NFC") -> str:
     # Runtime validation ensures form is valid before cast
     if form not in _VALID_NORMALIZE_FORMS:
         raise ValueError(
-            f"Invalid normalization form: {form!r}. "
-            f"Must be one of: {_VALID_NORMALIZE_FORMS}"
+            f"Invalid normalization form: {form!r}. Must be one of: {_VALID_NORMALIZE_FORMS}"
         )
 
     # cast is safe because runtime validation above ensures form is valid
