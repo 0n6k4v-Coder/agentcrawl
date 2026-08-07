@@ -300,6 +300,7 @@ line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.10"
+mypy_path = "stubs"
 strict = true
 warn_return_any = true
 warn_unused_configs = true

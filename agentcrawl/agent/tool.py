@@ -728,9 +728,9 @@ class AgentCrawlToolkit:
 # ══════════════════════════════════════════════════════════════
 
 try:
-    from langchain.tools import BaseTool  # type: ignore[import-not-found]
+    from langchain.tools import BaseTool
 
-    class AgentCrawlTool(BaseTool):  # type: ignore[misc]
+    class AgentCrawlTool(BaseTool):
         """
         LangChain tool for web scraping via AgentCrawl.
 
@@ -827,7 +827,7 @@ try:
                 return str(result.get("content", str(result)))
             return str(result)
 
-    class AgentCrawlSearchTool(BaseTool):  # type: ignore[misc]
+    class AgentCrawlSearchTool(BaseTool):
         """LangChain tool for web search via AgentCrawl."""
 
         name: str = "web_search"
@@ -879,7 +879,7 @@ try:
                 return "\n\n".join(parts) if parts else "No results found."
             return str(result)
 
-    class AgentCrawlCrawlTool(BaseTool):  # type: ignore[misc]
+    class AgentCrawlCrawlTool(BaseTool):
         """LangChain tool for website crawling via AgentCrawl."""
 
         name: str = "web_crawler"
@@ -970,9 +970,9 @@ except ImportError:
 # ══════════════════════════════════════════════════════════════
 
 try:
-    from crewai.tools import BaseTool as CrewAIBaseTool  # type: ignore[import-not-found]
+    from crewai.tools import BaseTool as CrewAIBaseTool
 
-    class CrewAICrawlTool(CrewAIBaseTool):  # type: ignore[misc]
+    class CrewAICrawlTool(CrewAIBaseTool):
         """
         CrewAI tool for web scraping via AgentCrawl.
 
@@ -1019,7 +1019,7 @@ try:
                 return str(result.get("content", str(result)))
             return str(result)
 
-    class CrewAISearchTool(CrewAIBaseTool):  # type: ignore[misc]
+    class CrewAISearchTool(CrewAIBaseTool):
         """CrewAI tool for web search via AgentCrawl."""
 
         name: str = "Web Search"
