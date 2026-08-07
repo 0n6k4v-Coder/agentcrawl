@@ -44,3 +44,6 @@ Thumbs.db
 # Playwright
 playwright-report/
 test-results/
+
+# Mypy output artifacts
+mypy_out*.txt
