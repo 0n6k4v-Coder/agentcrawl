@@ -227,7 +227,7 @@ def is_hook_event(obj: Any) -> TypeGuard[HookEvent]:
     return isinstance(obj, HookEvent)
 
 
-def is_async_hook(callback: Callable) -> bool:
+def is_async_hook(callback: Callable[..., Any]) -> bool:
     """Check if a hook callback is async."""
     import asyncio
 

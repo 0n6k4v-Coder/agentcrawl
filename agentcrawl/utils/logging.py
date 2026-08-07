@@ -89,7 +89,7 @@ class LoggingContext:
         self._token: Any = None
 
     def __enter__(self) -> LoggingContext:
-        current = _log_context.get()
+        current = _log_context.get() or {}
         merged = {**current, **self._kwargs}
         self._token = _log_context.set(merged)
         return self
@@ -101,12 +101,12 @@ class LoggingContext:
     @staticmethod
     def get_context() -> dict[str, Any]:
         """Get the current logging context."""
-        return dict(_log_context.get())
+        return dict(_log_context.get() or {})
 
     @staticmethod
     def set_context(**kwargs: Any) -> None:
         """Set context values (persists until cleared)."""
-        current = _log_context.get()
+        current = _log_context.get() or {}
         _log_context.set({**current, **kwargs})
 
     @staticmethod
@@ -240,7 +240,7 @@ class ContextFilter(logging.Filter):
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
-        ctx = _log_context.get()
+        ctx = _log_context.get() or {}
         for key, value in ctx.items():
             setattr(record, key, value)
         return True
@@ -364,12 +364,12 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def log_performance(
-    func: Callable | None = None,
+    func: Callable[..., Any] | None = None,
     *,
     logger_name: str | None = None,
     level: int = logging.DEBUG,
     message: str | None = None,
-) -> Callable:
+) -> Callable[..., Any]:
     """
     Decorator to log function execution time.
 
@@ -391,7 +391,7 @@ def log_performance(
         # → DEBUG [module] fetch_page completed in 123.45ms
     """
 
-    def decorator(fn: Callable) -> Callable:
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         _logger_name = logger_name or fn.__module__
         _logger = logging.getLogger(_logger_name)
         _message = message or f"{fn.__name__} completed in {{duration:.2f}}ms"
@@ -482,7 +482,7 @@ class PerformanceTimer:
 # ══════════════════════════════════════════════════════════════
 
 
-def _is_async(func: Callable) -> bool:
+def _is_async(func: Callable[..., Any]) -> bool:
     """Check if a function is async."""
     import asyncio
 

@@ -311,7 +311,7 @@ class RedisCacheBackend(CacheBackend):
 
         try:
             result = await self._redis.delete(key)
-            return result > 0
+            return bool(result > 0)
         except Exception as e:
             self._stats.record_error()
             logger.warning("Redis DELETE error for key '%s': %s", key, e)
@@ -420,7 +420,7 @@ class RedisCacheBackend(CacheBackend):
             raise RuntimeError("Redis not connected")
 
         try:
-            return await self._redis.incrby(key, amount)
+            return int(await self._redis.incrby(key, amount))
         except Exception as e:
             self._stats.record_error()
             logger.warning("Redis INCRBY error for key '%s': %s", key, e)
@@ -530,7 +530,7 @@ class RedisCacheBackend(CacheBackend):
         try:
             result = await self._redis.delete(*full_keys)
             self._stats.deletes += result
-            return result
+            return int(result)
         except Exception as e:
             self._stats.record_error()
             logger.warning("Redis pipeline DELETE error: %s", e)
@@ -595,7 +595,7 @@ class RedisCacheBackend(CacheBackend):
             result = await self._redis.delete(*keys_to_delete)
 
             # Subtract 1 for the tag key itself
-            deleted = max(0, result - 1)
+            deleted = max(0, int(result) - 1)
             self._stats.deletes += deleted
 
             logger.debug("Deleted %d entries for tag '%s'", deleted, tag)
@@ -684,7 +684,7 @@ class RedisCacheBackend(CacheBackend):
 
         full_key = self._prefix_key(key)
         try:
-            return await self._redis.ttl(full_key)
+            return int(await self._redis.ttl(full_key))
         except Exception as e:
             logger.warning("Redis TTL error for key '%s': %s", key, e)
             return None

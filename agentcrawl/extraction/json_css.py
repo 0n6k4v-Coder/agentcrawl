@@ -366,7 +366,7 @@ class JsonCssExtractor(ExtractionStrategy):
         field_def: dict[str, Any],
     ) -> str:
         """Extract text content from an element."""
-        text = element.text_content()
+        text = str(element.text_content())
 
         if self._strip_whitespace:
             text = text.strip()
@@ -455,7 +455,7 @@ class JsonCssExtractor(ExtractionStrategy):
         field_def: dict[str, Any],
     ) -> str:
         """Extract text using a regex pattern."""
-        text = element.text_content()
+        text = str(element.text_content())
         pattern = field_def.get("pattern", "")
 
         if not pattern:
@@ -519,17 +519,17 @@ class JsonCssExtractor(ExtractionStrategy):
                     return value
 
             if "prefix" in transform:
-                return transform["prefix"] + value
+                return str(transform["prefix"]) + value
 
             if "suffix" in transform:
-                return value + transform["suffix"]
+                return value + str(transform["suffix"])
 
             if "split" in transform:
                 delimiter = transform["split"]
                 index = transform.get("index", 0)
                 parts = value.split(delimiter)
                 if 0 <= index < len(parts):
-                    return parts[index].strip()
+                    return str(parts[index].strip())
                 return value
 
             if "replace" in transform:

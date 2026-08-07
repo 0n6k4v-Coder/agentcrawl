@@ -69,7 +69,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
 logger = logging.getLogger("agentcrawl.browser.actions")
 
@@ -246,11 +246,11 @@ class Action:
         result: dict[str, Any] = {
             "type": self.type.value if isinstance(self.type, ActionType) else self.type
         }
-        for f in self.__dataclass_fields__:  # type: ignore[attr-defined]
+        for f in self.__dataclass_fields__:
             if f == "type":
                 continue
             val = getattr(self, f)
-            if val is not None and val != self.__dataclass_fields__[f].default:  # type: ignore[attr-defined]
+            if val is not None and val != self.__dataclass_fields__[f].default:
                 result[f] = val
         return result
 
@@ -358,7 +358,7 @@ class PageActions:
     def __len__(self) -> int:
         return len(self._actions)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Action]:
         return iter(self._actions)
 
     def __repr__(self) -> str:
@@ -1168,7 +1168,7 @@ class _ActionExecutor:
                 duration_ms=duration,
             )
 
-    def _get_handler(self, action_type: ActionType | str):
+    def _get_handler(self, action_type: ActionType | str) -> Any:
         """Get the handler coroutine for an action type."""
         handlers = {
             ActionType.CLICK: self._handle_click,

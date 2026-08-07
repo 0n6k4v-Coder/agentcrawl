@@ -783,7 +783,7 @@ class BrowserConfig:
             geolocation = GeolocationConfig.from_dict(geolocation)
 
         # Filter to known fields
-        known = {f.name for f in cls.__dataclass_fields__.values()}  # type: ignore[attr-defined]
+        known = {f.name for f in cls.__dataclass_fields__.values()}
         filtered = {k: v for k, v in data.items() if k in known}
 
         return cls(

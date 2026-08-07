@@ -256,10 +256,10 @@ class SchemaResolver:
 
         # Pydantic model
         if hasattr(schema, "model_json_schema"):
-            return schema.model_json_schema()
+            return dict(schema.model_json_schema())
 
         if hasattr(schema, "schema"):
-            return schema.schema()
+            return dict(schema.schema())
 
         # TypedDict
         if hasattr(schema, "__annotations__"):
@@ -348,7 +348,7 @@ class SchemaResolver:
     @staticmethod
     def _check_type(value: Any, expected: str) -> bool:
         """Check if a value matches a JSON Schema type."""
-        type_map = {
+        type_map: dict[str, type | tuple[type, ...]] = {
             "string": str,
             "integer": int,
             "number": (int, float),
@@ -367,9 +367,9 @@ class SchemaResolver:
         if schema is None:
             return "none"
         if hasattr(schema, "__name__"):
-            return schema.__name__
+            return str(schema.__name__)
         if isinstance(schema, dict):
-            return schema.get("title", "json_schema")
+            return str(schema.get("title", "json_schema"))
         return type(schema).__name__
 
     @staticmethod

@@ -418,9 +418,9 @@ class DiskCacheBackend(CacheBackend):
         """Delete both .dat and .meta files for a key."""
         data_path, meta_path = self._key_to_paths(key)
 
-        deleted = False
-        deleted |= await self._run_sync(self._delete_file_sync, data_path)
-        deleted |= await self._run_sync(self._delete_file_sync, meta_path)
+        deleted: bool = False
+        deleted |= bool(await self._run_sync(self._delete_file_sync, data_path))
+        deleted |= bool(await self._run_sync(self._delete_file_sync, meta_path))
 
         await self._remove_from_index(key)
         return deleted
@@ -672,7 +672,7 @@ class DiskCacheBackend(CacheBackend):
                 "shards": shard_sizes,
             }
 
-        return await self._run_sync(_calc)
+        return dict(await self._run_sync(_calc))
 
     async def cleanup_expired(self) -> int:
         """

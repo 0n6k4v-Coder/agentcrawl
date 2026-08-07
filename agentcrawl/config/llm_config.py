@@ -543,7 +543,7 @@ class LLMConfig(BaseSettings):
             lines = [line for line in lines if not line.strip().startswith("```")]
             text = "\n".join(lines)
 
-        return json.loads(text)
+        return dict(json.loads(text))
 
     # ──────────────────────────────────────────────────────────
     # Token Counting

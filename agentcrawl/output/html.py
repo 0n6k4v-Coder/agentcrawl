@@ -558,7 +558,7 @@ class HtmlOutputFormatter:
             ImportError: If weasyprint is not installed.
         """
         try:
-            from weasyprint import HTML
+            from weasyprint import HTML  # type: ignore[import-not-found]
         except ImportError as err:
             raise ImportError(
                 "weasyprint is required for PDF conversion. Install with: pip install weasyprint"

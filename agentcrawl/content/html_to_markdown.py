@@ -724,7 +724,7 @@ class HTMLToMarkdown:
 
     def _get_text_content(self, element: Any) -> str:
         """Get all text content from an element (recursive)."""
-        return element.text_content()
+        return str(element.text_content())
 
     def _escape_text(self, text: str) -> str:
         """Escape Markdown special characters in text."""

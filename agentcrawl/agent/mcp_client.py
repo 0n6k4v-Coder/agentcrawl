@@ -249,7 +249,7 @@ class _SSETransport(_BaseTransport):
         self._client: httpx.AsyncClient | None = None
         self._connected = False
         self._message_endpoint: str | None = None
-        self._sse_task: asyncio.Task | None = None
+        self._sse_task: asyncio.Task[Any] | None = None
         self._incoming: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
 
     async def connect(self) -> None:
@@ -525,8 +525,8 @@ class MCPClient:
         self._server_info: MCPServerInfo | None = None
         self._tools_cache: list[MCPToolInfo] | None = None
         self._pending: dict[str, asyncio.Future[dict[str, Any]]] = {}
-        self._listener_task: asyncio.Task | None = None
-        self._notification_handlers: dict[str, list[Callable]] = {}
+        self._listener_task: asyncio.Task[Any] | None = None
+        self._notification_handlers: dict[str, list[Callable[..., Any]]] = {}
 
     def _create_transport(self) -> _BaseTransport:
         if self._transport_type == TransportType.SSE:
@@ -847,7 +847,7 @@ class MCPClient:
     async def list_resources(self) -> list[dict[str, Any]]:
         """List available resources on the MCP server."""
         result = await self._request("resources/list")
-        return result.get("resources", [])
+        return result.get("resources", []) or []
 
     async def read_resource(self, uri: str) -> dict[str, Any]:
         """Read a resource by URI."""
@@ -856,7 +856,7 @@ class MCPClient:
     async def list_prompts(self) -> list[dict[str, Any]]:
         """List available prompts on the MCP server."""
         result = await self._request("prompts/list")
-        return result.get("prompts", [])
+        return result.get("prompts", []) or []
 
     async def get_prompt(
         self,

@@ -158,7 +158,7 @@ class RetryConfig:
 
 
 def retry(
-    func: Callable | None = None,
+    func: Callable[..., Any] | None = None,
     *,
     max_retries: int = 3,
     delay: float = 1.0,
@@ -172,7 +172,7 @@ def retry(
     on_retry: Callable[[int, Exception, float], None] | None = None,
     on_success: Callable[[int, Any], None] | None = None,
     on_failure: Callable[[int, Exception], None] | None = None,
-) -> Callable:
+) -> Callable[..., Any]:
     """
     Retry decorator with exponential backoff.
 
@@ -221,7 +221,7 @@ def retry(
             on_failure=on_failure,
         )
 
-    def decorator(fn: Callable) -> Callable:
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         if _is_async(fn):
 
             @functools.wraps(fn)
@@ -243,10 +243,10 @@ def retry(
 
 
 async def _retry_async(
-    fn: Callable,
+    fn: Callable[..., Any],
     config: RetryConfig,
-    args: tuple,
-    kwargs: dict,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
 ) -> Any:
     """Execute an async function with retry logic."""
     last_exception: Exception | None = None
@@ -306,10 +306,10 @@ async def _retry_async(
 
 
 def _retry_sync(
-    fn: Callable,
+    fn: Callable[..., Any],
     config: RetryConfig,
-    args: tuple,
-    kwargs: dict,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
 ) -> Any:
     """Execute a sync function with retry logic."""
     last_exception: Exception | None = None
@@ -456,7 +456,7 @@ class CircuitBreaker:
     # Decorator
     # ──────────────────────────────────────────────────────────
 
-    def __call__(self, func: Callable) -> Callable:
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """Use as a decorator."""
         if _is_async(func):
 
@@ -475,9 +475,9 @@ class CircuitBreaker:
 
     async def _call_async(
         self,
-        fn: Callable,
-        args: tuple,
-        kwargs: dict,
+        fn: Callable[..., Any],
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
     ) -> Any:
         """Execute with circuit breaker (async)."""
         self._check_state()
@@ -495,9 +495,9 @@ class CircuitBreaker:
 
     def _call_sync(
         self,
-        fn: Callable,
-        args: tuple,
-        kwargs: dict,
+        fn: Callable[..., Any],
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
     ) -> Any:
         """Execute with circuit breaker (sync)."""
         self._check_state()
@@ -701,7 +701,7 @@ class RateLimiter:
 # ══════════════════════════════════════════════════════════════
 
 
-def _is_async(func: Callable) -> bool:
+def _is_async(func: Callable[..., Any]) -> bool:
     """Check if a function is async."""
     return asyncio.iscoroutinefunction(func)
 
@@ -709,7 +709,7 @@ def _is_async(func: Callable) -> bool:
 def retry_with_backoff(
     max_retries: int = 3,
     base_delay: float = 1.0,
-) -> Callable:
+) -> Callable[..., Any]:
     """
     Shorthand for a simple retry with exponential backoff.
 

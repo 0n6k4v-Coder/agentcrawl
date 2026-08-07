@@ -843,11 +843,15 @@ class CacheManager:
             "stats": self.get_stats(),
         }
 
-        if self._l1 and hasattr(self._l1, "get_diagnostics"):
-            diag["l1"] = await self._l1.get_diagnostics()  # type: ignore[attr-defined]
+        if self._l1:
+            method = getattr(self._l1, "get_diagnostics", None)
+            if method is not None:
+                diag["l1"] = await method()
 
-        if self._l2 and hasattr(self._l2, "get_diagnostics"):
-            diag["l2"] = await self._l2.get_diagnostics()  # type: ignore[attr-defined]
+        if self._l2:
+            method = getattr(self._l2, "get_diagnostics", None)
+            if method is not None:
+                diag["l2"] = await method()
 
         return diag
 

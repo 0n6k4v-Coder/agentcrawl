@@ -129,7 +129,7 @@ def normalize_unicode(text: str, form: str = "NFC") -> str:
         >>> normalize_unicode("café", "NFC")  # Composed form
         >>> normalize_unicode("ﬁle", "NFKC")  # → "file"
     """
-    return unicodedata.normalize(form, text)
+    return unicodedata.normalize(form, text)  # type: ignore[arg-type]
 
 
 def remove_accents(text: str) -> str:

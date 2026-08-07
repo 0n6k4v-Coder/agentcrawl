@@ -43,7 +43,10 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 from urllib.parse import urlparse
 
 logger = logging.getLogger("agentcrawl.content.citation")
@@ -630,7 +633,7 @@ class CitationExtractor:
         Transforms: [text](url) → text [N]
         """
 
-        def _replace_link(match: re.Match) -> str:
+        def _replace_link(match: re.Match[str]) -> str:
             link_text = match.group(1).strip()
             url = match.group(2).strip()
             normalized = self._normalize_url(url)
@@ -643,7 +646,7 @@ class CitationExtractor:
         result = self._INLINE_LINK_PATTERN.sub(_replace_link, text)
 
         # Also mark bare URLs
-        def _replace_url(match: re.Match) -> str:
+        def _replace_url(match: re.Match[str]) -> str:
             url = match.group(1).rstrip(".,;:!?")
             normalized = self._normalize_url(url)
             number = url_to_number.get(normalized)
@@ -669,7 +672,7 @@ class CitationExtractor:
         Removes: raw URLs (replaced by [N])
         """
 
-        def _replace_link(match: re.Match) -> str:
+        def _replace_link(match: re.Match[str]) -> str:
             link_text = match.group(1).strip()
             url = match.group(2).strip()
             normalized = self._normalize_url(url)
@@ -685,7 +688,7 @@ class CitationExtractor:
         result = self._IMAGE_PATTERN.sub("", result)
 
         # Replace bare URLs with markers
-        def _replace_url(match: re.Match) -> str:
+        def _replace_url(match: re.Match[str]) -> str:
             url = match.group(1).rstrip(".,;:!?")
             normalized = self._normalize_url(url)
             number = url_to_number.get(normalized)
@@ -873,7 +876,7 @@ class CitationManager:
         CitationExtractor()
         pattern = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 
-        def _replace(match: re.Match) -> str:
+        def _replace(match: re.Match[str]) -> str:
             link_text = match.group(1).strip()
             url = match.group(2).strip()
             number = self.get_number(url)
@@ -905,7 +908,7 @@ class CitationManager:
         if not self._citations:
             return ""
 
-        format_methods = {
+        format_methods: dict[BibliographyFormat, Callable[[Citation], str]] = {
             BibliographyFormat.MARKDOWN: lambda c: c.to_markdown_ref(),
             BibliographyFormat.APA: lambda c: c.to_apa_ref(),
             BibliographyFormat.PLAIN: lambda c: c.to_plain_ref(),

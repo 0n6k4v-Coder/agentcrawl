@@ -346,7 +346,7 @@ def encrypt_api_key(
 
     fernet = _get_fernet(encryption_key)
     encrypted_bytes = fernet.encrypt(api_key.encode("utf-8"))
-    return encrypted_bytes.decode("ascii")
+    return str(encrypted_bytes.decode("ascii"))
 
 
 def decrypt_api_key(
@@ -375,7 +375,7 @@ def decrypt_api_key(
 
     fernet = _get_fernet(encryption_key)
     decrypted_bytes = fernet.decrypt(encrypted.encode("ascii"))
-    return decrypted_bytes.decode("utf-8")
+    return str(decrypted_bytes.decode("utf-8"))
 
 
 # ══════════════════════════════════════════════════════════════
@@ -434,7 +434,7 @@ class CryptoManager:
             Encrypted base64 string.
         """
         encrypted_bytes = self._fernet.encrypt(plaintext.encode("utf-8"))
-        return encrypted_bytes.decode("ascii")
+        return str(encrypted_bytes.decode("ascii"))
 
     def decrypt(self, encrypted: str) -> str:
         """
@@ -447,7 +447,7 @@ class CryptoManager:
             Decrypted plain-text string.
         """
         decrypted_bytes = self._fernet.decrypt(encrypted.encode("ascii"))
-        return decrypted_bytes.decode("utf-8")
+        return str(decrypted_bytes.decode("utf-8"))
 
     def encrypt_dict(self, data: dict[str, str]) -> dict[str, str]:
         """

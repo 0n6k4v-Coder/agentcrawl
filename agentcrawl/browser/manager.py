@@ -72,7 +72,7 @@ async def _async_path_exists(path: str) -> bool:
 
 async def _async_path_join(*args: str) -> str:
     """Join paths using asyncio.to_thread."""
-    return await asyncio.to_thread(os.path.join, *args)
+    return await asyncio.to_thread(lambda: os.path.join(*args))
 
 
 async def _async_makedirs(path: str, exist_ok: bool = True) -> None:
@@ -93,7 +93,7 @@ async def _async_listdir(path: str) -> list[str]:
 async def _async_write_file(path: str, content: str, encoding: str = "utf-8") -> None:
     """Write file using asyncio.to_thread."""
 
-    def _write():
+    def _write() -> None:
         with open(path, "w", encoding=encoding) as f:
             f.write(content)
 
@@ -103,7 +103,7 @@ async def _async_write_file(path: str, content: str, encoding: str = "utf-8") ->
 async def _async_read_json(path: str) -> Any:
     """Read and parse JSON file using asyncio.to_thread."""
 
-    def _read():
+    def _read() -> Any:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
 
@@ -113,7 +113,7 @@ async def _async_read_json(path: str) -> Any:
 async def _async_write_json(path: str, data: Any, encoding: str = "utf-8") -> None:
     """Write JSON file using asyncio.to_thread."""
 
-    def _write():
+    def _write() -> None:
         with open(path, "w", encoding=encoding) as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -256,8 +256,8 @@ class BrowserManager:
         }
 
         # Background tasks
-        self._health_check_task: asyncio.Task | None = None
-        self._cleanup_task: asyncio.Task | None = None
+        self._health_check_task: asyncio.Task[Any] | None = None
+        self._cleanup_task: asyncio.Task[Any] | None = None
 
     # ──────────────────────────────────────────────────────────
     # Properties

@@ -144,7 +144,7 @@ class MemoryCacheBackend(CacheBackend):
         self._lock = asyncio.Lock()
 
         # Background cleanup
-        self._cleanup_task: asyncio.Task | None = None
+        self._cleanup_task: asyncio.Task[Any] | None = None
         self._cleanup_interval: int = 60  # seconds
 
         # Memory tracking

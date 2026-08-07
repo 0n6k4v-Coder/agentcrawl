@@ -1057,3 +1057,6 @@ class NullCacheBackend(CacheBackend):
 
     async def _size_raw(self) -> int:
         return 0
+
+    async def _stop_impl(self) -> None:
+        pass

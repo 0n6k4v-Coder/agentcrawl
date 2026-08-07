@@ -46,10 +46,9 @@ import json
 import logging
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from playwright.async_api import Browser, BrowserContext, Page
+from playwright.async_api import Browser, BrowserContext, Page
 
 from agentcrawl.browser.config import BrowserConfig
 
@@ -1084,11 +1083,11 @@ async def apply_stealth(
         seed=seed,
     )
 
-    if hasattr(target, "new_page"):  # Browser
+    if isinstance(target, Browser):  # Browser
         await adapter.apply_to_browser(target)
-    elif hasattr(target, "add_init_script"):  # Page
+    elif isinstance(target, Page):  # Page
         await adapter.apply_to_page(target)
-    elif hasattr(target, "contexts"):  # BrowserContext
+    elif isinstance(target, BrowserContext):  # BrowserContext
         await adapter.apply_to_context(target)
     else:
         raise TypeError(f"Unsupported target type: {type(target)}")

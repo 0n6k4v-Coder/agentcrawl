@@ -346,11 +346,12 @@ class BrowserPool:
 
         # Stats
         self._stats = PoolStats()
+        self._background_tasks: set[asyncio.Task[Any]] = set()
 
         # Background tasks
-        self._health_check_task: asyncio.Task | None = None
-        self._recycler_task: asyncio.Task | None = None
-        self._pre_warm_task: asyncio.Task | None = None
+        self._health_check_task: asyncio.Task[Any] | None = None
+        self._recycler_task: asyncio.Task[Any] | None = None
+        self._pre_warm_task: asyncio.Task[Any] | None = None
 
         # Drain notification event
         self._drain_event = asyncio.Event()
@@ -656,6 +657,7 @@ class BrowserPool:
             pooled_or_page: PooledPage wrapper or raw Playwright Page.
         """
         # Resolve PooledPage
+        pooled: PooledPage | None
         if isinstance(pooled_or_page, PooledPage):
             pooled = pooled_or_page
         else:
@@ -791,7 +793,7 @@ class BrowserPool:
         elif diff < 0:
             for _ in range(-diff):
                 with contextlib.suppress(Exception):
-                    self._semaphore._value = max(0, self._semaphore._value - 1)  # type: ignore[attr-defined]
+                    self._semaphore._value = max(0, self._semaphore._value - 1)
 
         # Close excess idle pages if shrinking
         if max_pages < old_max:
@@ -1191,7 +1193,7 @@ class BrowserPool:
     async def _semaphore_acquire(self, timeout: float = 0.0) -> bool:
         """Try to acquire the semaphore with optional timeout."""
         if timeout <= 0:
-            if self._semaphore._value > 0:  # type: ignore[attr-defined]
+            if self._semaphore._value > 0:
                 await self._semaphore.acquire()
                 return True
             return False

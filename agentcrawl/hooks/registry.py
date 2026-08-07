@@ -130,7 +130,7 @@ def hook(
     condition: Callable[[HookContext], bool] | None = None,
     timeout: float = 0.0,
     continue_on_error: bool = True,
-) -> Callable:
+) -> Callable[..., Any]:
     """
     Decorator to mark a function as a hook and register it
     with the global registry.
@@ -157,7 +157,7 @@ def hook(
         ...     print(f"Scraping: {ctx.url}")
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         # Attach metadata to the function
         func._hook_metadata = HookMetadata(  # type: ignore[attr-defined]
             name=func.__name__,
@@ -272,7 +272,7 @@ class HookRegistry:
     # Registration
     # ──────────────────────────────────────────────────────────
 
-    def register_hook_function(self, func: Callable) -> None:
+    def register_hook_function(self, func: Callable[..., Any]) -> None:
         """
         Register a function that has been decorated with @hook.
 
@@ -324,7 +324,7 @@ class HookRegistry:
     def register(
         self,
         event: HookEvent | str,
-        callback: Callable,
+        callback: Callable[..., Any],
         name: str = "",
         group: str = "default",
         priority: int = 100,

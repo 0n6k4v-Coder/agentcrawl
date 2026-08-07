@@ -84,7 +84,9 @@ def scrape(url: str, output_format: str, headless: bool) -> None:
     """Scrape a single URL (package mode)."""
     import asyncio
 
-    from agentcrawl import BrowserConfig, Crawler, CrawlerConfig
+    from agentcrawl.browser.config import BrowserConfig
+    from agentcrawl.config.crawler_config import CrawlerConfig
+    from agentcrawl.core.engine import CrawlEngine as Crawler
 
     async def _scrape() -> None:
         async with Crawler(browser_config=BrowserConfig(headless=headless)) as crawler:
@@ -110,7 +112,7 @@ def search(query: str, max_results: int, provider: str) -> None:
     """Search the web (package mode)."""
     import asyncio
 
-    from agentcrawl import SearchEngine
+    from agentcrawl.search.engine import SearchEngine
 
     async def _search() -> None:
         engine = SearchEngine(provider=provider)

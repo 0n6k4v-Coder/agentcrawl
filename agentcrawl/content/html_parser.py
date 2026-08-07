@@ -111,7 +111,7 @@ class PageMetadata:
     extra: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        d = {
+        d: dict[str, Any] = {
             "title": self.title,
             "description": self.description,
             "keywords": self.keywords,

@@ -291,7 +291,7 @@ class HookExecutor:
         timeout: float = 0.0,
         continue_on_error: bool | None = None,
         name: str = "",
-    ) -> Callable:
+    ) -> Callable[..., Any]:
         """
         Decorator to register a hook for an event.
 
@@ -314,7 +314,7 @@ class HookExecutor:
         if isinstance(event, str):
             event = HookEvent(event)
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             self.register(
                 event=event,
                 callback=func,
@@ -331,7 +331,7 @@ class HookExecutor:
     def register(
         self,
         event: HookEvent | str,
-        callback: Callable,
+        callback: Callable[..., Any],
         priority: int = 100,
         condition: Callable[[HookContext], bool] | None = None,
         timeout: float = 0.0,
