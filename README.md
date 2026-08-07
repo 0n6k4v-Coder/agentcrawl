@@ -625,6 +625,80 @@ agentcrawl install-browsers
 
 ---
 
+## 🛠️ Development Workflow
+
+### Setup (One-time)
+
+```bash
+# Clone repository
+git clone https://github.com/0n6k4v-Coder/agentcrawl.git
+cd agentcrawl
+
+# Install dependencies + Playwright
+make setup
+
+# Install pre-commit hooks (recommended)
+make pre-commit-setup
+```
+
+### Before Committing
+
+**Option 1: Pre-commit hooks (automatic, recommended)**
+
+If you installed pre-commit hooks, every `git commit` auto-checks:
+
+```bash
+git add agentcrawl/core.py
+git commit -m "feat: add feature"
+# → pre-commit auto-runs: ruff check, ruff format
+# → if pass → commit success
+# → if fail → fix → commit again
+```
+
+**Option 2: Manual check**
+
+```bash
+make quick-lint
+# → runs ruff check + ruff format --check
+# → if pass → safe to commit
+```
+
+### Before Pushing
+
+```bash
+make pre-push
+# → runs gacils (local CI simulation, 30-60s)
+# → if pass → safe to push
+
+git push origin main
+# → GitHub Actions CI should pass (already checked locally)
+```
+
+### IDE Setup (Recommended)
+
+**VSCode:**
+
+Install extensions:
+- Ruff (charliermarsh.ruff)
+- Python (ms-python.python)
+
+Add to `.vscode/settings.json`:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": true,
+      "source.organizeImports": true
+    }
+  }
+}
+```
+
+---
+
 ## 📄 License
 
 This project is licensed under the [Apache License 2.0](LICENSE).

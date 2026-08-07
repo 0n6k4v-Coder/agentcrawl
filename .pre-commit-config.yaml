@@ -1,0 +1,37 @@
+# AgentCrawl Pre-commit Hooks
+#
+# Layer 1: Fast file-level checks (every commit, < 1s)
+# Layer 2: Full CI simulation (every push, 30-60s)
+#
+# Install: pip install pre-commit && pre-commit install
+# Docs: https://pre-commit.com/
+
+repos:
+  # Layer 1: Ruff — lint + format (every commit)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Layer 1: Common checks (every commit)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  # Layer 2: gacils — full CI simulation (every push)
+  - repo: local
+    hooks:
+      - id: gacils
+        name: gacils (local CI simulation)
+        entry: gacils run
+        language: system
+        pass_filenames: false
+        stages: [push]
+        verbose: true

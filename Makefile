@@ -16,6 +16,10 @@ help:
 	@echo "  make docker-up          Start Docker Compose (build + up)"
 	@echo "  make docker-down        Stop Docker Compose"
 	@echo "  make clean              Remove build artifacts"
+	@echo ""
+	@echo "  make quick-lint         Quick lint check before commit"
+	@echo "  make pre-push           Run before git push (full local CI)"
+	@echo "  make pre-commit-setup   Install pre-commit hooks"
 
 # Install core package
 install:
@@ -69,3 +73,29 @@ clean:
 	rm -rf agentcrawl/__pycache__/ server/__pycache__/ agent/__pycache__/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
+
+# === Development Workflow ===
+
+quick-lint:  ## Quick lint check before commit
+	@echo "=== Ruff Check ==="
+	ruff check agentcrawl/ server/ tests/
+	@echo ""
+	@echo "=== Ruff Format Check ==="
+	ruff format --check agentcrawl/ server/ tests/
+	@echo ""
+	@echo "✅ Quick lint passed! Safe to commit."
+
+pre-push:  ## Run before git push (full local CI)
+	@echo "=== Running local CI (gacils) ==="
+	gacils run
+	@echo ""
+	@echo "✅ Local CI passed! Safe to push."
+
+pre-commit-setup:  ## Install pre-commit hooks (one-time setup)
+	@echo "=== Installing pre-commit hooks ==="
+	pip install pre-commit
+	pre-commit install
+	@echo ""
+	@echo "✅ Pre-commit hooks installed!"
+	@echo "Every git commit will now auto-check code."
+	@echo "Every git push will run gacils (local CI)."
