@@ -59,8 +59,7 @@ import re
 import unicodedata
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any, cast
-from typing import Literal
+from typing import Any, Literal, cast
 
 # ══════════════════════════════════════════════════════════════
 # Cleaning & Normalization
@@ -149,7 +148,7 @@ def normalize_unicode(text: str, form: str = "NFC") -> str:
         )
 
     # cast is safe because runtime validation above ensures form is valid
-    typed_form = cast(Literal["NFC", "NFD", "NFKC", "NFKD"], form)
+    typed_form = cast("Literal['NFC', 'NFD', 'NFKC', 'NFKD']", form)
     return unicodedata.normalize(typed_form, text)
 
 
