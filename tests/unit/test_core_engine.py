@@ -73,7 +73,9 @@ class TestCrawlResult:
     def test_post_init_token_count(self) -> None:
         from agentcrawl.core.engine import CrawlResult
 
-        result = CrawlResult(url="https://example.com", markdown="one two three four five six seven eight")
+        result = CrawlResult(
+            url="https://example.com", markdown="one two three four five six seven eight"
+        )
         # 8 words * ~4 = 32 chars, but token_count = max(1, len(markdown)//4)
         assert result.token_count == len("one two three four five six seven eight") // 4
 
@@ -207,7 +209,10 @@ class TestCrawlResult:
         from agentcrawl.core.engine import CrawlResult
 
         result = CrawlResult(
-            url="https://example.com", success=True, status_code=200, cached=True,
+            url="https://example.com",
+            success=True,
+            status_code=200,
+            cached=True,
         )
         repr_str = repr(result)
         assert "cached" in repr_str
