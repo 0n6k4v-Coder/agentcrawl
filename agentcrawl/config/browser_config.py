@@ -38,7 +38,10 @@ Usage:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -487,12 +490,11 @@ class BrowserSettings(BaseSettings):
         return cls(**data)
 
     @classmethod
-    def from_env(cls, prefix: str = "AGENTCRAWL") -> BrowserSettings:
-        """
-        Create settings from environment variables.
+    def from_env(cls, prefix: str = "AGENTCRAWL") -> Self:
+        """Create settings from environment variables.
 
-        This is equivalent to the default constructor but allows
-        a custom prefix.
+        Uses a dynamic subclass with the public ``model_config`` to override
+        ``env_prefix``, avoiding the private ``_env_prefix`` parameter.
 
         Args:
             prefix: Environment variable prefix.
@@ -500,7 +502,12 @@ class BrowserSettings(BaseSettings):
         Returns:
             BrowserSettings instance.
         """
-        return cls(_env_prefix=f"{prefix}_")  # type: ignore[call-arg]
+        env_prefix = f"{prefix}_"
+        if cls.model_config.get("env_prefix") == env_prefix:
+            return cls()
+        new_config = {**cls.model_config, "env_prefix": env_prefix}
+        dynamic_cls = type(cls.__name__, (cls,), {"model_config": new_config})
+        return cast("Self", dynamic_cls())
 
     # ──────────────────────────────────────────────────────────
     # Serialization

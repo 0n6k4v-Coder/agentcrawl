@@ -39,7 +39,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 from urllib.parse import urlparse
 
 from pydantic import Field, SecretStr, field_validator, model_validator
@@ -563,9 +566,18 @@ class ProxySettings(BaseSettings):
     # ──────────────────────────────────────────────────────────
 
     @classmethod
-    def from_env(cls, prefix: str = "AGENTCRAWL_PROXY") -> ProxySettings:
-        """Create settings from environment variables."""
-        return cls(_env_prefix=f"{prefix}_")  # type: ignore[call-arg]
+    def from_env(cls, prefix: str = "AGENTCRAWL_PROXY") -> Self:
+        """Create settings from environment variables.
+
+        Uses a dynamic subclass with the public ``model_config`` to override
+        ``env_prefix``, avoiding the private ``_env_prefix`` parameter.
+        """
+        env_prefix = f"{prefix}_"
+        if cls.model_config.get("env_prefix") == env_prefix:
+            return cls()
+        new_config = {**cls.model_config, "env_prefix": env_prefix}
+        dynamic_cls = type(cls.__name__, (cls,), {"model_config": new_config})
+        return cast("Self", dynamic_cls())
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProxySettings:
