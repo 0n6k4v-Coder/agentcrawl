@@ -1,5 +1,5 @@
 """Tests for agentcrawl.agent.tool module."""
-import asyncio
+
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,14 +12,14 @@ from agentcrawl.agent.tool import (
     WebCrawlInput,
     WebExtractInput,
     WebMapInput,
-    WebScreenshotInput,
     WebScrapeInput,
+    WebScreenshotInput,
     WebSearchInput,
     create_toolkit,
 )
 
-
 # ─── Input Schema Tests ───────────────────────────────────────
+
 
 class TestInputSchemas:
     """Tests for Pydantic input schemas."""
@@ -34,7 +34,7 @@ class TestInputSchemas:
         assert schema.timeout == 30
 
     def test_web_scrape_input_required(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             WebScrapeInput()
 
     def test_web_crawl_input_defaults(self):
@@ -46,7 +46,7 @@ class TestInputSchemas:
         assert schema.same_domain_only is True
 
     def test_web_crawl_input_required(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             WebCrawlInput()
 
     def test_web_search_input_defaults(self):
@@ -56,7 +56,7 @@ class TestInputSchemas:
         assert schema.output_format == "markdown"
 
     def test_web_search_input_required(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             WebSearchInput()
 
     def test_web_map_input_defaults(self):
@@ -66,7 +66,7 @@ class TestInputSchemas:
         assert schema.use_robots is True
 
     def test_web_map_input_required(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             WebMapInput()
 
     def test_web_extract_input_defaults(self):
@@ -75,7 +75,7 @@ class TestInputSchemas:
         assert schema.prompt == ""
 
     def test_web_extract_input_required(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             WebExtractInput()
 
     def test_web_screenshot_input_defaults(self):
@@ -84,7 +84,7 @@ class TestInputSchemas:
         assert schema.format == "png"
 
     def test_web_screenshot_input_required(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             WebScreenshotInput()
 
     def test_web_batch_scrape_input_defaults(self):
@@ -93,11 +93,12 @@ class TestInputSchemas:
         assert schema.max_concurrent == 5
 
     def test_web_batch_scrape_input_required(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             WebBatchScrapeInput()
 
 
 # ─── AgentCrawlToolkit ───────────────────────────────────────
+
 
 class TestAgentCrawlToolkitInit:
     """Tests for AgentCrawlToolkit initialization."""
@@ -135,13 +136,14 @@ class TestAgentCrawlToolkitInit:
 
     def test_registry_has_handlers_and_schemas(self):
         toolkit = AgentCrawlToolkit()
-        for name, info in toolkit._tool_registry.items():
+        for _name, info in toolkit._tool_registry.items():
             assert "handler" in info
             assert "input_schema" in info
             assert "description" in info
 
 
 # ─── AgentCrawlToolkit Public API ───────────────────────────
+
 
 class TestToolkitPublicAPI:
     """Tests for AgentCrawlToolkit public methods."""
@@ -184,7 +186,9 @@ class TestToolkitPublicAPI:
         assert len(schema) == 1
         assert schema[0]["name"] == "web_crawl"
 
+
 # ─── AgentCrawlToolkit.execute ──────────────────────────────
+
 
 class TestEngineManager:
     """Tests for _EngineManager private class."""
@@ -192,6 +196,7 @@ class TestEngineManager:
     @pytest.mark.asyncio
     async def test_get_engine_already_initialized(self):
         from agentcrawl.agent.tool import _EngineManager
+
         mgr = _EngineManager()
         mgr._engine = MagicMock()
         result = await mgr.get_engine()
@@ -200,12 +205,15 @@ class TestEngineManager:
     @pytest.mark.asyncio
     async def test_get_engine_creates_new(self):
         from agentcrawl.agent.tool import _EngineManager
+
         mgr = _EngineManager()
         mock_engine = MagicMock()
         mock_engine.startup = AsyncMock()
 
-        with patch("agentcrawl.config.settings.Settings") as mock_settings, \
-             patch("agentcrawl.core.engine.CrawlEngine") as mock_engine_cls:
+        with (
+            patch("agentcrawl.config.settings.Settings"),
+            patch("agentcrawl.core.engine.CrawlEngine") as mock_engine_cls,
+        ):
             mock_engine_cls.from_settings.return_value = mock_engine
             result = await mgr.get_engine()
 
@@ -215,6 +223,7 @@ class TestEngineManager:
     @pytest.mark.asyncio
     async def test_shutdown_not_initialized(self):
         from agentcrawl.agent.tool import _EngineManager
+
         mgr = _EngineManager()
         await mgr.shutdown()
         # Should not raise, should just do nothing
@@ -222,6 +231,7 @@ class TestEngineManager:
     @pytest.mark.asyncio
     async def test_shutdown_after_init(self):
         from agentcrawl.agent.tool import _EngineManager
+
         mgr = _EngineManager()
         mgr._engine = MagicMock()
         mgr._engine.shutdown = AsyncMock()
@@ -234,6 +244,7 @@ class TestEngineManager:
 
     def test_is_initialized_false(self):
         from agentcrawl.agent.tool import _EngineManager
+
         mgr = _EngineManager()
         assert mgr.is_initialized is False
 
@@ -241,6 +252,7 @@ class TestEngineManager:
     async def test_get_engine_double_lock(self):
         """Test double-checked locking in get_engine."""
         from agentcrawl.agent.tool import _EngineManager
+
         mgr = _EngineManager()
         mgr._engine = MagicMock()  # Already set
 
@@ -296,6 +308,7 @@ class TestToolkitExecute:
 
 # ─── AgentCrawlToolkit.execute_json ────────────────────────
 
+
 class TestExecuteJson:
     """Tests for execute_json method."""
 
@@ -329,6 +342,7 @@ class TestExecuteJson:
 
 # ─── AgentCrawlToolkit.close ─────────────────────────────────
 
+
 class TestToolkitClose:
     """Tests for close method."""
 
@@ -343,16 +357,17 @@ class TestToolkitClose:
 
     @pytest.mark.asyncio
     async def test_async_context_manager(self):
-        toolkit = AgentCrawlToolkit()
+        AgentCrawlToolkit()
         mock_mgr = MagicMock()
         mock_mgr.shutdown = AsyncMock()
         with patch("agentcrawl.agent.tool._engine_manager", mock_mgr):
-            async with AgentCrawlToolkit() as tk:
+            async with AgentCrawlToolkit():
                 pass
             mock_mgr.shutdown.assert_awaited_once()
 
 
 # ─── _format_result ─────────────────────────────────────────
+
 
 class TestFormatResult:
     """Tests for _format_result method."""
@@ -398,6 +413,7 @@ class TestFormatResult:
 
 # ─── _truncate ───────────────────────────────────────────────
 
+
 class TestTruncate:
     """Tests for _truncate method."""
 
@@ -423,6 +439,7 @@ class TestTruncate:
 
 
 # ─── _handle_scrape ─────────────────────────────────────────
+
 
 class TestHandleScrape:
     """Tests for _handle_scrape."""
@@ -482,7 +499,9 @@ class TestHandleScrape:
 
         with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
             mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await toolkit._handle_scrape(url="https://example.com", include_metadata=False, include_links=False)
+            result = await toolkit._handle_scrape(
+                url="https://example.com", include_metadata=False, include_links=False
+            )
 
         assert result["success"] is True
         assert "metadata" not in result
@@ -490,6 +509,7 @@ class TestHandleScrape:
 
 
 # ─── _handle_crawl ──────────────────────────────────────────
+
 
 class TestHandleCrawl:
     """Tests for _handle_crawl."""
@@ -521,7 +541,7 @@ class TestHandleCrawl:
         mock_page = MagicMock()
         mock_page.url = "https://example.com/page1"
         mock_page.markdown = "# Page"
-        mock_page.to_json.return_value = '{}'
+        mock_page.to_json.return_value = "{}"
         mock_page.status_code = 200
 
         mock_engine = MagicMock()
@@ -539,7 +559,7 @@ class TestHandleCrawl:
         mock_page = MagicMock()
         mock_page.url = "https://example.com/page1"
         mock_page.markdown = "# Page"
-        mock_page.to_json.return_value = '{}'
+        mock_page.to_json.return_value = "{}"
         mock_page.status_code = 200
 
         mock_engine = MagicMock()
@@ -557,7 +577,7 @@ class TestHandleCrawl:
         mock_page = MagicMock()
         mock_page.url = "https://example.com/page1"
         mock_page.markdown = "# Page"
-        mock_page.to_json.return_value = '{}'
+        mock_page.to_json.return_value = "{}"
         mock_page.status_code = 200
 
         mock_engine = MagicMock()
@@ -575,6 +595,7 @@ class TestHandleCrawl:
 
 
 # ─── _handle_search ──────────────────────────────────────────
+
 
 class TestHandleSearch:
     """Tests for _handle_search."""
@@ -624,6 +645,7 @@ class TestHandleSearch:
 
 # ─── _handle_map ───────────────────────────────────────────
 
+
 class TestHandleMap:
     """Tests for _handle_map."""
 
@@ -631,10 +653,12 @@ class TestHandleMap:
     async def test_map_success(self):
         toolkit = AgentCrawlToolkit()
         mock_engine = MagicMock()
-        mock_engine.map = AsyncMock(return_value=[
-            "https://example.com/page1",
-            "https://example.com/page2",
-        ])
+        mock_engine.map = AsyncMock(
+            return_value=[
+                "https://example.com/page1",
+                "https://example.com/page2",
+            ]
+        )
 
         with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
             mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
@@ -648,7 +672,9 @@ class TestHandleMap:
     async def test_map_max_urls_limit(self):
         toolkit = AgentCrawlToolkit()
         mock_engine = MagicMock()
-        mock_engine.map = AsyncMock(return_value=[f"https://example.com/page{i}" for i in range(100)])
+        mock_engine.map = AsyncMock(
+            return_value=[f"https://example.com/page{i}" for i in range(100)]
+        )
 
         with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
             mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
@@ -658,6 +684,7 @@ class TestHandleMap:
 
 
 # ─── _handle_extract ───────────────────────────────────────
+
 
 class TestHandleExtract:
     """Tests for _handle_extract."""
@@ -757,6 +784,7 @@ class TestHandleExtract:
 
 # ─── _handle_screenshot ──────────────────────────────────────
 
+
 class TestHandleScreenshot:
     """Tests for _handle_screenshot."""
 
@@ -780,6 +808,7 @@ class TestHandleScreenshot:
 
 # ─── _handle_batch_scrape ───────────────────────────────────
 
+
 class TestHandleBatchScrape:
     """Tests for _handle_batch_scrape."""
 
@@ -790,7 +819,7 @@ class TestHandleBatchScrape:
         mock_result.url = "https://a.com"
         mock_result.markdown = "# A"
         mock_result.success = True
-        mock_result.to_json.return_value = '{}'
+        mock_result.to_json.return_value = "{}"
 
         mock_engine = MagicMock()
         mock_engine.batch_scrape = AsyncMock(return_value=[mock_result])
@@ -811,7 +840,7 @@ class TestHandleBatchScrape:
         mock_result.url = "https://a.com"
         mock_result.markdown = "# A"
         mock_result.success = True
-        mock_result.to_json.return_value = '{}'
+        mock_result.to_json.return_value = "{}"
 
         mock_engine = MagicMock()
         mock_engine.batch_scrape = AsyncMock(return_value=[mock_result])
@@ -837,7 +866,7 @@ class TestHandleBatchScrape:
         mock_result.url = "https://a.com"
         mock_result.markdown = ""
         mock_result.success = False
-        mock_result.to_json.return_value = '{}'
+        mock_result.to_json.return_value = "{}"
 
         mock_engine = MagicMock()
         mock_engine.batch_scrape = AsyncMock(return_value=[mock_result])
@@ -855,7 +884,7 @@ class TestHandleBatchScrape:
         mock_result = MagicMock(spec=["url", "markdown", "to_json"])
         mock_result.url = "https://a.com"
         mock_result.markdown = "# A"
-        mock_result.to_json.return_value = '{}'
+        mock_result.to_json.return_value = "{}"
 
         mock_engine = MagicMock()
         mock_engine.batch_scrape = AsyncMock(return_value=[mock_result])
@@ -868,6 +897,7 @@ class TestHandleBatchScrape:
 
 
 # ─── OpenAIFunctionHandler ───────────────────────────────────
+
 
 class TestOpenAIFunctionHandler:
     """Tests for OpenAIFunctionHandler."""
@@ -998,12 +1028,15 @@ class TestOpenAIFunctionHandler:
     @pytest.mark.asyncio
     async def test_handle_tool_call_exception(self):
         handler = OpenAIFunctionHandler(toolkit=AgentCrawlToolkit(return_format="dict"))
-        with patch.object(handler._toolkit, "execute_json", side_effect=Exception("Tool error")):
-            with pytest.raises(Exception, match="Tool error"):
-                await handler.handle_tool_call("web_scrape", '{"url": "https://example.com"}')
+        with (
+            patch.object(handler._toolkit, "execute_json", side_effect=Exception("Tool error")),
+            pytest.raises(Exception, match="Tool error"),
+        ):
+            await handler.handle_tool_call("web_scrape", '{"url": "https://example.com"}')
 
 
 # ─── OpenAIFunctionHandler.run_agent_loop ────────────────────
+
 
 class TestRunAgentLoop:
     """Tests for run_agent_loop method."""
@@ -1033,11 +1066,19 @@ class TestRunAgentLoop:
         mock_response.choices[0].message.tool_calls = [MagicMock()]  # Always tool calls
         mock_response.choices[0].message.tool_calls[0].id = "call_1"
         mock_response.choices[0].message.tool_calls[0].function.name = "web_scrape"
-        mock_response.choices[0].message.tool_calls[0].function.arguments = '{"url": "https://example.com"}'
+        mock_response.choices[0].message.tool_calls[
+            0
+        ].function.arguments = '{"url": "https://example.com"}'
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch.object(handler, "handle_response", return_value=[{"role": "tool", "content": "{}", "tool_call_id": "call_1"}]):
-            result = await handler.run_agent_loop(mock_client, [{"role": "user", "content": "Hi"}], max_iterations=2)
+        with patch.object(
+            handler,
+            "handle_response",
+            return_value=[{"role": "tool", "content": "{}", "tool_call_id": "call_1"}],
+        ):
+            result = await handler.run_agent_loop(
+                mock_client, [{"role": "user", "content": "Hi"}], max_iterations=2
+            )
 
         assert "maximum iterations" in result
 
@@ -1068,30 +1109,36 @@ class TestRunAgentLoop:
 
 # ─── LangChain / CrewAI Stubs ─────────────────────────────────
 
+
 class TestOptionalImports:
     """Tests for optional langchain/crewai imports (stubs when not installed)."""
 
     def test_langchain_not_installed(self):
         # Since langchain is not installed in this environment
         import agentcrawl.agent.tool as tool_module
+
         assert tool_module.AgentCrawlTool is None
 
     def test_crewai_not_installed(self):
         import agentcrawl.agent.tool as tool_module
+
         assert tool_module.CrewAICrawlTool is None
 
     def test_get_langchain_tools_raises(self):
         from agentcrawl.agent.tool import get_langchain_tools as get_lc
+
         with pytest.raises(ImportError, match="LangChain"):
             get_lc()
 
     def test_get_crewai_tools_raises(self):
         from agentcrawl.agent.tool import get_crewai_tools as get_ca
+
         with pytest.raises(ImportError, match="CrewAI"):
             get_ca()
 
 
 # ─── create_toolkit ──────────────────────────────────────────
+
 
 class TestCreateToolkit:
     """Tests for create_toolkit factory function."""

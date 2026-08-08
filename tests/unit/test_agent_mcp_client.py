@@ -1,6 +1,6 @@
 """Tests for agentcrawl.agent.mcp_client module."""
+
 import asyncio
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -9,11 +9,11 @@ from agentcrawl.agent.mcp_client import (
     MCPClient,
     MCPConnectionError,
     MCPError,
+    MCPServerInfo,
     MCPTimeoutError,
     MCPToolError,
     MCPToolInfo,
     MCPToolResult,
-    MCPServerInfo,
     TransportType,
     _JsonRpc,
     create_sse_client,
@@ -21,8 +21,8 @@ from agentcrawl.agent.mcp_client import (
     create_websocket_client,
 )
 
-
 # ═══ TransportType ═══
+
 
 class TestTransportType:
     """Tests for TransportType enum."""
@@ -51,6 +51,7 @@ class TestTransportType:
 
 
 # ═══ MCPError ═══
+
 
 class TestMCPError:
     """Tests for MCPError exception."""
@@ -85,11 +86,16 @@ class TestMCPError:
 
 # ═══ MCPToolInfo ═══
 
+
 class TestMCPToolInfo:
     """Tests for MCPToolInfo dataclass."""
 
     def test_from_dict_basic(self):
-        data = {"name": "web_scrape", "description": "Scrape a URL", "inputSchema": {"type": "object"}}
+        data = {
+            "name": "web_scrape",
+            "description": "Scrape a URL",
+            "inputSchema": {"type": "object"},
+        }
         info = MCPToolInfo.from_dict(data)
         assert info.name == "web_scrape"
         assert info.description == "Scrape a URL"
@@ -109,6 +115,7 @@ class TestMCPToolInfo:
 
 # ═══ MCPToolResult ═══
 
+
 class TestMCPToolResultText:
     """Tests for MCPToolResult.text property."""
 
@@ -117,16 +124,20 @@ class TestMCPToolResultText:
         assert result.text == "Hello"
 
     def test_text_multiple_parts(self):
-        result = MCPToolResult(content=[
-            {"type": "text", "text": "Hello"},
-            {"type": "text", "text": " World"},
-        ])
+        result = MCPToolResult(
+            content=[
+                {"type": "text", "text": "Hello"},
+                {"type": "text", "text": " World"},
+            ]
+        )
         assert result.text == "Hello\n World"
 
     def test_text_image(self):
-        result = MCPToolResult(content=[
-            {"type": "image", "mimeType": "image/png"},
-        ])
+        result = MCPToolResult(
+            content=[
+                {"type": "image", "mimeType": "image/png"},
+            ]
+        )
         assert result.text == "[image: image/png]"
 
     def test_text_image_no_mime(self):
@@ -134,9 +145,11 @@ class TestMCPToolResultText:
         assert result.text == "[image: unknown]"
 
     def test_text_resource(self):
-        result = MCPToolResult(content=[
-            {"type": "resource", "uri": "file:///test.txt"},
-        ])
+        result = MCPToolResult(
+            content=[
+                {"type": "resource", "uri": "file:///test.txt"},
+            ]
+        )
         assert result.text == "[resource: file:///test.txt]"
 
     def test_text_resource_no_uri(self):
@@ -144,11 +157,13 @@ class TestMCPToolResultText:
         assert result.text == "[resource: unknown]"
 
     def test_text_mixed(self):
-        result = MCPToolResult(content=[
-            {"type": "text", "text": "Hello"},
-            {"type": "image", "mimeType": "image/jpeg"},
-            {"type": "resource", "uri": "file:///test.txt"},
-        ])
+        result = MCPToolResult(
+            content=[
+                {"type": "text", "text": "Hello"},
+                {"type": "image", "mimeType": "image/jpeg"},
+                {"type": "resource", "uri": "file:///test.txt"},
+            ]
+        )
         assert "Hello" in result.text
         assert "[image: image/jpeg]" in result.text
         assert "[resource: file:///test.txt]" in result.text
@@ -205,6 +220,7 @@ class TestMCPToolResultFromDict:
 
 # ═══ MCPServerInfo ═══
 
+
 class TestMCPServerInfo:
     """Tests for MCPServerInfo dataclass."""
 
@@ -236,6 +252,7 @@ class TestMCPServerInfo:
 
 
 # ═══ _JsonRpc ═══
+
 
 class TestJsonRpc:
     """Tests for _JsonRpc message builder."""
@@ -290,6 +307,7 @@ class TestJsonRpc:
 
 
 # ═══ MCPClient Init ═══
+
 
 class TestMCPClientInit:
     """Tests for MCPClient.__init__."""
@@ -386,6 +404,7 @@ class TestMCPClientInit:
 
 # ═══ MCPClient.connect ═══
 
+
 class TestMCPClientConnect:
     """Tests for MCPClient.connect."""
 
@@ -405,10 +424,12 @@ class TestMCPClientConnect:
         mock_transport.send = AsyncMock()
         mock_transport.receive = AsyncMock(return_value=[])
         # Mock _request to return the init response
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value=init_response):
-            with patch.object(client, "_notify", new_callable=AsyncMock):
-                with patch.object(client, "_listen", new_callable=AsyncMock):
-                    result = await client.connect()
+        with (
+            patch.object(client, "_request", new_callable=AsyncMock, return_value=init_response),
+            patch.object(client, "_notify", new_callable=AsyncMock),
+            patch.object(client, "_listen", new_callable=AsyncMock),
+        ):
+            await client.connect()
 
         assert client._connected is True
         assert client._server_info.name == "test-server"
@@ -430,6 +451,7 @@ class TestMCPClientConnect:
 
 
 # ═══ MCPClient.disconnect ═══
+
 
 class TestMCPClientDisconnect:
     """Tests for MCPClient.disconnect."""
@@ -477,6 +499,7 @@ class TestMCPClientDisconnect:
 
 # ═══ MCPClient async context ═══
 
+
 class TestMCPClientContext:
     """Tests for async context manager."""
 
@@ -490,16 +513,19 @@ class TestMCPClientContext:
         client._transport = mock_transport
 
         init_response = {"serverInfo": {"name": "test", "version": "1.0"}}
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value=init_response):
-            with patch.object(client, "_notify", new_callable=AsyncMock):
-                with patch.object(client, "_listen", new_callable=AsyncMock):
-                    async with client:
-                        assert client._connected is True
+        with (
+            patch.object(client, "_request", new_callable=AsyncMock, return_value=init_response),
+            patch.object(client, "_notify", new_callable=AsyncMock),
+            patch.object(client, "_listen", new_callable=AsyncMock),
+        ):
+            async with client:
+                assert client._connected is True
 
         assert client._connected is False
 
 
 # ═══ MCPClient.list_tools ═══
+
 
 class TestListTools:
     """Tests for list_tools."""
@@ -513,7 +539,9 @@ class TestListTools:
 
         # First call goes to _request
         tools_data = [{"name": "web_scrape", "description": "desc", "inputSchema": {}}]
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value={"tools": tools_data}):
+        with patch.object(
+            client, "_request", new_callable=AsyncMock, return_value={"tools": tools_data}
+        ):
             result1 = await client.list_tools()
             assert len(result1) == 1
             assert result1[0].name == "web_scrape"
@@ -547,6 +575,7 @@ class TestListTools:
 
 # ═══ MCPClient.call_tool ═══
 
+
 class TestCallTool:
     """Tests for call_tool."""
 
@@ -573,9 +602,11 @@ class TestCallTool:
         client._transport = MagicMock()
 
         tool_result = {"content": [{"type": "text", "text": "Tool failed"}], "isError": True}
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value=tool_result):
-            with pytest.raises(MCPToolError, match="Tool 'web_scrape' returned error"):
-                await client.call_tool("web_scrape", {"url": "https://example.com"})
+        with (
+            patch.object(client, "_request", new_callable=AsyncMock, return_value=tool_result),
+            pytest.raises(MCPToolError, match="Tool 'web_scrape' returned error"),
+        ):
+            await client.call_tool("web_scrape", {"url": "https://example.com"})
 
     @pytest.mark.asyncio
     async def test_call_tool_timeout(self):
@@ -587,9 +618,11 @@ class TestCallTool:
             # Never completes — simulates a hung server
             await asyncio.sleep(100)
 
-        with patch.object(client, "_request", new_callable=AsyncMock, side_effect=hanging_request):
-            with pytest.raises(MCPTimeoutError, match="timed out"):
-                await client.call_tool("web_scrape", {"url": "https://example.com"})
+        with (
+            patch.object(client, "_request", new_callable=AsyncMock, side_effect=hanging_request),
+            pytest.raises(MCPTimeoutError, match="timed out"),
+        ):
+            await client.call_tool("web_scrape", {"url": "https://example.com"})
 
     @pytest.mark.asyncio
     async def test_call_tool_default_timeout(self):
@@ -639,6 +672,7 @@ class TestCallTool:
 
 # ═══ MCPClient convenience methods ═══
 
+
 class TestConvenienceMethods:
     """Tests for convenience methods (scrape, crawl, search, map_site, extract, screenshot)."""
 
@@ -646,17 +680,23 @@ class TestConvenienceMethods:
     async def test_scrape(self):
         client = MCPClient()
         mock_result = MCPToolResult(content=[{"type": "text", "text": "content"}], is_error=False)
-        with patch.object(client, "call_tool", new_callable=AsyncMock, return_value=mock_result) as mock_call:
+        with patch.object(
+            client, "call_tool", new_callable=AsyncMock, return_value=mock_result
+        ) as mock_call:
             result = await client.scrape("https://example.com", output_format="json")
 
-        mock_call.assert_called_once_with("web_scrape", {"url": "https://example.com", "output_format": "json"})
+        mock_call.assert_called_once_with(
+            "web_scrape", {"url": "https://example.com", "output_format": "json"}
+        )
         assert result.text == "content"
 
     @pytest.mark.asyncio
     async def test_scrape_with_kwargs(self):
         client = MCPClient()
         mock_result = MCPToolResult(content=[{"type": "text", "text": "ok"}], is_error=False)
-        with patch.object(client, "call_tool", new_callable=AsyncMock, return_value=mock_result) as mock_call:
+        with patch.object(
+            client, "call_tool", new_callable=AsyncMock, return_value=mock_result
+        ) as mock_call:
             await client.scrape("https://example.com", output_format="html", stealth=False)
 
         call_args = mock_call.call_args
@@ -703,6 +743,7 @@ class TestConvenienceMethods:
 
 # ═══ MCPClient resource/prompt operations ═══
 
+
 class TestResourcePromptOps:
     """Tests for resource and prompt operations."""
 
@@ -713,7 +754,12 @@ class TestResourcePromptOps:
         client._pending = {}
         client._transport = MagicMock()
 
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value={"resources": [{"uri": "file:///test"}]}):
+        with patch.object(
+            client,
+            "_request",
+            new_callable=AsyncMock,
+            return_value={"resources": [{"uri": "file:///test"}]},
+        ):
             result = await client.list_resources()
 
         assert len(result) == 1
@@ -726,7 +772,9 @@ class TestResourcePromptOps:
         client._pending = {}
         client._transport = MagicMock()
 
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value={"resources": []}):
+        with patch.object(
+            client, "_request", new_callable=AsyncMock, return_value={"resources": []}
+        ):
             result = await client.list_resources()
         assert result == []
 
@@ -748,7 +796,9 @@ class TestResourcePromptOps:
         client._pending = {}
         client._transport = MagicMock()
 
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value={"content": "data"}) as mock_req:
+        with patch.object(
+            client, "_request", new_callable=AsyncMock, return_value={"content": "data"}
+        ) as mock_req:
             result = await client.read_resource("file:///test.txt")
 
         mock_req.assert_called_once_with("resources/read", {"uri": "file:///test.txt"})
@@ -761,7 +811,9 @@ class TestResourcePromptOps:
         client._pending = {}
         client._transport = MagicMock()
 
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value={"prompts": [{"name": "test"}]}):
+        with patch.object(
+            client, "_request", new_callable=AsyncMock, return_value={"prompts": [{"name": "test"}]}
+        ):
             result = await client.list_prompts()
 
         assert len(result) == 1
@@ -785,10 +837,14 @@ class TestResourcePromptOps:
         client._pending = {}
         client._transport = MagicMock()
 
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value={"prompt": "..."}) as mock_req:
-            result = await client.get_prompt("my_prompt", {"arg": "val"})
+        with patch.object(
+            client, "_request", new_callable=AsyncMock, return_value={"prompt": "..."}
+        ) as mock_req:
+            await client.get_prompt("my_prompt", {"arg": "val"})
 
-        mock_req.assert_called_once_with("prompts/get", {"name": "my_prompt", "arguments": {"arg": "val"}})
+        mock_req.assert_called_once_with(
+            "prompts/get", {"name": "my_prompt", "arguments": {"arg": "val"}}
+        )
 
     @pytest.mark.asyncio
     async def test_get_prompt_defaults(self):
@@ -798,10 +854,11 @@ class TestResourcePromptOps:
         client._transport = MagicMock()
 
         with patch.object(client, "_request", new_callable=AsyncMock, return_value={}):
-            result = await client.get_prompt("my_prompt")
+            await client.get_prompt("my_prompt")
 
 
 # ═══ MCPClient.on_notification ═══
+
 
 class TestOnNotification:
     """Tests for on_notification."""
@@ -838,6 +895,7 @@ class TestOnNotification:
 
 # ═══ MCPClient._request ═══
 
+
 class TestRequest:
     """Tests for _request method."""
 
@@ -857,7 +915,7 @@ class TestRequest:
         mock_transport.send = AsyncMock()
         client._transport = mock_transport
 
-        loop = asyncio.get_event_loop()
+        asyncio.get_event_loop()
 
         async def mock_receive():
             # Simulate receiving the response
@@ -871,7 +929,12 @@ class TestRequest:
         mock_transport.receive = MagicMock(return_value=fake_receive())
 
         with patch("agentcrawl.agent.mcp_client._JsonRpc.request") as mock_req:
-            mock_req.return_value = {"jsonrpc": "2.0", "id": "test-id", "method": "tools/list", "params": {}}
+            mock_req.return_value = {
+                "jsonrpc": "2.0",
+                "id": "test-id",
+                "method": "tools/list",
+                "params": {},
+            }
 
             # Schedule _handle_message to resolve the pending future that
             # _request creates. Since we bypass connect() (no listener task
@@ -882,14 +945,16 @@ class TestRequest:
                 await asyncio.sleep(0.01)
                 await client._handle_message(response_message)
 
-            asyncio.create_task(drive_response())
+            driver = asyncio.create_task(drive_response())
             result = await client._request("tools/list", {"key": "val"})
+            driver.cancel()
 
         assert result == {"data": "value"}
         mock_transport.send.assert_awaited_once()
 
 
 # ═══ MCPClient._handle_message ═══
+
 
 class TestHandleMessage:
     """Tests for _handle_message."""
@@ -918,7 +983,10 @@ class TestHandleMessage:
         future = loop.create_future()
         client._pending = {"req-2": future}
 
-        message = {"id": "req-2", "error": {"code": -32601, "message": "Not found", "data": {"x": 1}}}
+        message = {
+            "id": "req-2",
+            "error": {"code": -32601, "message": "Not found", "data": {"x": 1}},
+        }
         await client._handle_message(message)
 
         assert future.done()
@@ -998,6 +1066,7 @@ class TestHandleMessage:
 
 
 # ═══ MCPClient._listen ═══
+
 
 class TestListen:
     """Tests for _listen method."""
@@ -1085,6 +1154,7 @@ class TestListen:
 
 # ═══ MCPClient.reconnect ═══
 
+
 class TestReconnect:
     """Tests for reconnect."""
 
@@ -1098,11 +1168,13 @@ class TestReconnect:
         client._transport = mock_transport
 
         init_response = {"serverInfo": {"name": "test", "version": "1.0"}}
-        with patch.object(client, "_request", new_callable=AsyncMock, return_value=init_response):
-            with patch.object(client, "_notify", new_callable=AsyncMock):
-                with patch.object(client, "_listen", new_callable=AsyncMock):
-                    with patch.object(client, "_create_transport", return_value=mock_transport):
-                        await client.reconnect(max_retries=3, delay=0.001)
+        with (
+            patch.object(client, "_request", new_callable=AsyncMock, return_value=init_response),
+            patch.object(client, "_notify", new_callable=AsyncMock),
+            patch.object(client, "_listen", new_callable=AsyncMock),
+            patch.object(client, "_create_transport", return_value=mock_transport),
+        ):
+            await client.reconnect(max_retries=3, delay=0.001)
 
         assert client._connected is True
 
@@ -1110,47 +1182,56 @@ class TestReconnect:
     async def test_reconnect_all_fail(self):
         client = MCPClient()
 
-        with patch.object(client, "disconnect", new_callable=AsyncMock):
-            with patch.object(client, "_create_transport") as mock_create:
-                mock_transport = MagicMock()
-                mock_transport.connect = AsyncMock(side_effect=MCPConnectionError("fail"))
-                mock_transport.is_connected = False
-                mock_create.return_value = mock_transport
+        with (
+            patch.object(client, "disconnect", new_callable=AsyncMock),
+            patch.object(client, "_create_transport") as mock_create,
+            pytest.raises(MCPConnectionError, match="Failed to reconnect"),
+        ):
+            mock_transport = MagicMock()
+            mock_transport.connect = AsyncMock(side_effect=MCPConnectionError("fail"))
+            mock_transport.is_connected = False
+            mock_create.return_value = mock_transport
 
-                with pytest.raises(MCPConnectionError, match="Failed to reconnect"):
-                    await client.reconnect(max_retries=3, delay=0.001)
+            await client.reconnect(max_retries=3, delay=0.001)
 
     @pytest.mark.asyncio
     async def test_reconnect_retry_then_success(self):
         client = MCPClient()
         call_count = [0]
 
-        with patch.object(client, "disconnect", new_callable=AsyncMock):
-            with patch.object(client, "_create_transport") as mock_create:
-                mock_transport = MagicMock()
-                mock_transport.is_connected = True
+        with (
+            patch.object(client, "disconnect", new_callable=AsyncMock),
+            patch.object(client, "_create_transport") as mock_create,
+        ):
+            mock_transport = MagicMock()
+            mock_transport.is_connected = True
 
-                def side_effect(*args, **kwargs):
-                    call_count[0] += 1
-                    if call_count[0] == 1:
-                        mock_transport.connect = AsyncMock(side_effect=MCPConnectionError("fail"))
-                    else:
-                        mock_transport.connect = AsyncMock()
-                    return mock_transport
+            def side_effect(*args, **kwargs):
+                call_count[0] += 1
+                if call_count[0] == 1:
+                    mock_transport.connect = AsyncMock(side_effect=MCPConnectionError("fail"))
+                else:
+                    mock_transport.connect = AsyncMock()
+                return mock_transport
 
-                mock_create.side_effect = side_effect
+            mock_create.side_effect = side_effect
 
-                init_response = {"serverInfo": {"name": "test", "version": "1.0"}}
-                with patch.object(client, "_request", new_callable=AsyncMock, return_value=init_response):
-                    with patch.object(client, "_notify", new_callable=AsyncMock):
-                        with patch.object(client, "_listen", new_callable=AsyncMock):
-                            with patch("asyncio.sleep", new_callable=AsyncMock):
-                                await client.reconnect(max_retries=3, delay=0.001)
+            init_response = {"serverInfo": {"name": "test", "version": "1.0"}}
+            with (
+                patch.object(
+                    client, "_request", new_callable=AsyncMock, return_value=init_response
+                ),
+                patch.object(client, "_notify", new_callable=AsyncMock),
+                patch.object(client, "_listen", new_callable=AsyncMock),
+                patch("asyncio.sleep", new_callable=AsyncMock),
+            ):
+                await client.reconnect(max_retries=3, delay=0.001)
 
         assert client._connected is True
 
 
 # ═══ MCPClient.get_tool_names ═══
+
 
 class TestGetToolNames:
     """Tests for get_tool_names."""
@@ -1170,6 +1251,7 @@ class TestGetToolNames:
 
 
 # ═══ Factory functions ═══
+
 
 class TestFactoryFunctions:
     """Tests for factory helpers."""

@@ -1,4 +1,5 @@
 """Tests for agentcrawl.agent.function_schema module."""
+
 import json
 
 import pytest
@@ -19,8 +20,15 @@ from agentcrawl.agent.function_schema import (
     get_tool_names,
 )
 
-
-EXPECTED_TOOL_NAMES = ["web_scrape", "web_crawl", "web_search", "web_map", "web_extract", "web_screenshot", "web_batch_scrape"]
+EXPECTED_TOOL_NAMES = [
+    "web_scrape",
+    "web_crawl",
+    "web_search",
+    "web_map",
+    "web_extract",
+    "web_screenshot",
+    "web_batch_scrape",
+]
 
 
 class TestToolDefinitions:
