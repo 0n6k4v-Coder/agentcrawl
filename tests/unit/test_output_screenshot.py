@@ -1,8 +1,8 @@
 """Tests for agentcrawl.output.screenshot module."""
+
 import base64
 import io
 import os
-import struct
 
 import pytest
 
@@ -12,12 +12,13 @@ from agentcrawl.output.screenshot import (
     ScreenshotInfo,
 )
 
-
 # ─── Helpers ────────────────────────────────────────────────────
+
 
 def make_png_bytes(width=100, height=100, color=(255, 0, 0)):
     """Generate minimal PNG bytes of given dimensions."""
     from PIL import Image
+
     img = Image.new("RGB", (width, height), color=color)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -27,6 +28,7 @@ def make_png_bytes(width=100, height=100, color=(255, 0, 0)):
 def make_jpeg_bytes(width=100, height=100, color=(0, 255, 0)):
     """Generate minimal JPEG bytes of given dimensions."""
     from PIL import Image
+
     img = Image.new("RGB", (width, height), color=color)
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
@@ -36,10 +38,12 @@ def make_jpeg_bytes(width=100, height=100, color=(0, 255, 0)):
 @pytest.fixture
 def sample_result():
     """Create a CrawlResult-like object with screenshot data."""
+
     class MockResult:
         def __init__(self):
             self.url = "https://example.com/page"
             self.screenshot = base64.b64encode(make_png_bytes(100, 100)).decode("ascii")
+
     return MockResult()
 
 
@@ -56,6 +60,7 @@ def sample_jpeg_b64():
 
 
 # ─── ScreenshotInfo ──────────────────────────────────────────────────
+
 
 class TestScreenshotInfo:
     """Tests for ScreenshotInfo dataclass."""
@@ -104,6 +109,7 @@ class TestScreenshotInfo:
 
 # ─── ScreenshotDiff ──────────────────────────────────────────────────
 
+
 class TestScreenshotDiff:
     """Tests for ScreenshotDiff dataclass."""
 
@@ -149,6 +155,7 @@ class TestScreenshotDiff:
 
 # ─── ScreenshotHandler Init ─────────────────────────────────────────
 
+
 class TestScreenshotHandlerInit:
     """Tests for ScreenshotHandler initialization."""
 
@@ -167,8 +174,8 @@ class TestScreenshotHandlerInit:
         assert handler._default_quality == 95
 
     def test_custom_output_dir(self):
-        handler = ScreenshotHandler(output_dir="/tmp/screenshots")
-        assert handler._output_dir == "/tmp/screenshots"
+        handler = ScreenshotHandler(output_dir="./screenshots")
+        assert handler._output_dir == "./screenshots"
 
     def test_supported_formats(self):
         assert "png" in ScreenshotHandler.SUPPORTED_FORMATS
@@ -177,11 +184,11 @@ class TestScreenshotHandlerInit:
         assert "webp" in ScreenshotHandler.SUPPORTED_FORMATS
 
     def test_to_dict(self):
-        handler = ScreenshotHandler(default_format="jpeg", default_quality=90, output_dir="/tmp/shots")
+        handler = ScreenshotHandler(default_format="jpeg", default_quality=90, output_dir="./shots")
         d = handler.to_dict()
         assert d["default_format"] == "jpeg"
         assert d["default_quality"] == 90
-        assert d["output_dir"] == "/tmp/shots"
+        assert d["output_dir"] == "./shots"
 
     def test_repr(self):
         handler = ScreenshotHandler()
@@ -191,6 +198,7 @@ class TestScreenshotHandlerInit:
 
 
 # ─── Encode/Decode ───────────────────────────────────────────────
+
 
 class TestEncodeDecode:
     """Tests for encode/decode/to_data_uri methods."""
@@ -251,6 +259,7 @@ class TestEncodeDecode:
 
 # ─── Save Methods ────────────────────────────────────────────────
 
+
 class TestSaveMethods:
     """Tests for save, save_bytes, save_batch methods."""
 
@@ -297,12 +306,15 @@ class TestSaveMethods:
         handler = ScreenshotHandler()
         filepath = str(tmp_path / "nested" / "dir" / "image.png")
         raw = make_png_bytes(50, 50)
-        result = handler.save_bytes(raw, filepath)
+        handler.save_bytes(raw, filepath)
         assert os.path.exists(filepath)
 
     def test_save_batch(self, tmp_path):
         handler = ScreenshotHandler()
-        results = [sample_result_for_url("https://example.com/1"), sample_result_for_url("https://example.com/2")]
+        results = [
+            sample_result_for_url("https://example.com/1"),
+            sample_result_for_url("https://example.com/2"),
+        ]
         directory = str(tmp_path / "batch")
         paths = handler.save_batch(results, directory)
         assert len(paths) == 2
@@ -336,23 +348,28 @@ class TestSaveMethods:
 
 def sample_result_for_url(url):
     """Helper to create a mock CrawlResult with screenshot at given URL."""
+
     class MockResult:
         def __init__(self, url):
             self.url = url
             self.screenshot = base64.b64encode(make_png_bytes(50, 50)).decode("ascii")
+
     return MockResult(url)
 
 
 def simple_result_mock():
     """Helper to create a simple mock CrawlResult."""
+
     class MockResult:
         def __init__(self):
             self.url = "https://example.com"
             self.screenshot = ""
+
     return MockResult()
 
 
 # ─── Get Info ──────────────────────────────────────────────────
+
 
 class TestGetInfo:
     """Tests for get_info and get_info_from_result methods."""
@@ -399,6 +416,7 @@ class TestGetInfo:
 
     def test_get_info_webp(self):
         from PIL import Image
+
         img = Image.new("RGB", (50, 50), color=(0, 0, 255))
         buf = io.BytesIO()
         img.save(buf, format="WEBP")
@@ -410,6 +428,7 @@ class TestGetInfo:
 
     def test_get_info_gif(self):
         from PIL import Image
+
         img = Image.new("RGB", (50, 50), color=(0, 255, 0))
         buf = io.BytesIO()
         img.save(buf, format="GIF")
@@ -440,6 +459,7 @@ class TestGetInfo:
 
 # ─── Format Detection ──────────────────────────────────────────
 
+
 class TestDetectFormat:
     """Tests for _detect_format method."""
 
@@ -469,6 +489,7 @@ class TestDetectFormat:
 
 # ─── Dimensions ────────────────────────────────────────────────
 
+
 class TestDimensions:
     """Tests for _get_dimensions method."""
 
@@ -480,6 +501,7 @@ class TestDimensions:
 
     def test_get_jpeg_dimensions(self):
         from PIL import Image
+
         img = Image.new("RGB", (320, 240), color=(255, 128, 0))
         buf = io.BytesIO()
         img.save(buf, format="JPEG")
@@ -490,6 +512,7 @@ class TestDimensions:
 
     def test_get_webp_dimensions(self):
         from PIL import Image
+
         img = Image.new("RGB", (400, 300), color=(0, 128, 255))
         buf = io.BytesIO()
         img.save(buf, format="WEBP")
@@ -524,11 +547,13 @@ class TestDimensions:
 
 # ─── JPEG Dimensions ───────────────────────────────────────────
 
+
 class TestJpegDimensions:
     """Tests for _get_jpeg_dimensions method."""
 
     def test_get_jpeg_dimensions_valid(self):
         from PIL import Image
+
         img = Image.new("RGB", (640, 480), color=(128, 64, 32))
         buf = io.BytesIO()
         img.save(buf, format="JPEG")
@@ -551,6 +576,7 @@ class TestJpegDimensions:
 
 
 # ─── Compare ──────────────────────────────────────────────────
+
 
 class TestCompare:
     """Tests for compare method."""
@@ -604,6 +630,7 @@ class TestCompare:
     def test_compare_no_pillow(self, monkeypatch):
         """Test compare when Pillow is not available."""
         import sys
+
         original_pil = sys.modules.get("PIL", None)
         if original_pil:
             monkeypatch.setitem(sys.modules, "PIL", None)
@@ -616,6 +643,7 @@ class TestCompare:
 
 
 # ─── Thumbnail ────────────────────────────────────────────────
+
 
 class TestThumbnail:
     """Tests for thumbnail method."""
@@ -636,6 +664,7 @@ class TestThumbnail:
     def test_thumbnail_no_pillow(self, monkeypatch, sample_png_b64):
         """Test thumbnail when Pillow is not available."""
         import sys
+
         original_pil = sys.modules.get("PIL", None)
         if original_pil:
             monkeypatch.setitem(sys.modules, "PIL", None)
@@ -653,6 +682,7 @@ class TestThumbnail:
 
 
 # ─── Has Screenshot ───────────────────────────────────────────
+
 
 class TestHasScreenshot:
     """Tests for has_screenshot method."""
@@ -675,6 +705,7 @@ class TestHasScreenshot:
 
 
 # ─── URL Slug ──────────────────────────────────────────────────
+
 
 class TestUrlToSlug:
     """Tests for _url_to_slug method."""

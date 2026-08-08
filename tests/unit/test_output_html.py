@@ -1,4 +1,5 @@
 """Tests for agentcrawl.output.html module."""
+
 import pytest
 
 from agentcrawl.core.engine import CrawlResult
@@ -132,7 +133,9 @@ class TestHtmlSanitizerSanitize:
 
     def test_remove_meta_link_base(self):
         sanitizer = HtmlSanitizer()
-        html = "<meta charset='utf-8'><link rel='stylesheet'><base href='http://evil.com'><p>Hello</p>"
+        html = (
+            "<meta charset='utf-8'><link rel='stylesheet'><base href='http://evil.com'><p>Hello</p>"
+        )
         result = sanitizer.sanitize(html)
         assert "<meta" not in result
         assert "<link" not in result
@@ -206,7 +209,7 @@ class TestHtmlSanitizerSanitize:
 
     def test_remove_event_handler_with_unquoted_value(self):
         sanitizer = HtmlSanitizer()
-        html = '<div onclick=evil()>Hello</div>'
+        html = "<div onclick=evil()>Hello</div>"
         result = sanitizer.sanitize(html)
         assert "onclick" not in result
 
@@ -316,7 +319,7 @@ class TestHtmlFormat:
     def test_format_with_metadata_meta_tags(self, sample_result):
         formatter = HtmlOutputFormatter(include_metadata=True)
         result = formatter.format(sample_result)
-        assert "meta name=\"description\"" in result or "description" in result
+        assert 'meta name="description"' in result or "description" in result
 
     def test_format_template_replacement(self):
         formatter = HtmlOutputFormatter(template="<article>{{content}}</article>")
@@ -476,7 +479,6 @@ class TestToPdf:
 
     @pytest.mark.asyncio
     async def test_to_pdf_with_output_path(self, tmp_path):
-        import os
         from unittest.mock import patch
 
         formatter = HtmlOutputFormatter()
@@ -494,7 +496,7 @@ class TestToPdf:
             filepath = str(tmp_path / "output.pdf")
             pdf_bytes = await formatter.to_pdf(result, output_path=filepath)
             assert pdf_bytes == b"fake_pdf_bytes"
-            assert os.path.exists(filepath)
+            assert (tmp_path / "output.pdf").exists()
 
 
 class TestHtmlRepr:
@@ -606,16 +608,47 @@ class TestHtmlSanitizerEventHandlers:
     def test_all_event_attrs_removed(self):
         sanitizer = HtmlSanitizer()
         attrs = [
-            "onclick", "ondblclick", "onmousedown", "onmouseup",
-            "onmouseover", "onmousemove", "onmouseout", "onmouseenter",
-            "onmouseleave", "onkeydown", "onkeypress", "onkeyup",
-            "onfocus", "onblur", "onchange", "oninput", "onsubmit",
-            "onreset", "onselect", "onload", "onunload", "onerror",
-            "onresize", "onscroll", "onabort", "oncanplay",
-            "ondrag", "ondragend", "ondragenter", "ondragleave",
-            "ondragover", "ondragstart", "ondrop", "oncontextmenu",
-            "onwheel", "ontouchstart", "ontouchmove", "ontouchend",
-            "onanimationstart", "onanimationend", "ontransitionend",
+            "onclick",
+            "ondblclick",
+            "onmousedown",
+            "onmouseup",
+            "onmouseover",
+            "onmousemove",
+            "onmouseout",
+            "onmouseenter",
+            "onmouseleave",
+            "onkeydown",
+            "onkeypress",
+            "onkeyup",
+            "onfocus",
+            "onblur",
+            "onchange",
+            "oninput",
+            "onsubmit",
+            "onreset",
+            "onselect",
+            "onload",
+            "onunload",
+            "onerror",
+            "onresize",
+            "onscroll",
+            "onabort",
+            "oncanplay",
+            "ondrag",
+            "ondragend",
+            "ondragenter",
+            "ondragleave",
+            "ondragover",
+            "ondragstart",
+            "ondrop",
+            "oncontextmenu",
+            "onwheel",
+            "ontouchstart",
+            "ontouchmove",
+            "ontouchend",
+            "onanimationstart",
+            "onanimationend",
+            "ontransitionend",
         ]
         for attr in attrs:
             html = f'<div {attr}="evil()">Test</div>'

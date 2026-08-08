@@ -1,7 +1,6 @@
 """Tests for agentcrawl.hooks.registry module."""
-import asyncio
+
 import json
-import os
 
 import pytest
 
@@ -242,6 +241,7 @@ class TestHookRegistryRegistration:
 
     def test_register_all_from(self, registry):
         other = HookRegistry(name="other")
+
         async def hook1(ctx):
             pass
 
@@ -253,6 +253,7 @@ class TestHookRegistryRegistration:
 
     def test_register_all_from_skip_duplicates(self, registry):
         other = HookRegistry(name="other")
+
         async def hook1(ctx):
             pass
 
@@ -431,9 +432,15 @@ class TestHookRegistryQuery:
         async def hook3(ctx):
             pass
 
-        registry.register(HookEvent.PRE_SCRAPE, hook1, name="hook1", group="logging", description="desc1")
-        registry.register(HookEvent.PRE_SCRAPE, hook2, name="hook2", group="analytics", description="desc2")
-        registry.register(HookEvent.POST_SCRAPE, hook3, name="hook3", group="logging", description="desc3")
+        registry.register(
+            HookEvent.PRE_SCRAPE, hook1, name="hook1", group="logging", description="desc1"
+        )
+        registry.register(
+            HookEvent.PRE_SCRAPE, hook2, name="hook2", group="analytics", description="desc2"
+        )
+        registry.register(
+            HookEvent.POST_SCRAPE, hook3, name="hook3", group="logging", description="desc3"
+        )
         registry.disable_hook("hook3")
 
         return registry

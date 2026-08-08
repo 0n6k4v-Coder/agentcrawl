@@ -1,5 +1,5 @@
 """Tests for agentcrawl.utils.logging module."""
-import io
+
 import json
 import logging
 import logging.handlers
@@ -13,8 +13,8 @@ from agentcrawl.utils.logging import (
     ContextFilter,
     JsonFormatter,
     LoggingContext,
-    PerformanceTimer,
     ModuleFilter,
+    PerformanceTimer,
     clear_log_context,
     enable_debug_logging,
     get_log_context,
@@ -45,11 +45,10 @@ class TestLoggingContext:
             assert inner_ctx["request_id"] == "req_456"
 
     def test_nested_context_merges(self):
-        with LoggingContext(a="1"):
-            with LoggingContext(b="2"):
-                ctx = LoggingContext.get_context()
-                assert ctx["a"] == "1"
-                assert ctx["b"] == "2"
+        with LoggingContext(a="1"), LoggingContext(b="2"):
+            ctx = LoggingContext.get_context()
+            assert ctx["a"] == "1"
+            assert ctx["b"] == "2"
 
         # After exiting, context should be back to original
         ctx = LoggingContext.get_context()
@@ -544,6 +543,7 @@ class TestPerformanceTimer:
         timer = PerformanceTimer("test")
         with timer:
             import time
+
             time.sleep(0.001)
         assert timer.duration_ms > 0
 

@@ -1,4 +1,5 @@
 """Tests for agentcrawl.hooks.executor module."""
+
 import asyncio
 import time
 

@@ -1,11 +1,16 @@
 """Tests for agentcrawl.hooks.types module."""
+
 import asyncio
 from unittest.mock import MagicMock
 
 import pytest
 
-from agentcrawl.hooks.executor import HookContext, HookEvent, HookExecutor, HookRegistration, HookStats
-from agentcrawl.hooks.registry import HookMetadata, HookRegistry, hook
+from agentcrawl.hooks.executor import (
+    HookContext,
+    HookEvent,
+    HookExecutor,
+)
+from agentcrawl.hooks.registry import HookRegistry
 from agentcrawl.hooks.types import (
     ALL_HOOK_EVENTS,
     DEFAULT_GROUPS,
@@ -15,12 +20,8 @@ from agentcrawl.hooks.types import (
     HookCallback,
     HookCondition,
     HookConfigDict,
-    HookDecorator,
-    HookDiscoverable,
-    HookGroupable,
     HookInfoDict,
     HookName,
-    HookRegistrable,
     HookStatsDict,
     HookTransform,
     RegistryConfigDict,
@@ -40,10 +41,22 @@ class TestHookEvent:
 
     def test_all_events_present(self):
         expected_events = {
-            "pre_scrape", "post_scrape", "pre_extract", "post_extract",
-            "pre_filter", "post_filter", "pre_chunk", "post_chunk",
-            "on_error", "on_complete", "pre_crawl", "post_crawl",
-            "pre_navigate", "post_navigate", "pre_action", "post_action",
+            "pre_scrape",
+            "post_scrape",
+            "pre_extract",
+            "post_extract",
+            "pre_filter",
+            "post_filter",
+            "pre_chunk",
+            "post_chunk",
+            "on_error",
+            "on_complete",
+            "pre_crawl",
+            "post_crawl",
+            "pre_navigate",
+            "post_navigate",
+            "pre_action",
+            "post_action",
         }
         actual_events = {e.value for e in HookEvent}
         assert expected_events == actual_events
@@ -213,8 +226,9 @@ class TestTypeAliases:
         assert HookTransform is not None
 
     def test_async_hook_transform_alias(self):
-        from agentcrawl.hooks.types import AsyncHookTransform as _alias
-        assert _alias is not None
+        from agentcrawl.hooks.types import AsyncHookTransform
+
+        assert AsyncHookTransform is not None
 
     def test_sync_hook_transform_alias(self):
         assert SyncHookTransform is not None
@@ -268,7 +282,7 @@ class TestProtocols:
     """Tests for Protocol definitions."""
 
     def test_hookable_protocol(self):
-        assert HookDiscoverable is not None or True  # Protocol always exists
+        assert True  # Protocol always exists
 
     def test_runtime_checkable_protocols(self):
         # Protocols are runtime_checkable

@@ -1,5 +1,6 @@
 """Tests for agentcrawl.output.markdown module."""
-from unittest.mock import MagicMock
+
+import os
 
 import pytest
 
@@ -32,8 +33,18 @@ def sample_result():
             ],
         },
         citations=[
-            {"number": 1, "url": "https://example.com/ref1", "title": "Reference 1", "domain": "example.com"},
-            {"number": 2, "url": "https://other.com/ref2", "title": "Reference 2", "domain": "other.com"},
+            {
+                "number": 1,
+                "url": "https://example.com/ref1",
+                "title": "Reference 1",
+                "domain": "example.com",
+            },
+            {
+                "number": 2,
+                "url": "https://other.com/ref2",
+                "title": "Reference 2",
+                "domain": "other.com",
+            },
         ],
         chunks=[
             {"index": 0, "heading": "Section 1", "token_count": 50, "text": "Content of chunk 1"},
@@ -74,7 +85,9 @@ class TestMarkdownOutputFormatterInit:
         assert d["link_format"] == "markdown"
 
     def test_custom_template(self):
-        formatter = MarkdownOutputFormatter(template="# {{title}}\n{{content}}\n---\n{{citations_section}}")
+        formatter = MarkdownOutputFormatter(
+            template="# {{title}}\n{{content}}\n---\n{{citations_section}}"
+        )
         assert formatter._template == "# {{title}}\n{{content}}\n---\n{{citations_section}}"
 
     def test_custom_front_matter_fields(self):
@@ -209,7 +222,10 @@ class TestMarkdownFormat:
 
         class MockResult:
             url = "https://example.com"
-            extracted_data = {"key": "value"}
+
+            @property
+            def extracted_data(self):
+                return {"key": "value"}
 
         output = formatter.format(MockResult())
         assert "key" in output
@@ -255,8 +271,12 @@ class TestMarkdownFormat:
         assert "url:" in output
 
     def test_front_matter_url_fallback(self):
-        formatter = MarkdownOutputFormatter(include_front_matter=True, front_matter_fields=["title", "url"])
-        result = CrawlResult(url="https://example.com", markdown="content", metadata={"title": "My Title"})
+        formatter = MarkdownOutputFormatter(
+            include_front_matter=True, front_matter_fields=["title", "url"]
+        )
+        result = CrawlResult(
+            url="https://example.com", markdown="content", metadata={"title": "My Title"}
+        )
         output = formatter.format(result)
         assert "title" in output
         assert "url" in output
@@ -373,7 +393,3 @@ class TestMarkdownRepr:
         assert "citations" in repr_str
         assert "chunks" in repr_str
         assert "stats" in repr_str
-
-
-# Need os for save_batch test
-import os

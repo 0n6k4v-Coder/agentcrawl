@@ -1,7 +1,7 @@
 """Tests for agentcrawl.output.json module."""
+
 import json
 from datetime import date, datetime
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -224,16 +224,18 @@ class TestJsonFormat:
 
     def test_format_with_datetime(self, sample_result):
         formatter = JsonOutputFormatter()
-        result = CrawlResult(url="https://example.com", metadata={"date": datetime(2024, 1, 1, 12, 0, 0)})
+        result = CrawlResult(
+            url="https://example.com", metadata={"date": datetime(2024, 1, 1, 12, 0, 0)}
+        )
         output = formatter.format(result)
-        data = json.loads(output)
+        json.loads(output)
         assert "2024-01-01T12:00:00" in output
 
     def test_format_with_date(self, sample_result):
         formatter = JsonOutputFormatter()
         result = CrawlResult(url="https://example.com", metadata={"date": date(2024, 1, 1)})
         output = formatter.format(result)
-        data = json.loads(output)
+        json.loads(output)
         assert "2024-01-01" in output
 
     def test_format_with_bytes(self):

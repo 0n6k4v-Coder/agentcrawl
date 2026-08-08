@@ -1,4 +1,5 @@
 """Tests for agentcrawl.utils.crypto module."""
+
 import base64
 import hashlib
 import hmac
@@ -172,7 +173,7 @@ class TestDeriveKey:
         assert len(salt) == 16
 
     def test_derive_key_deterministic_with_salt(self):
-        key1, salt = derive_key("password", salt=b"fixed_salt_12345678")
+        key1, _salt = derive_key("password", salt=b"fixed_salt_12345678")
         key2, _ = derive_key("password", salt=b"fixed_salt_12345678")
         assert key1 == key2
 
@@ -309,7 +310,6 @@ class TestCryptoManager:
         assert manager.verify("message", sig) is True
 
     def test_rotate_key(self, manager):
-        original_key = manager._encryption_key
         new_key = CryptoManager.generate_encryption_key()
         manager.rotate_key(new_key)
         assert manager._encryption_key == new_key

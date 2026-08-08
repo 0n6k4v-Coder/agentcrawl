@@ -1,5 +1,4 @@
 """Tests for agentcrawl.utils.url module."""
-import pytest
 
 from agentcrawl.utils.url import (
     add_query_params,
@@ -9,8 +8,8 @@ from agentcrawl.utils.url import (
     filter_urls,
     get_base_domain,
     get_domain,
-    get_file_extension,
     get_favicon_url,
+    get_file_extension,
     get_origin,
     get_path,
     get_path_depth,
@@ -46,7 +45,10 @@ class TestNormalizeUrl:
         assert normalize_url("https://example.com/") == "https://example.com/"
 
     def test_remove_trailing_slash_false(self):
-        assert normalize_url("https://example.com/page/", remove_trailing_slash=False) == "https://example.com/page/"
+        assert (
+            normalize_url("https://example.com/page/", remove_trailing_slash=False)
+            == "https://example.com/page/"
+        )
 
     def test_uppercase_scheme_and_host(self):
         assert normalize_url("HTTPS://Example.COM/page") == "https://example.com/page"
@@ -58,7 +60,10 @@ class TestNormalizeUrl:
         assert normalize_url("https://example.com/page#top") == "https://example.com/page"
 
     def test_fragment_kept(self):
-        assert normalize_url("https://example.com/page#top", remove_fragment=False) == "https://example.com/page#top"
+        assert (
+            normalize_url("https://example.com/page#top", remove_fragment=False)
+            == "https://example.com/page#top"
+        )
 
     def test_tracking_params_removed(self):
         result = normalize_url("https://example.com/page?utm_source=tw&utm_medium=social")
@@ -99,7 +104,7 @@ class TestNormalizeUrl:
     def test_duplicate_slashes_removed(self):
         result = normalize_url("https://example.com/page//sub///deep")
         # Path should not have duplicate slashes
-        path_result = result[result.find("/", 8):]  # After https:
+        path_result = result[result.find("/", 8) :]  # After https:
         assert "//" not in path_result
 
     def test_path_root_preserved(self):
@@ -427,7 +432,9 @@ class TestUrlMatchesPattern:
         assert url_matches_pattern("https://example.com/page", "https://example.com/page") is True
 
     def test_no_match(self):
-        assert url_matches_pattern("https://example.com/about", "https://example.com/contact") is False
+        assert (
+            url_matches_pattern("https://example.com/about", "https://example.com/contact") is False
+        )
 
 
 class TestUrlMatchesRegex:
@@ -570,7 +577,11 @@ class TestPathUtilities:
         assert result == "not-a-url"
 
     def test_get_path_segments(self):
-        assert get_path_segments("https://example.com/docs/guide/intro") == ["docs", "guide", "intro"]
+        assert get_path_segments("https://example.com/docs/guide/intro") == [
+            "docs",
+            "guide",
+            "intro",
+        ]
 
     def test_get_path_segments_empty(self):
         assert get_path_segments("https://example.com") == []

@@ -1,4 +1,5 @@
 """Tests for agentcrawl.utils.text module."""
+
 import pytest
 
 from agentcrawl.utils.text import (

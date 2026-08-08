@@ -1,5 +1,4 @@
 """Tests for agentcrawl.utils.html module."""
-import pytest
 
 from agentcrawl.utils.html import (
     clean_html,
@@ -69,7 +68,9 @@ class TestStripSpecificTags:
         assert "<p>text</p>" in result
 
     def test_remove_multiple_tags(self):
-        result = strip_specific_tags("<p>text</p><script>x</script><style>y</style>", ["script", "style"])
+        result = strip_specific_tags(
+            "<p>text</p><script>x</script><style>y</style>", ["script", "style"]
+        )
         assert "<script>" not in result
         assert "<style>" not in result
 
@@ -463,7 +464,7 @@ class TestDetectEncoding:
         assert detect_encoding(b"\xfe\xff") == "utf-16"
 
     def test_meta_charset(self):
-        html = '<meta charset="utf-8">'.encode("utf-8")
+        html = b'<meta charset="utf-8">'
         assert detect_encoding(html) == "utf-8"
 
     def test_meta_content_type(self):

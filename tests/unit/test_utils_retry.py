@@ -1,7 +1,6 @@
 """Tests for agentcrawl.utils.retry module."""
+
 import asyncio
-import logging
-from unittest.mock import patch
 
 import pytest
 
@@ -168,7 +167,12 @@ class TestRetrySync:
     def test_on_success_callback(self):
         callbacks = []
 
-        @retry(max_retries=2, delay=0, jitter=False, on_success=lambda attempt, result: callbacks.append((attempt, result)))
+        @retry(
+            max_retries=2,
+            delay=0,
+            jitter=False,
+            on_success=lambda attempt, result: callbacks.append((attempt, result)),
+        )
         def func():
             return "ok"
 
@@ -179,7 +183,12 @@ class TestRetrySync:
     def test_on_failure_callback(self):
         callbacks = []
 
-        @retry(max_retries=2, delay=0, jitter=False, on_failure=lambda attempts, exc: callbacks.append((attempts, str(exc))))
+        @retry(
+            max_retries=2,
+            delay=0,
+            jitter=False,
+            on_failure=lambda attempts, exc: callbacks.append((attempts, str(exc))),
+        )
         def func():
             raise ValueError("fail")
 
@@ -226,10 +235,9 @@ class TestRetrySync:
         call_count = 0
 
         decorated = retry_with_backoff(max_retries=2, base_delay=0)
-        func = decorated(lambda: _fail_then_succeed())
+        decorated(lambda: _fail_then_succeed())
 
         # The inner function needs state tracking
-        results = []
 
         @retry_with_backoff(max_retries=2, base_delay=0)
         def failing_func():
@@ -286,6 +294,7 @@ class TestCircuitBreaker:
 
         # Wait for recovery
         import time
+
         time.sleep(0.02)
 
         # Should transition to half-open
@@ -297,7 +306,9 @@ class TestCircuitBreaker:
         assert breaker.state == CircuitState.CLOSED
 
     def test_excluded_exceptions_not_counted(self):
-        breaker = CircuitBreaker(failure_threshold=1, recovery_timeout=60, excluded_exceptions=(ValueError,))
+        breaker = CircuitBreaker(
+            failure_threshold=1, recovery_timeout=60, excluded_exceptions=(ValueError,)
+        )
 
         call_count = 0
 
@@ -446,7 +457,9 @@ class TestCircuitBreakerAsync:
 
     @pytest.mark.asyncio
     async def test_async_context_manager_excluded_exception(self):
-        breaker = CircuitBreaker(failure_threshold=1, recovery_timeout=60, excluded_exceptions=(ValueError,))
+        breaker = CircuitBreaker(
+            failure_threshold=1, recovery_timeout=60, excluded_exceptions=(ValueError,)
+        )
 
         with pytest.raises(ValueError):
             async with breaker:
@@ -654,7 +667,9 @@ class TestRetryAsync:
     async def test_async_on_success_callback(self):
         callbacks = []
 
-        @retry(max_retries=2, delay=0, jitter=False, on_success=lambda a, r: callbacks.append((a, r)))
+        @retry(
+            max_retries=2, delay=0, jitter=False, on_success=lambda a, r: callbacks.append((a, r))
+        )
         async def func():
             return "ok"
 
@@ -666,7 +681,12 @@ class TestRetryAsync:
     async def test_async_on_failure_callback(self):
         callbacks = []
 
-        @retry(max_retries=1, delay=0, jitter=False, on_failure=lambda a, e: callbacks.append((a, str(e))))
+        @retry(
+            max_retries=1,
+            delay=0,
+            jitter=False,
+            on_failure=lambda a, e: callbacks.append((a, str(e))),
+        )
         async def func():
             raise ValueError("fail")
 
