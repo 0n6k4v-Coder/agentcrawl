@@ -52,7 +52,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from agentcrawl.browser.manager import BrowserManager
 from agentcrawl.config.crawler_config import CrawlerConfig
@@ -452,10 +452,6 @@ class CrawlEngine:
                     cached.cached = True
                     self._stats.record_scrape(cached)
                     return cached
-                elif hasattr(cached, "cached"):
-                    cached.cached = True
-                    self._stats.record_scrape(cached)
-                    return cast("CrawlResult", cached)
                 elif isinstance(cached, dict):
                     cached["cached"] = True
                     # Convert dict back to CrawlResult
@@ -588,8 +584,17 @@ class CrawlEngine:
                         error=str(result),
                     )
                 )
-            elif not isinstance(result, Exception):
-                processed.append(cast("CrawlResult", result))
+            elif isinstance(result, CrawlResult):
+                processed.append(result)
+            else:
+                logger.warning("Unexpected result type: %s", type(result))
+                processed.append(
+                    CrawlResult(
+                        url=url,
+                        success=False,
+                        error=f"Unexpected result type: {type(result)}",
+                    )
+                )
 
         return processed
 

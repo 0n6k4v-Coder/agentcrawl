@@ -639,18 +639,12 @@ class TestEngineErrors:
     @pytest.mark.asyncio
     async def test_batch_scrape_partial_failure(self, settings: Any, config: Any) -> None:
         """Batch scrape handles partial failures."""
-        from agentcrawl.core.engine import CrawlEngine
+        from agentcrawl.core.engine import CrawlEngine, CrawlResult
 
         engine = CrawlEngine.from_settings(settings)
 
-        success_result = MagicMock()
-        success_result.success = True
-        success_result.url = "https://example.com/1"
-
-        fail_result = MagicMock()
-        fail_result.success = False
-        fail_result.url = "https://example.com/2"
-        fail_result.error = "Timeout"
+        success_result = CrawlResult(url="https://example.com/1", success=True)
+        fail_result = CrawlResult(url="https://example.com/2", success=False, error="Timeout")
 
         with patch("agentcrawl.core.engine.BrowserManager") as mock_bm_cls:
             mock_bm = mock_bm_cls.return_value

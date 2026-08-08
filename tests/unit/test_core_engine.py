@@ -451,17 +451,17 @@ class TestEngineCaching:
 
     @pytest.mark.asyncio
     async def test_scrape_with_cache_hit_object(self, settings: Any) -> None:
-        """Test scrape returns from cache (object with .cached attribute)."""
-        from agentcrawl.core.engine import CrawlEngine
+        """Test scrape returns from cache (CrawlResult object with cached=False)."""
+        from agentcrawl.core.engine import CrawlEngine, CrawlResult
 
         engine = CrawlEngine.from_settings(settings)
         engine._is_started = True
 
-        cached_obj = MagicMock()
-        cached_obj.cached = False
-        cached_obj.success = True
+        cached_result = CrawlResult(
+            url="https://example.com", success=True, markdown="# cached", cached=False
+        )
         mock_cache = AsyncMock()
-        mock_cache.get = AsyncMock(return_value=cached_obj)
+        mock_cache.get = AsyncMock(return_value=cached_result)
         engine._cache_manager = mock_cache
 
         config = CrawlerConfig_mock(cache=True)
