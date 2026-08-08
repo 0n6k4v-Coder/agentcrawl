@@ -47,3 +47,14 @@ test-results/
 
 # Mypy output artifacts
 mypy_out*.txt
+
+# Type checker / linter caches (not covered by existing patterns)
+.mypy_cache/
+.ruff_cache/
+
+# Agent runtime data
+.agentcrawl/
+
+# GitHub Action CI Local Simulator artifacts
+.gacils-artifacts/
+.gacils-cache/
