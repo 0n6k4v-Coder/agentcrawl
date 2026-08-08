@@ -9,6 +9,7 @@ AgentCrawl converts any URL into clean, LLM-optimized Markdown or structured JSO
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.40+-2EAD33.svg)](https://playwright.dev/)
+[![Coverage](https://img.shields.io/badge/coverage-49.92%25-yellow.svg)](https://github.com/0n6k4v-Coder/agentcrawl/actions/workflows/ci.yml)
 
 ---
 
