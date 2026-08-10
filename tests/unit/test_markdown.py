@@ -617,7 +617,7 @@ class TestEdgeCases:
 
     def test_convert_none(self, converter: HTMLToMarkdown) -> None:
         """None input returns empty string."""
-        result = converter.convert(None)  # type: ignore
+        result = converter.convert(None)  # type: ignore[arg-type]
         assert result == ""
 
     def test_convert_whitespace(self, converter: HTMLToMarkdown) -> None:
