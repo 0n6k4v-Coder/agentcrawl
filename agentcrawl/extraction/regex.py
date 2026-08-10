@@ -72,6 +72,7 @@ from __future__ import annotations
 
 import logging
 import re
+from re import error
 from typing import Any
 
 from agentcrawl.extraction.base import (
@@ -555,7 +556,3 @@ class RegexExtractor(ExtractionStrategy):
             f"fields={len(self._fields)}, "
             f"source={self._source!r})"
         )
-
-
-# Import re.error for exception handling
-from re import error  # noqa: E402

@@ -55,6 +55,7 @@ from __future__ import annotations
 import importlib
 import logging
 import pkgutil
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -835,11 +836,9 @@ async def _builtin_start_timer(ctx: HookContext) -> None:
 
 async def _builtin_stop_timer(ctx: HookContext) -> None:
     """Stop the scrape timer and record duration."""
-    import time as time_mod
-
     start = ctx.get("_scrape_start")
     if start:
-        duration = (time_mod.time() - start) * 1000
+        duration = (time.time() - start) * 1000
         ctx.set("scrape_duration_ms", round(duration, 2))
 
 
@@ -847,7 +846,3 @@ async def _builtin_log_error(ctx: HookContext) -> None:
     """Log errors."""
     if ctx.error:
         logger.error("Error at %s: %s", ctx.url, ctx.error)
-
-
-# Import time for built-in hooks
-import time  # noqa: E402
