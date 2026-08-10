@@ -318,7 +318,7 @@ class TestMCPClientInit:
         assert client._url == "http://localhost:8000/mcp/sse"
         assert client._timeout == 60.0
         assert client._api_key is None
-        assert client._connected is False
+        assert client.is_connected is False
         assert client.is_connected is False
 
     def test_sse_transport(self):
@@ -431,7 +431,7 @@ class TestMCPClientConnect:
         ):
             await client.connect()
 
-        assert client._connected is True
+        assert client.is_connected is True
         assert client._server_info.name == "test-server"
         assert client._server_info.version == "1.0.0"
         assert client._server_info.protocol_version == "2024-11-05"
@@ -447,7 +447,7 @@ class TestMCPClientConnect:
         with pytest.raises(MCPConnectionError, match="Connection refused"):
             await client.connect()
 
-        assert client._connected is False
+        assert client.is_connected is False
 
 
 # ═══ MCPClient.disconnect ═══
@@ -477,7 +477,7 @@ class TestMCPClientDisconnect:
         client._transport = mock_transport
 
         await client.disconnect()
-        assert client._connected is False
+        assert client.is_connected is False
         assert client._tools_cache is None
         assert client._server_info is None
 
@@ -519,9 +519,9 @@ class TestMCPClientContext:
             patch.object(client, "_listen", new_callable=AsyncMock),
         ):
             async with client:
-                assert client._connected is True
+                assert client.is_connected is True
 
-        assert client._connected is False
+        assert client.is_connected is False
 
 
 # ═══ MCPClient.list_tools ═══
@@ -1121,7 +1121,7 @@ class TestListen:
         client._transport.receive = MagicMock(return_value=raise_error())
 
         await client._listen()
-        assert client._connected is False
+        assert client.is_connected is False
 
     @pytest.mark.asyncio
     async def test_listen_exception_disconnected(self):
@@ -1135,7 +1135,7 @@ class TestListen:
         client._transport.receive = MagicMock(return_value=raise_error())
 
         await client._listen()
-        assert client._connected is False
+        assert client.is_connected is False
 
     @pytest.mark.asyncio
     async def test_listen_exception_not_connected(self):
@@ -1176,7 +1176,7 @@ class TestReconnect:
         ):
             await client.reconnect(max_retries=3, delay=0.001)
 
-        assert client._connected is True
+        assert client.is_connected is True
 
     @pytest.mark.asyncio
     async def test_reconnect_all_fail(self):
@@ -1227,7 +1227,7 @@ class TestReconnect:
             ):
                 await client.reconnect(max_retries=3, delay=0.001)
 
-        assert client._connected is True
+        assert client.is_connected is True
 
 
 # ═══ MCPClient.get_tool_names ═══

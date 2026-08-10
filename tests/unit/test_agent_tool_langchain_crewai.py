@@ -11,7 +11,7 @@ NOT pollute other test files (e.g. test_agent_tool.py::TestOptionalImports).
 from __future__ import annotations
 
 import sys
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -163,10 +163,10 @@ class TestLangChainTool:
     def test_tool_lazy_toolkit(self) -> None:
         tool = AgentCrawlTool()
         tk = tool._get_toolkit()
-        assert tk._return_format == "text"
+        assert tk.return_format == "text"
 
     @pytest.mark.asyncio
-    async def test_arun_success(self) -> None:
+    async def test_arun_success(self, mock_engine_manager) -> None:
         tool = AgentCrawlTool()
         mock_result = MagicMock()
         mock_result.url = "https://example.com"
@@ -175,37 +175,31 @@ class TestLangChainTool:
         mock_result.links = {}
         mock_result.to_json.return_value = '{"url": "..."}'
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.scrape = AsyncMock(return_value=mock_result)
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("https://example.com")
+        result = await tool._arun("https://example.com")
 
         assert "Hello" in result
 
     @pytest.mark.asyncio
-    async def test_arun_error(self) -> None:
+    async def test_arun_error(self, mock_engine_manager) -> None:
         tool = AgentCrawlTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.scrape = AsyncMock(side_effect=Exception("Scrape failed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("https://example.com")
+        result = await tool._arun("https://example.com")
 
         assert "Scrape failed" in result
 
     @pytest.mark.asyncio
-    async def test_arun_engine_error(self) -> None:
+    async def test_arun_engine_error(self, mock_engine_manager) -> None:
         """Test _arun when engine raises an exception."""
         tool = AgentCrawlTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.scrape = AsyncMock(side_effect=RuntimeError("Engine crashed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("https://example.com")
+        result = await tool._arun("https://example.com")
 
         assert "Engine crashed" in result
 
@@ -225,10 +219,10 @@ class TestLangChainSearchTool:
     def test_tool_lazy_toolkit(self) -> None:
         tool = AgentCrawlSearchTool()
         tk = tool._get_toolkit()
-        assert tk._return_format == "text"
+        assert tk.return_format == "text"
 
     @pytest.mark.asyncio
-    async def test_arun_success(self) -> None:
+    async def test_arun_success(self, mock_engine_manager) -> None:
         tool = AgentCrawlSearchTool()
         mock_result = MagicMock()
         mock_result.title = "Result 1"
@@ -236,44 +230,38 @@ class TestLangChainSearchTool:
         mock_result.snippet = "A snippet"
         mock_result.markdown = "# Content"
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(return_value=[mock_result])
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("test query")
+        result = await tool._arun("test query")
 
         assert "Result 1" in result
         assert "https://example.com" in result
 
     @pytest.mark.asyncio
-    async def test_arun_error(self) -> None:
+    async def test_arun_error(self, mock_engine_manager) -> None:
         tool = AgentCrawlSearchTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(side_effect=Exception("Search failed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("test query")
+        result = await tool._arun("test query")
 
         assert "Search failed" in result
 
     @pytest.mark.asyncio
-    async def test_arun_no_results(self) -> None:
+    async def test_arun_no_results(self, mock_engine_manager) -> None:
         """Test _arun when search returns empty results."""
         toolkit = AgentCrawlToolkit(return_format="dict")
         tool = AgentCrawlSearchTool(toolkit=toolkit)
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(return_value=[])
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("test query")
+        result = await tool._arun("test query")
 
         assert "No results found" in result
 
     @pytest.mark.asyncio
-    async def test_arun_result_no_content(self) -> None:
+    async def test_arun_result_no_content(self, mock_engine_manager) -> None:
         """Test _arun when result has no content."""
         toolkit = AgentCrawlToolkit(return_format="dict")
         tool = AgentCrawlSearchTool(toolkit=toolkit)
@@ -283,26 +271,22 @@ class TestLangChainSearchTool:
         mock_result.snippet = "A snippet"
         # No markdown attribute — hasattr(r, "markdown") will be False
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(return_value=[mock_result])
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("test query")
+        result = await tool._arun("test query")
 
         assert "Result 1" in result
         assert "Content" not in result
 
     @pytest.mark.asyncio
-    async def test_arun_engine_error(self) -> None:
+    async def test_arun_engine_error(self, mock_engine_manager) -> None:
         """Test _arun when engine raises an exception."""
         tool = AgentCrawlSearchTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(side_effect=RuntimeError("Engine crashed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("test query")
+        result = await tool._arun("test query")
 
         assert "Engine crashed" in result
 
@@ -322,10 +306,10 @@ class TestLangChainCrawlTool:
     def test_tool_lazy_toolkit(self) -> None:
         tool = AgentCrawlCrawlTool()
         tk = tool._get_toolkit()
-        assert tk._return_format == "text"
+        assert tk.return_format == "text"
 
     @pytest.mark.asyncio
-    async def test_arun_success(self) -> None:
+    async def test_arun_success(self, mock_engine_manager) -> None:
         toolkit = AgentCrawlToolkit(return_format="dict")
         tool = AgentCrawlCrawlTool(toolkit=toolkit)
         mock_page = MagicMock()
@@ -334,30 +318,26 @@ class TestLangChainCrawlTool:
         mock_page.to_json.return_value = '{"url": "..."}'
         mock_page.status_code = 200
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.crawl = AsyncMock(return_value=[mock_page])
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("https://example.com")
+        result = await tool._arun("https://example.com")
 
         assert "Crawled" in result
         assert "page1" in result
 
     @pytest.mark.asyncio
-    async def test_arun_error(self) -> None:
+    async def test_arun_error(self, mock_engine_manager) -> None:
         tool = AgentCrawlCrawlTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.crawl = AsyncMock(side_effect=Exception("Crawl failed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("https://example.com")
+        result = await tool._arun("https://example.com")
 
         assert "Crawl failed" in result
 
     @pytest.mark.asyncio
-    async def test_arun_many_pages(self) -> None:
+    async def test_arun_many_pages(self, mock_engine_manager) -> None:
         """Test _arun with many pages (limit to 20)."""
         toolkit = AgentCrawlToolkit(return_format="dict")
         tool = AgentCrawlCrawlTool(toolkit=toolkit)
@@ -370,25 +350,21 @@ class TestLangChainCrawlTool:
             page.status_code = 200
             pages.append(page)
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.crawl = AsyncMock(return_value=pages)
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("https://example.com")
+        result = await tool._arun("https://example.com")
 
         assert "25 pages" in result
 
     @pytest.mark.asyncio
-    async def test_arun_engine_error(self) -> None:
+    async def test_arun_engine_error(self, mock_engine_manager) -> None:
         """Test _arun when engine raises an exception."""
         tool = AgentCrawlCrawlTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.crawl = AsyncMock(side_effect=RuntimeError("Engine crashed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun("https://example.com")
+        result = await tool._arun("https://example.com")
 
         assert "Engine crashed" in result
 
@@ -431,46 +407,40 @@ class TestCrewAICrawlTool:
     def test_tool_lazy_toolkit(self) -> None:
         tool = CrewAICrawlTool()
         tk = tool._get_toolkit()
-        assert tk._return_format == "text"
+        assert tk.return_format == "text"
 
     @pytest.mark.asyncio
-    async def test_arun_success(self) -> None:
+    async def test_arun_success(self, mock_engine_manager) -> None:
         tool = CrewAICrawlTool()
         mock_result = MagicMock()
         mock_result.url = "https://example.com"
         mock_result.markdown = "# Hello"
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.scrape = AsyncMock(return_value=mock_result)
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(url="https://example.com")
+        result = await tool._arun(url="https://example.com")
 
         assert "Hello" in result
 
     @pytest.mark.asyncio
-    async def test_arun_error(self) -> None:
+    async def test_arun_error(self, mock_engine_manager) -> None:
         tool = CrewAICrawlTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.scrape = AsyncMock(side_effect=Exception("CrewAI scrape failed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(url="https://example.com")
+        result = await tool._arun(url="https://example.com")
 
         assert "CrewAI scrape failed" in result
 
     @pytest.mark.asyncio
-    async def test_arun_engine_error(self) -> None:
+    async def test_arun_engine_error(self, mock_engine_manager) -> None:
         """Test _arun when engine raises an exception."""
         tool = CrewAICrawlTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.scrape = AsyncMock(side_effect=RuntimeError("Engine crashed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(url="https://example.com")
+        result = await tool._arun(url="https://example.com")
 
         assert "Engine crashed" in result
 
@@ -490,10 +460,10 @@ class TestCrewAISearchTool:
     def test_tool_lazy_toolkit(self) -> None:
         tool = CrewAISearchTool()
         tk = tool._get_toolkit()
-        assert tk._return_format == "text"
+        assert tk.return_format == "text"
 
     @pytest.mark.asyncio
-    async def test_arun_success(self) -> None:
+    async def test_arun_success(self, mock_engine_manager) -> None:
         toolkit = AgentCrawlToolkit(return_format="dict")
         tool = CrewAISearchTool(toolkit=toolkit)
         mock_result = MagicMock()
@@ -502,45 +472,39 @@ class TestCrewAISearchTool:
         mock_result.snippet = "A snippet"
         mock_result.markdown = "Some content here"
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(return_value=[mock_result])
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(query="test query")
+        result = await tool._arun(query="test query")
 
         assert "Result 1" in result
         assert "https://example.com" in result
         assert "Some content" in result
 
     @pytest.mark.asyncio
-    async def test_arun_error(self) -> None:
+    async def test_arun_error(self, mock_engine_manager) -> None:
         tool = CrewAISearchTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(side_effect=Exception("CrewAI search failed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(query="test query")
+        result = await tool._arun(query="test query")
 
         assert "CrewAI search failed" in result
 
     @pytest.mark.asyncio
-    async def test_arun_no_results(self) -> None:
+    async def test_arun_no_results(self, mock_engine_manager) -> None:
         """Test _arun when search returns empty results."""
         toolkit = AgentCrawlToolkit(return_format="dict")
         tool = CrewAISearchTool(toolkit=toolkit)
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(return_value=[])
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(query="test query")
+        result = await tool._arun(query="test query")
 
         assert "No results found" in result
 
     @pytest.mark.asyncio
-    async def test_arun_result_no_content(self) -> None:
+    async def test_arun_result_no_content(self, mock_engine_manager) -> None:
         """Test _arun when result has no content."""
         toolkit = AgentCrawlToolkit(return_format="dict")
         tool = CrewAISearchTool(toolkit=toolkit)
@@ -549,25 +513,21 @@ class TestCrewAISearchTool:
         mock_result.url = "https://example.com"
         mock_result.content = None
 
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(return_value=[mock_result])
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(query="test query")
+        result = await tool._arun(query="test query")
 
         assert "Result 1" in result
 
     @pytest.mark.asyncio
-    async def test_arun_engine_error(self) -> None:
+    async def test_arun_engine_error(self, mock_engine_manager) -> None:
         """Test _arun when engine raises an exception."""
         tool = CrewAISearchTool()
-        mock_engine = MagicMock()
+        mock_engine = mock_engine_manager.get_engine.return_value
         mock_engine.search = AsyncMock(side_effect=RuntimeError("Engine crashed"))
 
-        with patch("agentcrawl.agent.tool._engine_manager") as mock_mgr:
-            mock_mgr.get_engine = AsyncMock(return_value=mock_engine)
-            result = await tool._arun(query="test query")
+        result = await tool._arun(query="test query")
 
         assert "Engine crashed" in result
 

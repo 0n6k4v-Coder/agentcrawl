@@ -255,23 +255,23 @@ class TestCrawlSessionMetadata:
 
     def test_touch(self) -> None:
         s = self._make_session()
-        old = s._state.last_active_at
+        old = s.state.last_active_at
         time.sleep(0.01)
         s.touch()
-        assert s._state.last_active_at > old
+        assert s.state.last_active_at > old
 
     def test_extend_ttl_no_expiry(self) -> None:
         s = self._make_session()
-        assert s._state.expires_at is None
+        assert s.state.expires_at is None
         s.extend_ttl(3600)
-        assert s._state.expires_at is not None
+        assert s.state.expires_at is not None
 
     def test_extend_ttl_with_expiry(self) -> None:
         s = self._make_session(ttl=3600)
-        old = s._state.expires_at
+        old = s.state.expires_at
         time.sleep(0.01)
         s.extend_ttl(7200)
-        assert s._state.expires_at > old
+        assert s.state.expires_at > old
 
 
 # ═══ CrawlSession Lifecycle ═══
@@ -368,7 +368,7 @@ class TestCrawlSessionPersistence:
         """Test _save_state catches errors when to_json fails."""
         s = self._make_session(persist=True, storage_dir=str(tmp_path))
         # Mock to_json to raise, triggering the except block
-        with patch.object(s._state, "to_json", side_effect=Exception("json error")):
+        with patch.object(s.state, "to_json", side_effect=Exception("json error")):
             await s._save_state()  # should not raise
 
     @pytest.mark.asyncio
@@ -383,7 +383,7 @@ class TestCrawlSessionPersistence:
         state_path = tmp_path / f"{s.session_id}.json"
         state_path.write_text(state.to_json())
         assert await s._restore_state() is True
-        assert s._state.page_count == 10
+        assert s.state.page_count == 10
 
     @pytest.mark.asyncio
     async def test_restore_state_expired(self, tmp_path: Any) -> None:
@@ -421,8 +421,8 @@ class TestCrawlSessionPersistence:
         )
         s._context = mock_ctx
         await s._save_browser_state()
-        assert s._state.cookies == [{"name": "t", "value": "v"}]
-        assert "https://e.com" in s._state.local_storage
+        assert s.state.cookies == [{"name": "t", "value": "v"}]
+        assert "https://e.com" in s.state.local_storage
 
     @pytest.mark.asyncio
     async def test_save_browser_state_empty_ls(self) -> None:
@@ -433,7 +433,7 @@ class TestCrawlSessionPersistence:
         )
         s._context = mock_ctx
         await s._save_browser_state()
-        assert s._state.cookies == []
+        assert s.state.cookies == []
 
     @pytest.mark.asyncio
     async def test_save_browser_state_error(self) -> None:
@@ -503,7 +503,7 @@ class TestCrawlSessionNavigation:
         s._context = MagicMock()
         s._context.new_page = AsyncMock(return_value=mock_page)
         await s.goto("https://example.com")
-        assert len(s._state.history) == 1
+        assert len(s.state.history) == 1
 
     @pytest.mark.asyncio
     async def test_goto_exception(self) -> None:
@@ -668,7 +668,7 @@ class TestCrawlSessionActions:
                 [{"type": "click", "selector": "#btn"}], url="https://example.com"
             )
             assert len(results) == 1
-            assert len(s._state.history) == 1
+            assert len(s.state.history) == 1
 
     @pytest.mark.asyncio
     async def test_execute_actions_no_url(self) -> None:
@@ -684,7 +684,7 @@ class TestCrawlSessionActions:
             mock_pa_cls.return_value = mock_pa
             results = await s.execute_actions([{"type": "click", "selector": "#btn"}])
             assert len(results) == 1
-            assert len(s._state.history) == 0
+            assert len(s.state.history) == 0
 
     def test_execute_actions_not_started(self) -> None:
         with pytest.raises(RuntimeError, match="not started"):
@@ -709,8 +709,8 @@ class TestCrawlSessionActions:
     def test_record_visit(self) -> None:
         s = self._make_session()
         s._record_visit(url="https://example.com", status_code=200)
-        assert len(s._state.history) == 1
-        assert s._state.page_count == 1
+        assert len(s.state.history) == 1
+        assert s.state.page_count == 1
 
 
 # ═══ CrawlSession Static Methods ═══

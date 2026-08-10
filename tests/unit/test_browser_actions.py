@@ -1020,7 +1020,7 @@ class TestFrameHandlers:
         action = Action(type="switch_frame", frame_selector="iframe#myframe")
         r = await executor.execute(action)
         assert r.success
-        assert executor._current_frame is mock_frame
+        assert executor.current_frame is mock_frame
 
     @pytest.mark.asyncio
     async def test_handle_switch_frame_no_selector(self) -> None:
@@ -1047,7 +1047,7 @@ class TestFrameHandlers:
         r = await executor.execute(action)
         assert r.success
         # After switching to main, _current_frame should be _page
-        assert executor._current_frame is executor._page
+        assert executor.current_frame is executor.page
 
 
 class TestAssertionHandlers:
