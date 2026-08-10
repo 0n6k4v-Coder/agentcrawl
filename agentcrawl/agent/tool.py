@@ -727,6 +727,36 @@ class AgentCrawlToolkit:
 # LangChain Tool
 # ══════════════════════════════════════════════════════════════
 
+
+def get_langchain_tools(
+    toolkit: AgentCrawlToolkit | None = None,
+) -> list[Any]:
+    """
+    Get all AgentCrawl tools as LangChain BaseTool instances.
+
+    Args:
+        toolkit: Optional shared toolkit instance.
+
+    Returns:
+        List of LangChain tools.
+
+    Raises:
+        ImportError: If langchain is not installed.
+    """
+    try:
+        from langchain.tools import BaseTool  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            "LangChain is required. Install with: pip install langchain langchain-openai"
+        ) from None
+    tk = toolkit or AgentCrawlToolkit(return_format="text")
+    return [
+        AgentCrawlTool(toolkit=tk),
+        AgentCrawlSearchTool(toolkit=tk),
+        AgentCrawlCrawlTool(toolkit=tk),
+    ]
+
+
 try:
     from langchain.tools import BaseTool
 
@@ -929,45 +959,43 @@ try:
                 return "\n".join(parts)
             return str(result)
 
-    def get_langchain_tools(
-        toolkit: AgentCrawlToolkit | None = None,
-    ) -> list[BaseTool]:
-        """
-        Get all AgentCrawl tools as LangChain BaseTool instances.
-
-        Args:
-            toolkit: Optional shared toolkit instance.
-
-        Returns:
-            List of LangChain tools.
-
-        Example:
-            >>> from agentcrawl.agent.tool import get_langchain_tools
-            >>> tools = get_langchain_tools()
-            >>> agent = initialize_agent(tools=tools, llm=llm, ...)
-        """
-        tk = toolkit or AgentCrawlToolkit(return_format="text")
-        return [
-            AgentCrawlTool(toolkit=tk),
-            AgentCrawlSearchTool(toolkit=tk),
-            AgentCrawlCrawlTool(toolkit=tk),
-        ]
-
 except ImportError:
     # LangChain not installed — provide stubs
     AgentCrawlTool = None  # type: ignore[assignment,misc]
     AgentCrawlSearchTool = None  # type: ignore[assignment,misc]
     AgentCrawlCrawlTool = None  # type: ignore[assignment,misc]
 
-    def get_langchain_tools(toolkit: Any = None) -> list[Any]:  # type: ignore[misc]
-        raise ImportError(
-            "LangChain is required. Install with: pip install langchain langchain-openai"
-        )
-
 
 # ══════════════════════════════════════════════════════════════
 # CrewAI Tool
 # ══════════════════════════════════════════════════════════════
+
+
+def get_crewai_tools(
+    toolkit: AgentCrawlToolkit | None = None,
+) -> list[Any]:
+    """
+    Get all AgentCrawl tools as CrewAI BaseTool instances.
+
+    Args:
+        toolkit: Optional shared toolkit instance.
+
+    Returns:
+        List of CrewAI tools.
+
+    Raises:
+        ImportError: If crewai is not installed.
+    """
+    try:
+        from crewai.tools import BaseTool as CrewAIBaseTool  # noqa: F401
+    except ImportError:
+        raise ImportError("CrewAI is required. Install with: pip install crewai") from None
+    tk = toolkit or AgentCrawlToolkit(return_format="text")
+    return [
+        CrewAICrawlTool(toolkit=tk),
+        CrewAISearchTool(toolkit=tk),
+    ]
+
 
 try:
     from crewai.tools import BaseTool as CrewAIBaseTool
@@ -1061,30 +1089,9 @@ try:
                 return "\n".join(parts) if parts else "No results found."
             return str(result)
 
-    def get_crewai_tools(
-        toolkit: AgentCrawlToolkit | None = None,
-    ) -> list[CrewAIBaseTool]:
-        """
-        Get all AgentCrawl tools as CrewAI BaseTool instances.
-
-        Args:
-            toolkit: Optional shared toolkit instance.
-
-        Returns:
-            List of CrewAI tools.
-        """
-        tk = toolkit or AgentCrawlToolkit(return_format="text")
-        return [
-            CrewAICrawlTool(toolkit=tk),
-            CrewAISearchTool(toolkit=tk),
-        ]
-
 except ImportError:
     CrewAICrawlTool = None  # type: ignore[assignment,misc]
     CrewAISearchTool = None  # type: ignore[assignment,misc]
-
-    def get_crewai_tools(toolkit: Any = None) -> list[Any]:  # type: ignore[misc]
-        raise ImportError("CrewAI is required. Install with: pip install crewai")
 
 
 # ══════════════════════════════════════════════════════════════
