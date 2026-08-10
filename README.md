@@ -586,6 +586,21 @@ GitHub Actions runs tests on Python 3.11, 3.12, 3.13 with Playwright Chromium pr
 
 ---
 
+## 📚 Developer Documentation
+
+For contributors, see these detailed guides:
+
+- **[Testing Guidelines](docs/TESTING.md)** — How to write tests, mocking patterns, test isolation, shared fixtures
+- **[Code Style Guide](docs/CODE_STYLE.md)** — API design, type annotations, Protocol usage, cast() rules
+- **[Suppression Policy](docs/SUPPRESSION_POLICY.md)** — Type/lint suppression rules and root cause fixes
+
+### Audit Reports
+
+- [Heavy Mocking Audit Report](references/heavy_mocking_audit_report.md) — Analysis of mock patterns across test suite
+- [Private Attribute Access Audit Report](references/private_attribute_access_audit_report.md) — Analysis of private API access in tests
+
+---
+
 ## 📊 Performance
 
 | Metric | AgentCrawl | Firecrawl (self-hosted) | Crawl4AI |
