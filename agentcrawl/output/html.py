@@ -507,7 +507,7 @@ class HtmlOutputFormatter:
     def _markdown_to_html(md_text: str) -> str:
         """Convert markdown to HTML."""
         try:
-            import markdown  # type: ignore[import-untyped]
+            import markdown
 
             return str(
                 markdown.markdown(

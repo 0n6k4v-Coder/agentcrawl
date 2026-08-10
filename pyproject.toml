@@ -328,6 +328,7 @@ module = [
     "duckduckgo_search.*",
     "pdfplumber.*",
     "docx.*",
+    "markdown.*",
 ]
 ignore_missing_imports = true
 
