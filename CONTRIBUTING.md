@@ -71,6 +71,54 @@ make pre-push
 - Maintain or improve test coverage
 - Use descriptive test names
 
+## Documentation
+
+Before contributing, please read our developer documentation:
+
+- **[Testing Guidelines](docs/TESTING.md)** — How to write tests, mocking patterns, test isolation
+- **[Code Style Guide](docs/CODE_STYLE.md)** — API design, typing, Protocol usage, cast() rules
+- **[Suppression Policy](docs/SUPPRESSION_POLICY.md)** — Type/lint suppression rules and root cause fixes
+
+## Testing Requirements
+
+All new code must have tests:
+
+- **Unit tests:** Required for all new functions/classes
+- **Integration tests:** Required for new features that interact with external systems (browser, network, LLM)
+- **Coverage:** Maintain or improve current coverage (~56%)
+
+Run tests before submitting PR:
+
+```bash
+make test
+pytest tests/unit/ --cov=agentcrawl --cov-report=term
+```
+
+See [Testing Guidelines](docs/TESTING.md) for detailed patterns on mocking, test isolation, and shared fixtures.
+
+## Code Style
+
+Follow our code style conventions:
+
+- Use type annotations for all public functions
+- Prefer public properties over private attribute access in tests
+- Use Protocol for duck typing when appropriate
+- Use `cast()` only with runtime validation
+- Document all public APIs with docstrings
+
+See [Code Style Guide](docs/CODE_STYLE.md) for detailed rules and examples.
+
+## Suppression Policy
+
+We follow a strict "no suppression without root cause" policy:
+
+- Try to fix the underlying issue first (e.g., use `isinstance` instead of `hasattr` + `cast`)
+- If suppression is necessary, use specific error codes (not bare `# type: ignore`)
+- Add justification comments explaining why suppression is needed
+- Acceptable cases: third-party stubs, optional deps, Literal narrowing, test-only violations
+
+See [Suppression Policy](docs/SUPPRESSION_POLICY.md) for full policy and Phase 3 audit results.
+
 ## Pull Request Process
 
 1. **Fork and branch:**
