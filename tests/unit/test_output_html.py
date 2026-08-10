@@ -167,13 +167,15 @@ class TestHtmlSanitizerSanitize:
         sanitizer = HtmlSanitizer()
         html = '<a href="data:text/html,<script>alert(1)</script>">Click</a>'
         result = sanitizer.sanitize(html)
-        assert "data:" not in result.lower()
+        assert "data:" not in result.lower()  # sanitizer normalizes attribute values to lowercase
 
     def test_remove_css_expressions(self):
         sanitizer = HtmlSanitizer()
         html = "<div style='width: expression(alert(1))'>Hello</div>"
         result = sanitizer.sanitize(html)
-        assert "expression" not in result.lower()
+        assert (
+            "expression" not in result.lower()
+        )  # CSS sanitizer strips all style attributes regardless of case
 
     def test_remove_style_attrs(self):
         sanitizer = HtmlSanitizer()
@@ -274,7 +276,9 @@ class TestHtmlFormat:
         result = formatter.format(sample_result)
         assert "<html" in result
         assert "<body" in result
-        assert "<title>" in result or "title" in result.lower()
+        assert (
+            "<title>" in result or "title" in result.lower()
+        )  # title tag may be uppercased by sanitizer
 
     def test_format_with_raw_html(self):
         formatter = HtmlOutputFormatter()
