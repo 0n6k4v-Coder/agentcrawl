@@ -1130,6 +1130,16 @@ class _ActionExecutor:
         self._default_timeout = default_timeout
         self._current_frame: Any = page  # Track frame context
 
+    @property
+    def page(self) -> Any:
+        """Return the current Playwright page."""
+        return self._page
+
+    @property
+    def current_frame(self) -> Any:
+        """Return the current frame context."""
+        return self._current_frame
+
     async def execute(self, action: Action) -> ActionResult:
         """Execute a single action and return the result."""
         import time

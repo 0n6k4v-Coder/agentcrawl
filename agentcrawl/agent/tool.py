@@ -300,6 +300,11 @@ class AgentCrawlToolkit:
             },
         }
 
+    @property
+    def return_format(self) -> str:
+        """Return the output format for tool results."""
+        return self._return_format
+
     # ──────────────────────────────────────────────────────────
     # Public API
     # ──────────────────────────────────────────────────────────
