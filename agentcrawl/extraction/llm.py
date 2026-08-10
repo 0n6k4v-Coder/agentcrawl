@@ -404,7 +404,7 @@ class LLMExtractor(ExtractionStrategy):
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            pass
+            logger.debug("JSON parse attempt 2 (strip code fences) failed")
 
         # Attempt 3: Extract JSON object from text
         json_str = self._extract_json_from_text(cleaned)
@@ -412,14 +412,14 @@ class LLMExtractor(ExtractionStrategy):
             try:
                 return json.loads(json_str)
             except json.JSONDecodeError:
-                pass
+                logger.debug("JSON parse attempt 3 (extract from text) failed")
 
         # Attempt 4: Fix common issues
         fixed = self._fix_json(cleaned)
         try:
             return json.loads(fixed)
         except json.JSONDecodeError:
-            pass
+            logger.debug("JSON parse attempt 4 (fix common issues) failed")
 
         # Attempt 5: Try to extract from fixed text
         json_str = self._extract_json_from_text(fixed)
@@ -427,7 +427,7 @@ class LLMExtractor(ExtractionStrategy):
             try:
                 return json.loads(json_str)
             except json.JSONDecodeError:
-                pass
+                logger.debug("JSON parse attempt 5 (extract from fixed text) failed")
 
         logger.warning("Failed to parse LLM response as JSON")
         return {"_raw": text[:500]}

@@ -404,7 +404,7 @@ class FitMarkdownExtractor(ExtractionStrategy):
                     logger.debug("CSS selector %s failed: %s", selector, e)
                     continue
         except ImportError:
-            pass
+            logger.debug("lxml unavailable, falling back to regex extraction")
 
         return None
 

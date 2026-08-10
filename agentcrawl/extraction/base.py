@@ -672,7 +672,7 @@ class ExtractionStrategy(ABC):
                 parsed = json.loads(text)
                 return self._try_parse_to_model(parsed)
             except json.JSONDecodeError:
-                pass
+                logger.debug("JSON parse of fixed text failed")
 
         return raw_data
 
