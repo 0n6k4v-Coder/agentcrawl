@@ -272,7 +272,7 @@ python -m server \\
 | `POST` | `/v1/interact` | Interact with a page (click, scroll, type) |
 | `GET` | `/health` | Health check |
 | `GET` | `/metrics` | Prometheus metrics |
-| `SSE` | `/mcp/sse` | MCP (Model Context Protocol) endpoint |
+| `Streamable HTTP` | `/mcp` | MCP (Model Context Protocol) endpoint (2026-07-28 transport) |
 
 ### API Usage Example
 
@@ -374,13 +374,93 @@ response = client.chat.completions.create(
 
 ### MCP (Model Context Protocol)
 
-```bash
-# Start server with MCP enabled
-python -m server --port 8000 --mcp
+The AgentCrawl MCP server is built natively against **MCP SDK 2.0.0** and
+exposes six canonical tools: `scrape_webpage`, `search_web`, `crawl_website`,
+`discover_urls`, `extract_data`, and `batch_scrape`.
 
-# Connect from Claude Code
-claude mcp add --transport sse agentcrawl http://localhost:8000/mcp/sse
+**HTTP transport (Streamable HTTP)**
+
+```bash
+# Start the MCP Streamable HTTP server (standalone, no REST API)
+python -m server.mcp.server --transport http --host 127.0.0.1 --port 9000
 ```
+
+The server exposes a single stateless Streamable HTTP endpoint at `/mcp`.
+Clients connect using any MCP 2.0.0 Streamable HTTP client. The endpoint is
+stateless at the MCP protocol boundary (no persistent session storage).
+
+```text
+MCP SDK:           2.0.0
+HTTP transport:    Streamable HTTP (stateless_http=True)
+HTTP endpoint:     /mcp
+stdio:             supported
+Canonical tools:   6 (scrape_webpage, search_web, crawl_website, discover_urls, extract_data, batch_scrape)
+Legacy SSE:        removed (GET /sse, POST /messages/). run_sse raises RuntimeError
+WebSocket MCP:     removed
+Custom JSON-RPC:   removed (native SDK ClientSession)
+
+
+```bash
+# Connect from a client supporting MCP Streamable HTTP (e.g. Claude Code):
+claude mcp add --transport http agentcrawl http://localhost:9000/mcp
+```
+
+**stdio transport**
+
+```bash
+# Launch as a stdio subprocess (for agents that manage the process).
+python -m server.mcp.server --transport stdio
+```
+
+> **Migration status (Set D complete):** The MCP stack has been fully modernised to
+> MCP SDK 2.0.0. The legacy SSE transport (`GET /sse` + `POST /messages/`) has been
+> removed from both the server and client. The MCP client (`agent/mcp_client.py` /
+> `agentcrawl/agent/mcp_client.py`) now uses the official SDK 2.0.0 `ClientSession`
+> with Streamable HTTP and stdio transports, and reconciles with the canonical
+> six-tool contract. The legacy `web_*` tool names and `web_screenshot` are no longer
+> exposed. Set D verified the agent/package boundary, runtime endpoint reachability,
+> Streamable HTTP and stdio end-to-end interoperability, canonical tool dispatch,
+> error propagation, stateless request independence, lifecycle cleanup, and duplicate
+> package-tree synchronization.
+>
+>
+> **Deferred (future sets):** Authorization, MCP Tasks, MRTR, Sampling,
+> Roots, and Hermes integration are not yet implemented.
+
+**Python MCP Client**
+
+The client in `agentcrawl/agent/mcp_client.py` uses the official MCP SDK 2.0.0
+`ClientSession` with Streamable HTTP and stdio transports. It exposes the same
+six canonical tools as the server.
+
+```python
+import asyncio
+from agentcrawl.agent import MCPClient
+
+async def main():
+    # Streamable HTTP transport (connects to /mcp endpoint)
+    async with MCPClient(transport="http", url="http://localhost:9000/mcp") as client:
+        # Discover tools from the server (single source of truth)
+        tools = await client.list_tools()
+        print(f"Server offers {len(tools)} tools:")
+        for t in tools:
+            print(f"  - {t.name}")
+
+        # Call canonical tools
+        result = await client.scrape("https://example.com")
+        print(result.text)
+
+        # Or call directly by name
+        result = await client.call_tool("search_web", {"query": "Python asyncio"})
+
+asyncio.run(main())
+```
+
+The client also offers convenience wrappers for every canonical tool:
+`scrape`, `crawl`, `search`, `discover`, `extract`, `batch_scrape`. Legacy
+`web_*` names and `web_screenshot` are not available — use the canonical
+names listed above.
+
 
 ### Custom Agent Harness
 
@@ -453,7 +533,7 @@ agentcrawl/
 │   ├── auth/                # API Key, JWT, rate limiter
 │   ├── queue/               # In-memory and Redis queue backends
 │   ├── schemas/             # Request/response Pydantic models
-│   ├── mcp/                 # MCP server (SSE + WebSocket)
+│   ├── mcp/                 # MCP server (Streamable HTTP + stdio, SDK 2.0.0)
 │   └── monitoring/          # Health, metrics, logging
 ├── agent/                   # AI Agent integration (LangChain, OpenAI FC, MCP)
 ├── tests/                   # Unit and integration tests

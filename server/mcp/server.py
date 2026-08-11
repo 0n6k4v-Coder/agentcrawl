@@ -1,495 +1,289 @@
-"""
-AgentCrawl — MCP Server
-===========================
+"""AgentCrawl — MCP Server
+=========================
 
-Model Context Protocol (MCP) server that exposes AgentCrawl
-tools to AI agents and LLM applications.
+Model Context Protocol (MCP) server built natively against MCP SDK 2.0.0.
 
-MCP is an open protocol for connecting AI assistants to
-external tools and data sources. This server provides
-web scraping, crawling, search, and extraction tools.
+Transports:
 
-Prerequisites:
-    pip install mcp agentcrawl
+* **stdio** — ``python -m server.mcp.server --transport stdio``
+* **Streamable HTTP** — ``python -m server.mcp.server --transport http
+  --host 0.0.0.0 --port 8080`` (stateless at the MCP boundary,
+  ``stateless_http=True``)
 
-Usage:
-    # Start MCP server (stdio transport)
-    python -m agentcrawl.server.mcp.server
+The server exposes the canonical tool contract defined in
+:mod:`server.mcp.tools` (exactly six tools, single source of truth).
 
-    # Start with SSE transport
-    python -m agentcrawl.server.mcp.server --transport sse --port 8080
-
-    # Configure in Claude Desktop (claude_desktop_config.json):
-    {
-        "mcpServers": {
-            "agentcrawl": {
-                "command": "python",
-                "args": ["-m", "agentcrawl.server.mcp.server"]
-            }
-        }
-    }
-
-Tools:
-    scrape_webpage   — Scrape a URL and return Markdown
-    search_web       — Search the web
-    crawl_website    — Crawl multiple pages
-    discover_urls    — Discover URLs on a site
-    extract_data     — Extract structured data
+Legacy SSE (`mcp.server.sse.SseServerTransport` with ``/sse`` +
+``/messages/``) has been removed.  See the "Legacy migration" section of
+the module docstring and the project MIGRATION notes.
 """
 
 from __future__ import annotations
 
+import argparse
 import asyncio
+import contextlib
 import json
 import logging
 import sys
+from dataclasses import dataclass, field
 from typing import Any
 
-logger = logging.getLogger("agentcrawl.mcp")
+import mcp.types as types
+from mcp.server.lowlevel import Server
+from mcp.server.stdio import stdio_server
+
+from server.mcp.tools import (
+    TOOL_DEFINITIONS,
+    ToolError,
+    _serialize,
+    get_tool,
+)
+
+# Server identity used in the MCP ``initialize`` handshake.
+SERVER_NAME = "agentcrawl"
+SERVER_VERSION = "1.0.0"
+
+logger = logging.getLogger("agentcrawl.mcp.server")
 
 
 # ══════════════════════════════════════════════════════════════
-# Tool Definitions
-# ══════════════════════════════════════════════════════════════
-
-TOOLS: list[dict[str, Any]] = [
-    {
-        "name": "scrape_webpage",
-        "description": (
-            "Scrape a webpage and return its content as clean Markdown. "
-            "Removes navigation, ads, and boilerplate. "
-            "Use this to read the content of a specific URL."
-        ),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "description": "The URL to scrape",
-                },
-                "include_links": {
-                    "type": "boolean",
-                    "description": "Whether to include extracted links",
-                    "default": False,
-                },
-                "only_main_content": {
-                    "type": "boolean",
-                    "description": "Extract only main content (skip nav, footer)",
-                    "default": True,
-                },
-            },
-            "required": ["url"],
-        },
-    },
-    {
-        "name": "search_web",
-        "description": (
-            "Search the web and return results with titles, URLs, and snippets. "
-            "Use this to find relevant pages before scraping them."
-        ),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "The search query",
-                },
-                "max_results": {
-                    "type": "integer",
-                    "description": "Maximum number of results",
-                    "default": 5,
-                },
-            },
-            "required": ["query"],
-        },
-    },
-    {
-        "name": "crawl_website",
-        "description": (
-            "Crawl a website starting from a URL and return content from "
-            "multiple pages. Use this to gather information from documentation "
-            "sites or multi-page resources."
-        ),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "description": "The starting URL to crawl",
-                },
-                "max_pages": {
-                    "type": "integer",
-                    "description": "Maximum number of pages to crawl",
-                    "default": 10,
-                },
-                "max_depth": {
-                    "type": "integer",
-                    "description": "Maximum link depth to follow",
-                    "default": 2,
-                },
-            },
-            "required": ["url"],
-        },
-    },
-    {
-        "name": "discover_urls",
-        "description": (
-            "Discover all URLs on a website without scraping content. "
-            "Uses sitemap.xml, robots.txt, and link crawling. "
-            "Use this to understand a site's structure."
-        ),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "description": "The website URL",
-                },
-                "max_urls": {
-                    "type": "integer",
-                    "description": "Maximum URLs to discover",
-                    "default": 100,
-                },
-            },
-            "required": ["url"],
-        },
-    },
-    {
-        "name": "extract_data",
-        "description": (
-            "Extract structured data from a webpage using CSS selectors. "
-            "Define fields with selectors to extract specific data. "
-            "Returns structured JSON."
-        ),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "description": "The URL to extract from",
-                },
-                "fields": {
-                    "type": "string",
-                    "description": (
-                        "Comma-separated field names to extract. Example: 'title,price,description'"
-                    ),
-                },
-            },
-            "required": ["url", "fields"],
-        },
-    },
-]
-
-
-# ══════════════════════════════════════════════════════════════
-# Tool Handlers
+# Shared engine lifecycle (Set G)
 # ══════════════════════════════════════════════════════════════
 
 
-async def handle_scrape_webpage(args: dict[str, Any]) -> str:
-    """Handle scrape_webpage tool call."""
-    from agentcrawl import CrawlEngine, CrawlerConfig
+@dataclass
+class MCPServerContext:
+    """Server-lifetime state carried through an MCP session context.
 
-    url = args.get("url", "")
-    include_links = args.get("include_links", False)
-    only_main_content = args.get("only_main_content", True)
+    A single ``CrawlEngine`` is created once at server startup (G1) and
+    reused for every tool invocation during that server lifetime.  Its
+    memory cache therefore persists across calls (G3).  The concurrency
+    semaphore (G2) bounds how many engine operations may run at once.
+    """
 
-    if not url:
-        return json.dumps({"error": "URL is required"})
+    engine: Any
+    semaphore: asyncio.Semaphore
+    max_concurrent: int
 
-    config = CrawlerConfig(
-        output_format="markdown",
-        include_links=include_links,
-        include_metadata=True,
-        only_main_content=only_main_content,
-        cache=True,
-        cache_ttl=3600,
+
+@contextlib.asynccontextmanager
+async def _mcp_lifespan(server: Server[Any]):
+    """Create one shared :class:`CrawlEngine` for the server's lifetime.
+
+    * Startup creates the engine via :meth:`CrawlEngine.default` (preserving
+      the package-mode API) and enters it — initializing browser + cache.
+    * The ``MCPServerContext`` (engine + concurrency semaphore) is yielded
+      to handlers via ``ctx.lifespan_context``.
+    * Shutdown always runs — even if startup or a tool invocation fails
+      partway through — releasing the browser and cache (G4).
+    """
+    from agentcrawl.config.settings import Settings
+    from agentcrawl.core.engine import CrawlEngine
+
+    settings = Settings()
+    max_concurrent = max(1, int(settings.mcp_max_concurrent))
+    semaphore = asyncio.Semaphore(max_concurrent)
+
+    # One engine per server lifetime (G1).  ``CrawlEngine.default()`` preserves
+    # the package-mode API used by tests/fixtures that patch it.
+    engine = CrawlEngine.default()
+    started = False
+    try:
+        await engine.__aenter__()  # startup (browser + cache)
+        started = True
+        ctx = MCPServerContext(
+            engine=engine,
+            semaphore=semaphore,
+            max_concurrent=max_concurrent,
+        )
+        yield ctx
+    finally:
+        # Graceful shutdown (G4) — runs even if startup/tool failed.
+        if started:
+            with contextlib.suppress(Exception):
+                await engine.__aexit__(None, None, None)
+        else:
+            # Startup itself failed; ensure no partial resources leak.
+            with contextlib.suppress(Exception):
+                if getattr(engine, "_browser_manager", None) is not None:
+                    await engine._browser_manager.stop()
+
+
+def _get_server_context(ctx: Any, tool_name: str = "") -> MCPServerContext:
+    """Extract the shared server context from a request context.
+
+    The ``MCPServerContext`` (shared engine + semaphore) is yielded by the
+    ``_mcp_lifespan`` and exposed by the MCP SDK on ``ctx.lifespan_context``.
+    Tests that build a bare :class:`~mcp.server.lowlevel.server.Server`
+    without a lifespan are supported by falling back to a synthetic context
+    that creates and owns its own short-lived engine.
+    """
+    server_ctx = getattr(ctx, "lifespan_context", None)
+    if isinstance(server_ctx, MCPServerContext):
+        return server_ctx
+
+    # Fallback for servers constructed without the MCP lifespan (e.g. the
+    # in-process test harness that calls create_mcp_server without entering
+    # the lifespan).  Lazily build a per-call-compatible context.
+    import asyncio
+
+    from agentcrawl.core.engine import CrawlEngine
+
+    engine = CrawlEngine.default()
+    semaphore = asyncio.Semaphore(1)
+    return MCPServerContext(
+        engine=engine,
+        semaphore=semaphore,
+        max_concurrent=1,
     )
 
-    try:
-        async with CrawlEngine.default() as engine:
-            result = await engine.scrape(url, config)
 
-            if not result.success:
-                return json.dumps({"error": result.error, "url": url})
+def create_mcp_server() -> Server:
+    """Construct the canonical MCP server (MCP SDK 2.0.0 native API).
 
-            response: dict[str, Any] = {
-                "url": result.url,
-                "title": result.metadata.get("title", ""),
-                "content": result.markdown,
-                "word_count": result.word_count,
-            }
+    Uses the modern Server constructor callback parameters
+    (``on_list_tools`` / ``on_call_tool``) rather than the removed
+    ``@server.list_tools()`` / ``@server.call_tool()`` decorators, which do
+    not exist in MCP 2.0.0.
 
-            if include_links and result.links:
-                response["links"] = result.links.get("all", [])[:20]
-
-            return json.dumps(response, ensure_ascii=False)
-
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-async def handle_search_web(args: dict[str, Any]) -> str:
-    """Handle search_web tool call."""
-    from agentcrawl import SearchEngine
-
-    query = args.get("query", "")
-    max_results = args.get("max_results", 5)
-
-    if not query:
-        return json.dumps({"error": "Query is required"})
-
-    try:
-        engine = SearchEngine(provider="duckduckgo")
-        results = await engine.search(query, max_results=max_results)
-
-        return json.dumps(
-            {"query": query, "results": results},
-            ensure_ascii=False,
-        )
-
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-async def handle_crawl_website(args: dict[str, Any]) -> str:
-    """Handle crawl_website tool call."""
-    from agentcrawl import BFSCrawler, CrawlEngine, CrawlerConfig
-
-    url = args.get("url", "")
-    max_pages = args.get("max_pages", 10)
-    max_depth = args.get("max_depth", 2)
-
-    if not url:
-        return json.dumps({"error": "URL is required"})
-
-    config = CrawlerConfig(
-        output_format="markdown",
-        only_main_content=True,
-        cache=True,
-    )
-
-    try:
-        async with CrawlEngine.default() as engine:
-            job = await engine.crawl(
-                url,
-                strategy=BFSCrawler(max_depth=max_depth, max_pages=max_pages),
-                config=config,
-            )
-
-            pages = []
-            for page in job.pages:
-                if page.success:
-                    content = page.markdown
-                    if len(content) > 2000:
-                        content = content[:2000] + "\n\n[... truncated]"
-                    pages.append(
-                        {
-                            "url": page.url,
-                            "title": page.metadata.get("title", ""),
-                            "content": content,
-                            "word_count": page.word_count,
-                        }
-                    )
-
-            return json.dumps(
-                {
-                    "start_url": url,
-                    "total_pages": job.total_pages,
-                    "successful_pages": job.successful_pages,
-                    "pages": pages,
-                },
-                ensure_ascii=False,
-            )
-
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-async def handle_discover_urls(args: dict[str, Any]) -> str:
-    """Handle discover_urls tool call."""
-    from agentcrawl import DomainMapper
-
-    url = args.get("url", "")
-    max_urls = args.get("max_urls", 100)
-
-    if not url:
-        return json.dumps({"error": "URL is required"})
-
-    try:
-        mapper = DomainMapper(max_urls=max_urls)
-        urls = await mapper.discover(url)
-
-        return json.dumps(
-            {"url": url, "total_urls": len(urls), "urls": urls},
-            ensure_ascii=False,
-        )
-
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-async def handle_extract_data(args: dict[str, Any]) -> str:
-    """Handle extract_data tool call."""
-    from pydantic import create_model
-
-    from agentcrawl import CrawlEngine
-
-    url = args.get("url", "")
-    fields_str = args.get("fields", "")
-
-    if not url:
-        return json.dumps({"error": "URL is required"})
-
-    if not fields_str:
-        return json.dumps({"error": "Fields are required"})
-
-    field_names = [f.strip() for f in fields_str.split(",") if f.strip()]
-
-    if not field_names:
-        return json.dumps({"error": "No valid fields specified"})
-
-    try:
-        # Build dynamic model
-        field_definitions = dict.fromkeys(field_names, (str, ""))
-        dynamic_model = create_model("ExtractedData", **field_definitions)
-
-        async with CrawlEngine.default() as engine:
-            result = await engine.extract(
-                url,
-                schema=dynamic_model,
-                method="llm",
-            )
-
-            if not result.success:
-                return json.dumps({"error": result.error, "url": url})
-
-            if result.extracted_data:
-                if hasattr(result.extracted_data, "model_dump"):
-                    data = result.extracted_data.model_dump()
-                else:
-                    data = result.extracted_data
-                return json.dumps(data, ensure_ascii=False)
-
-            return json.dumps({"error": "No data extracted", "url": url})
-
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-# Tool handler registry
-TOOL_HANDLERS: dict[str, Any] = {
-    "scrape_webpage": handle_scrape_webpage,
-    "search_web": handle_search_web,
-    "crawl_website": handle_crawl_website,
-    "discover_urls": handle_discover_urls,
-    "extract_data": handle_extract_data,
-}
-
-
-# ══════════════════════════════════════════════════════════════
-# MCP Server
-# ══════════════════════════════════════════════════════════════
-
-
-def create_mcp_server() -> Any:
+    The tool contract is sourced exclusively from
+    :data:`server.mcp.tools.TOOL_DEFINITIONS` — there is no duplicate
+    ``TOOLS`` list or ``TOOL_HANDLERS`` dictionary in this module.
     """
-    Create and configure the MCP server.
 
-    Returns:
-        MCP Server instance.
-    """
-    try:
-        import mcp.types as types
-        from mcp.server import Server
-
-    except ImportError:
-        print(
-            "MCP library not installed. Install with: pip install mcp",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    server = Server("agentcrawl")
-
-    # ── List Tools ────────────────────────────────────────────
-
-    @server.list_tools()
-    async def list_tools() -> list[types.Tool]:
-        """Return available tools."""
-        tools = []
-        for tool_def in TOOLS:
-            tools.append(
-                types.Tool(
-                    name=tool_def["name"],
-                    description=tool_def["description"],
-                    inputSchema=tool_def["inputSchema"],
-                )
+    async def list_tools(
+        ctx: Any,
+        params: types.PaginatedRequestParams | None,
+    ) -> types.ListToolsResult:
+        """Return the canonical, deterministically-ordered tool list."""
+        tools = [
+            types.Tool(
+                name=t.name,
+                description=t.description,
+                input_schema=t.input_schema,
             )
-        return tools
+            for t in TOOL_DEFINITIONS
+        ]
+        return types.ListToolsResult(tools=tools)
 
-    # ── Call Tool ─────────────────────────────────────────────
-
-    @server.call_tool()
     async def call_tool(
-        name: str,
-        arguments: dict[str, Any],
-    ) -> list[types.TextContent]:
-        """Execute a tool call."""
-        handler = TOOL_HANDLERS.get(name)
+        ctx: Any,
+        params: types.CallToolRequestParams,
+    ) -> types.CallToolResult:
+        """Dispatch a tool invocation to its canonical handler.
 
-        if handler is None:
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps({"error": f"Unknown tool: {name}"}),
-                )
-            ]
+        Error semantics (REQ-B07):
+
+        * Unknown tool      → ``tool not found`` ``ErrorData`` result.
+        * ``ToolError``     → ``isError=True`` result with the message.
+        * Other exception   → logged, ``isError=True`` with a generic
+          message (no stack trace leaks to the client).
+        * Success           → ``TextContent`` with JSON-serialized result,
+          ``isError=False``.
+        """
+        name = params.name
+        arguments = params.arguments or {}
+
+        tool = get_tool(name)
+        if tool is None:
+            return types.CallToolResult(
+                content=[
+                    types.TextContent(
+                        type="text",
+                        text=json.dumps({"error": f"Tool not found: {name}"}),
+                    )
+                ],
+                is_error=True,
+            )
+
+        # Resolve the server-lifetime shared engine + concurrency semaphore
+        # (G1/G2/G3/G4).  The engine is created once in the MCP server lifespan
+        # and stored on ``ctx.lifespan_context``.
+        server_ctx = _get_server_context(ctx, name)
+        engine = server_ctx.engine
 
         try:
-            result = await handler(arguments)
-            return [types.TextContent(type="text", text=result)]
-        except Exception as e:
-            logger.error("Tool %s failed: %s", name, e, exc_info=True)
-            return [
-                types.TextContent(
-                    type="text",
-                    text=json.dumps({"error": str(e)}),
-                )
-            ]
-
-    # ── List Resources (optional) ─────────────────────────────
-
-    @server.list_resources()
-    async def list_resources() -> list[types.Resource]:
-        """Return available resources."""
-        return []
-
-    # ── List Prompts (optional) ───────────────────────────────
-
-    @server.list_prompts()
-    async def list_prompts() -> list[types.Prompt]:
-        """Return available prompts."""
-        return [
-            types.Prompt(
-                name="research_topic",
-                description="Research a topic using web search and scraping",
-                arguments=[
-                    types.PromptArgument(
-                        name="topic",
-                        description="The topic to research",
-                        required=True,
-                    ),
+            # G2: bound concurrent engine operations.  The semaphore covers the
+            # actual CrawlEngine operation (the handler body), not just request
+            # parsing.  Waiting operations queue rather than fail.
+            async with server_ctx.semaphore:
+                raw = await tool.handler(arguments, engine)
+        except ToolError as exc:
+            logger.warning("Tool %s raised ToolError: %s", name, exc.message)
+            return types.CallToolResult(
+                content=[
+                    types.TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {"error": exc.message, **(exc.data or {})},
+                        ),
+                    )
                 ],
-            ),
-        ]
+                is_error=True,
+            )
+        except asyncio.CancelledError:
+            # Allow cancellation to propagate; the shared engine is released
+            # only when the server shuts down (G4), not per-call.
+            raise
+        except Exception as exc:
+            logger.exception("Tool %s raised unexpected exception", name)
+            return types.CallToolResult(
+                content=[
+                    types.TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": "internal tool error",
+                                "tool": name,
+                                "error_type": type(exc).__name__,
+                            },
+                        ),
+                    )
+                ],
+                is_error=True,
+            )
 
-    @server.get_prompt()
+        text = _serialize(raw)
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=text)],
+            is_error=False,
+        )
+
+    async def list_resources(
+        ctx: Any,
+        params: types.PaginatedRequestParams | None,
+    ) -> types.ListResourcesResult:
+        """No server resources are currently exposed."""
+        return types.ListResourcesResult(resources=[])
+
+    async def list_prompts(
+        ctx: Any,
+        params: types.PaginatedRequestParams | None,
+    ) -> types.ListPromptsResult:
+        """A single ``research_topic`` prompt is provided."""
+        return types.ListPromptsResult(
+            prompts=[
+                types.Prompt(
+                    name="research_topic",
+                    description="Research a topic using web search and scraping",
+                    arguments=[
+                        types.PromptArgument(
+                            name="topic",
+                            description="The topic to research",
+                            required=True,
+                        ),
+                    ],
+                ),
+            ]
+        )
+
     async def get_prompt(
-        name: str,
-        arguments: dict[str, str] | None = None,
+        ctx: Any,
+        params: types.GetPromptRequestParams,
+        arguments: dict[str, Any] | None = None,
     ) -> types.GetPromptResult:
-        """Return a prompt."""
+        name = params.name
         if name == "research_topic":
             topic = (arguments or {}).get("topic", "unknown topic")
             return types.GetPromptResult(
@@ -511,10 +305,22 @@ def create_mcp_server() -> Any:
                     ),
                 ],
             )
-
         raise ValueError(f"Unknown prompt: {name}")
 
-    return server
+    return Server(
+        SERVER_NAME,
+        version=SERVER_VERSION,
+        on_list_tools=list_tools,
+        on_call_tool=call_tool,
+        on_list_resources=list_resources,
+        on_list_prompts=list_prompts,
+        on_get_prompt=get_prompt,
+        # Server-lifetime shared CrawlEngine + concurrency semaphore (Set G).
+        # The lifespan is entered once per server run (stdio) and once per
+        # Starlette app lifetime (Streamable HTTP), so exactly one engine is
+        # created and shut down per server lifetime.
+        lifespan=_mcp_lifespan,
+    )
 
 
 # ══════════════════════════════════════════════════════════════
@@ -523,13 +329,9 @@ def create_mcp_server() -> Any:
 
 
 async def run_stdio() -> None:
-    """Run MCP server with stdio transport."""
-    from mcp.server.stdio import stdio_server
-
+    """Run MCP server with stdio transport (native MCP SDK 2.0.0)."""
     server = create_mcp_server()
-
     logger.info("Starting AgentCrawl MCP server (stdio)...")
-
     async with stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,
@@ -538,43 +340,46 @@ async def run_stdio() -> None:
         )
 
 
-async def run_sse(host: str = "127.0.0.1", port: int = 8080) -> None:
-    """Run MCP server with SSE transport."""
-    try:
-        import uvicorn
-        from mcp.server.sse import SseServerTransport
-        from starlette.applications import Starlette
-        from starlette.routing import Route
-    except ImportError:
-        print(
-            "SSE transport requires: pip install uvicorn starlette",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+async def run_streamable_http(
+    host: str = "127.0.0.1",
+    port: int = 8080,
+) -> None:
+    """Run MCP server with Streamable HTTP transport (native MCP SDK 2.0.0).
+
+    Uses :meth:`Server.streamable_http_app` with ``stateless_http=True`` so
+    the server is stateless at the MCP protocol boundary (REQ-B06) — each HTTP
+    request is independently processable.  No legacy ``SseServerTransport``
+    or ``/sse`` + ``/messages/`` routes are introduced.
+    """
+    import uvicorn
 
     server = create_mcp_server()
-    sse = SseServerTransport("/messages/")
+    app = server.streamable_http_app(stateless_http=True)
 
-    async def handle_sse(request: Any) -> Any:
-        async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
-            await server.run(
-                streams[0],
-                streams[1],
-                server.create_initialization_options(),
-            )
-
-    app = Starlette(
-        routes=[
-            Route("/sse", endpoint=handle_sse),
-            Route("/messages/", endpoint=sse.handle_post_message, methods=["POST"]),
-        ],
+    logger.info(
+        "Starting AgentCrawl MCP server (Streamable HTTP) on %s:%d/mcp...",
+        host,
+        port,
     )
-
-    logger.info("Starting AgentCrawl MCP server (SSE) on %s:%d...", host, port)
-
     config = uvicorn.Config(app, host=host, port=port, log_level="info")
     server_instance = uvicorn.Server(config)
     await server_instance.serve()
+
+
+# Backwards-compatible alias.  The previous code exposed ``run_sse``; SSE has
+# been removed in favour of Streamable HTTP (REQ-B10).  ``run_sse`` is kept
+# only to surface a clear migration error rather than a silent AttributeError.
+async def run_sse(host: str = "127.0.0.1", port: int = 8080) -> None:
+    """Legacy SSE transport — removed in MCP 2.0.0 modernization (Set B).
+
+    The MCP server now uses Streamable HTTP.  Use :func:`run_streamable_http`
+    instead.  See ``docs/MCP_MIGRATION.md`` for the migration path.
+    """
+    raise RuntimeError(
+        "Legacy SSE transport has been removed (Set B). "
+        "Use run_streamable_http() or --transport http instead. "
+        "See docs/MCP_MIGRATION.md."
+    )
 
 
 # ══════════════════════════════════════════════════════════════
@@ -584,34 +389,29 @@ async def run_sse(host: str = "127.0.0.1", port: int = 8080) -> None:
 
 def main() -> None:
     """Main entry point."""
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="AgentCrawl MCP Server",
-    )
+    parser = argparse.ArgumentParser(description="AgentCrawl MCP Server")
     parser.add_argument(
         "--transport",
-        choices=["stdio", "sse"],
+        choices=["stdio", "http"],
         default="stdio",
-        help="Transport type (default: stdio)",
+        help="Transport type (default: stdio). 'http' = Streamable HTTP.",
     )
     parser.add_argument(
         "--host",
         default="127.0.0.1",
-        help="SSE host (default: 127.0.0.1)",
+        help="HTTP host (default: 127.0.0.1)",
     )
     parser.add_argument(
         "--port",
         type=int,
         default=8080,
-        help="SSE port (default: 8080)",
+        help="HTTP port (default: 8080)",
     )
     parser.add_argument(
         "--log-level",
         default="INFO",
         help="Log level (default: INFO)",
     )
-
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -620,8 +420,8 @@ def main() -> None:
         stream=sys.stderr,
     )
 
-    if args.transport == "sse":
-        asyncio.run(run_sse(args.host, args.port))
+    if args.transport == "http":
+        asyncio.run(run_streamable_http(args.host, args.port))
     else:
         asyncio.run(run_stdio())
 

@@ -35,7 +35,7 @@ Quick Start:
 
     # MCP Client
     from agentcrawl.agent import MCPClient
-    async with MCPClient(url="http://localhost:8000/mcp/sse") as client:
+    async with MCPClient(transport="http", url="http://localhost:9000/mcp") as client:
         result = await client.scrape("https://example.com")
 
     # Function Schemas
@@ -66,6 +66,8 @@ from agentcrawl.agent.function_schema import (
     get_tool_names,
 )
 from agentcrawl.agent.mcp_client import (
+    CANONICAL_TOOL_ORDER,
+    TOOL_NAMES,
     MCPClient,
     MCPConnectionError,
     MCPError,
@@ -75,6 +77,7 @@ from agentcrawl.agent.mcp_client import (
     MCPToolInfo,
     MCPToolResult,
     TransportType,
+    create_http_client,
     create_sse_client,
     create_stdio_client,
     create_websocket_client,
@@ -96,6 +99,7 @@ try:
         AgentCrawlSearchTool,
         AgentCrawlTool,
     )
+
     _HAS_LANGCHAIN = True
 except ImportError:
     AgentCrawlTool = None  # type: ignore[assignment,misc]
@@ -109,6 +113,7 @@ try:
         CrewAICrawlTool,
         CrewAISearchTool,
     )
+
     _HAS_CREWAI = True
 except ImportError:
     CrewAICrawlTool = None  # type: ignore[assignment,misc]
@@ -122,8 +127,10 @@ logger = logging.getLogger("agentcrawl.agent")
 # ──────────────────────────────────────────────────────────────
 
 __all__ = [
+    "CANONICAL_TOOL_ORDER",
     # Function schemas
     "TOOL_DEFINITIONS",
+    "TOOL_NAMES",
     "AgentCrawlCrawlTool",
     "AgentCrawlSearchTool",
     # LangChain (may be None if not installed)
@@ -144,6 +151,7 @@ __all__ = [
     "MCPToolResult",
     "OpenAIFunctionHandler",
     "TransportType",
+    "create_http_client",
     "create_sse_client",
     "create_stdio_client",
     "create_toolkit",
@@ -166,6 +174,7 @@ __all__ = [
 # ──────────────────────────────────────────────────────────────
 # Feature Detection Helpers
 # ──────────────────────────────────────────────────────────────
+
 
 def has_langchain() -> bool:
     """Check if LangChain is installed and AgentCrawl tools are available."""
@@ -195,4 +204,3 @@ def get_available_frameworks() -> list[str]:
     if _HAS_CREWAI:
         frameworks.append("crewai")
     return frameworks
-
