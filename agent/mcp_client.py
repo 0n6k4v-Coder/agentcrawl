@@ -50,6 +50,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
+from mcp.client._probe import negotiate_auto
 from mcp.client.session import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 from mcp.client.streamable_http import streamable_http_client
@@ -328,13 +329,20 @@ class MCPClient:
     # ─────────────────────────────────────────────────────────
 
     async def connect(self) -> MCPServerInfo:
-        """Connect to the MCP server and perform the initialization handshake.
+        """Connect to the MCP server and perform protocol negotiation.
+
+        Protocol negotiation follows the MCP 2.0.0 ``mode='auto'`` policy:
+        a ``server/discover`` probe is sent at the newest modern protocol
+        version (``2026-07-28``).  If the server advertises modern versions
+        the client adopts the negotiated era directly; otherwise it falls
+        back to the legacy ``initialize`` handshake.  The negotiated
+        protocol version is discoverable via :attr:`protocol_version`.
 
         Returns:
-            Server information (name, version, capabilities).
+            Server information (name, version, capabilities, protocol version).
 
         Raises:
-            MCPConnectionError: If connection or initialization fails.
+            MCPConnectionError: If connection or negotiation fails.
         """
         try:
             if self._transport_type == TransportType.STDIO:
@@ -359,11 +367,32 @@ class MCPClient:
             self._session = ClientSession(read_stream=read_stream, write_stream=write_stream)
             await self._session.__aenter__()
 
-            init_result: InitializeResult = await asyncio.wait_for(
-                self._session.initialize(),
+            # Use the MCP SDK's approved auto-negotiation: probes
+            # server/discover at the modern era (2026-07-28) and falls back
+            # to the legacy initialize handshake only for legacy-only servers.
+            await asyncio.wait_for(
+                negotiate_auto(self._session),
                 timeout=self._timeout,
             )
-            self._server_info = MCPServerInfo.from_initialize_result(init_result)
+
+            # Build server info from the negotiated session state.
+            negotiated = self._session.protocol_version
+            caps = self._session.server_capabilities
+            if caps is not None and hasattr(caps, "model_dump"):
+                caps = caps.model_dump()
+            if self._session._discover_result is not None:
+                si = self._session.server_info
+                self._server_info = MCPServerInfo(
+                    name=si.name if si else "",
+                    version=si.version if si else "",
+                    protocol_version=negotiated or "",
+                    capabilities=dict(caps or {}),
+                )
+            elif self._session._initialize_result is not None:
+                init_result = self._session._initialize_result
+                self._server_info = MCPServerInfo.from_initialize_result(init_result)
+            else:
+                self._server_info = MCPServerInfo(protocol_version=negotiated or "")
             self._connected = True
             self._tools_cache = None
 
@@ -425,6 +454,19 @@ class MCPClient:
     def server_info(self) -> MCPServerInfo | None:
         """Information about the connected server."""
         return self._server_info
+
+    @property
+    def protocol_version(self) -> str | None:
+        """The negotiated MCP protocol version (e.g. ``2026-07-28``).
+
+        Returns ``None`` until :meth:`connect` completes the negotiation.
+        After a successful ``mode='auto'`` negotiation the value reflects
+        the era agreed with the server (modern ``2026-07-28`` for an
+        MCP 2.0.0 server, or a legacy version for older peers).
+        """
+        if self._session is not None:
+            return self._session.protocol_version
+        return None
 
     # ─────────────────────────────────────────────────────────
     # Tool Operations

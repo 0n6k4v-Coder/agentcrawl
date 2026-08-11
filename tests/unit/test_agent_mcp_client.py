@@ -69,6 +69,51 @@ LEGACY_NAMES = [
 ]
 
 
+# ─────────────────────────────────────────────────────────────
+# Mock session helper for connect() tests (Set H: negotiate_auto)
+# ─────────────────────────────────────────────────────────────
+
+_MODERN_PROTOCOL_VERSION = "2026-07-28"
+
+
+def _make_mock_session(protocol_version: str = _MODERN_PROTOCOL_VERSION):
+    """Build a MagicMock that mimics a ClientSession after ``negotiate_auto``.
+
+    After ``negotiate_auto(session)`` the SDK session has:
+      * ``protocol_version`` — the negotiated era (default ``2026-07-28``)
+      * ``server_info`` — ServerInfo or None
+      * ``server_capabilities`` — dict or ServerCapabilities
+      * ``_discover_result`` / ``_initialize_result`` — internal slots
+    """
+    mock_session = MagicMock()
+    mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session.__aexit__ = AsyncMock(return_value=None)
+
+    # negotiate_auto() is called as ``negotiate_auto(session)``; the function
+    # inspects session._discover_result / _initialize_result and calls adopt().
+    # In production negotiate_auto sends a server/discover probe and then
+    # calls session.adopt().  We mock it to set up the session as if adopt()
+    # succeeded with the modern era.
+    mock_server_info = MagicMock()
+    mock_server_info.name = "agentcrawl"
+    mock_server_info.version = "1.0.0"
+
+    # Configure the session properties that connect() reads after negotiate_auto.
+    type(mock_session).protocol_version = _MODERN_PROTOCOL_VERSION
+    mock_session.server_info = mock_server_info
+    mock_session.server_capabilities = {}
+    mock_session._discover_result = MagicMock()
+    mock_session._initialize_result = None
+
+    # Patch negotiate_auto to be an AsyncMock that does nothing (the session
+    # is already preset as if adopt() ran successfully).
+    async def _fake_negotiate_auto(session):
+        # Simulate the adopt() side-effects that negotiate_auto performs.
+        pass
+
+    return mock_session, _fake_negotiate_auto
+
+
 # ══════════════════════════════════════════════════════════════
 # TransportType
 # ══════════════════════════════════════════════════════════════
@@ -364,24 +409,15 @@ class TestMCPClientConnect:
 
     @pytest.mark.asyncio
     async def test_connect_http(self):
-        """Client connects via Streamable HTTP using the SDK primitives."""
+        """Client connects via Streamable HTTP using negotiate_auto (modern era)."""
         client = MCPClient(transport="http", url="http://localhost:8080/mcp")
 
-        mock_session = MagicMock()
-        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_session.__aexit__ = AsyncMock(return_value=None)
-
-        init_result = MagicMock()
-        init_result.protocol_version = "2025-11-25"
-        init_result.server_info = MagicMock()
-        init_result.server_info.name = "agentcrawl"
-        init_result.server_info.version = "1.0.0"
-        init_result.capabilities = {}
-        mock_session.initialize = AsyncMock(return_value=init_result)
+        mock_session, fake_negotiate = _make_mock_session()
 
         with (
             patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
             patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=fake_negotiate),
         ):
             mock_cm = MagicMock()
             mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
@@ -393,28 +429,19 @@ class TestMCPClientConnect:
         assert client.is_connected is True
         assert info.name == "agentcrawl"
         assert info.version == "1.0.0"
-        assert info.protocol_version == "2025-11-25"
+        assert info.protocol_version == _MODERN_PROTOCOL_VERSION
 
     @pytest.mark.asyncio
     async def test_connect_stdio(self):
-        """Client connects via stdio using the SDK's stdio_client."""
+        """Client connects via stdio using negotiate_auto (modern era)."""
         client = MCPClient(transport="stdio", command="python", args=["-m", "server.mcp.server"])
 
-        mock_session = MagicMock()
-        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_session.__aexit__ = AsyncMock(return_value=None)
-
-        init_result = MagicMock()
-        init_result.protocol_version = "2025-11-25"
-        init_result.server_info = MagicMock()
-        init_result.server_info.name = "agentcrawl"
-        init_result.server_info.version = "1.0.0"
-        init_result.capabilities = {}
-        mock_session.initialize = AsyncMock(return_value=init_result)
+        mock_session, fake_negotiate = _make_mock_session()
 
         with (
             patch("agentcrawl.agent.mcp_client.stdio_client") as mock_sc,
             patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=fake_negotiate),
         ):
             mock_cm = MagicMock()
             mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
@@ -450,23 +477,21 @@ class TestMCPClientConnect:
         mock_session = MagicMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
+        mock_session.protocol_version = ""
+        mock_session.server_info = MagicMock()
+        mock_session.server_info.name = "agentcrawl"
+        mock_session.server_info.version = "1.0.0"
+        mock_session.server_capabilities = {}
+        mock_session._discover_result = None
+        mock_session._initialize_result = None
 
-        init_result = MagicMock()
-        init_result.protocol_version = "2025-11-25"
-        init_result.server_info = MagicMock()
-        init_result.server_info.name = "agentcrawl"
-        init_result.server_info.version = "1.0.0"
-        init_result.capabilities = {}
-
-        async def slow_init():
+        async def slow_negotiate(session):
             await asyncio.sleep(10)
-            return init_result
-
-        mock_session.initialize = slow_init
 
         with (
             patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
             patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", side_effect=slow_negotiate),
         ):
             mock_cm = MagicMock()
             mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
@@ -508,21 +533,12 @@ class TestMCPClientConnect:
         """``async with`` connects and disconnects cleanly."""
         client = MCPClient(transport="http", url="http://localhost:8080/mcp")
 
-        mock_session = MagicMock()
-        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_session.__aexit__ = AsyncMock(return_value=None)
-
-        init_result = MagicMock()
-        init_result.protocol_version = "2025-11-25"
-        init_result.server_info = MagicMock()
-        init_result.server_info.name = "agentcrawl"
-        init_result.server_info.version = "1.0.0"
-        init_result.capabilities = {}
-        mock_session.initialize = AsyncMock(return_value=init_result)
+        mock_session, fake_negotiate = _make_mock_session()
 
         with (
             patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
             patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=fake_negotiate),
         ):
             mock_cm = MagicMock()
             mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
@@ -543,6 +559,141 @@ class TestMCPClientConnect:
         client._transport_cm = None
         # Should not raise
         await client.disconnect()
+
+
+# ══════════════════════════════════════════════════════════════
+# Set H — Protocol negotiation & architecture tests
+# ══════════════════════════════════════════════════════════════
+
+
+class TestSetHProtocolNegotiation:
+    """H2 — Verify the client uses negotiate_auto (mode='auto') for the
+    modern MCP 2.0.0 protocol path, not a direct initialize() call."""
+
+    @pytest.mark.asyncio
+    async def test_connect_uses_negotiate_auto(self):
+        """connect() must call negotiate_auto, not session.initialize()."""
+        client = MCPClient(transport="http", url="http://localhost:8080/mcp")
+        mock_session, _ = _make_mock_session()
+
+        negotiate_called = []
+
+        async def tracking_negotiate(session):
+            negotiate_called.append(session)
+
+        with (
+            patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
+            patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", side_effect=tracking_negotiate),
+        ):
+            mock_cm = MagicMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_shc.return_value = mock_cm
+
+            await client.connect()
+
+        assert len(negotiate_called) == 1, "negotiate_auto must be called exactly once"
+        assert negotiate_called[0] is mock_session
+
+    @pytest.mark.asyncio
+    async def test_connect_does_not_call_initialize_directly(self):
+        """The client must NOT call session.initialize() — that is the legacy
+        handshake path that locks to 2025-11-25."""
+        client = MCPClient(transport="http", url="http://localhost:8080/mcp")
+        mock_session, fake_negotiate = _make_mock_session()
+
+        with (
+            patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
+            patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=fake_negotiate),
+        ):
+            mock_cm = MagicMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_shc.return_value = mock_cm
+
+            await client.connect()
+
+        # initialize must NOT be called — it's the legacy 2025-11-25 path.
+        assert not getattr(mock_session.initialize, "called", False), (
+            "session.initialize() must not be called; use negotiate_auto"
+        )
+
+    @pytest.mark.asyncio
+    async def test_connect_reports_modern_protocol_version(self):
+        """After connect, protocol_version must be 2026-07-28 (modern era)."""
+        client = MCPClient(transport="http", url="http://localhost:8080/mcp")
+        mock_session, fake_negotiate = _make_mock_session()
+
+        with (
+            patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
+            patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=fake_negotiate),
+        ):
+            mock_cm = MagicMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_shc.return_value = mock_cm
+
+            await client.connect()
+
+        assert client.protocol_version == _MODERN_PROTOCOL_VERSION
+
+    @pytest.mark.asyncio
+    async def test_protocol_version_none_before_connect(self):
+        """protocol_version is None before connect."""
+        client = MCPClient()
+        assert client.protocol_version is None
+
+    @pytest.mark.asyncio
+    async def test_protocol_version_none_after_disconnect(self):
+        """protocol_version is None after disconnect."""
+        client = MCPClient()
+        mock_session, fake_negotiate = _make_mock_session()
+
+        with (
+            patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
+            patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=fake_negotiate),
+        ):
+            mock_cm = MagicMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_shc.return_value = mock_cm
+
+            await client.connect()
+            assert client.protocol_version == _MODERN_PROTOCOL_VERSION
+            await client.disconnect()
+            assert client.protocol_version is None
+
+    def test_no_direct_initialize_call_in_source(self):
+        """The active client source must not call self._session.initialize()."""
+        import agentcrawl.agent.mcp_client as mod
+
+        src = inspect.getsource(mod)
+        assert "self._session.initialize()" not in src, (
+            "Client must use negotiate_auto, not session.initialize()"
+        )
+        assert "negotiate_auto" in src
+
+
+class TestSetHProtocolNegotiationInterop:
+    """H2 — Integration test: connect to a real server and verify the
+    negotiated protocol version is the modern 2026-07-28 era."""
+
+    @pytest.mark.asyncio
+    async def test_interop_negotiates_modern_protocol(
+        self,
+        _mcp_server,
+        _mock_crawl_engine,
+    ):
+        """Client → Streamable HTTP → real server; protocol_version must be
+        2026-07-28 after auto-negotiation."""
+        server_url = _mcp_server
+        async with MCPClient(transport="http", url=server_url) as client:
+            assert client.protocol_version == _MODERN_PROTOCOL_VERSION
+            assert client.is_connected is True
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1140,13 +1291,13 @@ class TestMCPServerInfo:
         info = MCPServerInfo.from_dict(
             {
                 "serverInfo": {"name": "test-server", "version": "1.0.0"},
-                "protocolVersion": "2025-11-25",
+                "protocolVersion": _MODERN_PROTOCOL_VERSION,
                 "capabilities": {"tools": {}},
             }
         )
         assert info.name == "test-server"
         assert info.version == "1.0.0"
-        assert info.protocol_version == "2025-11-25"
+        assert info.protocol_version == _MODERN_PROTOCOL_VERSION
         assert info.capabilities == {"tools": {}}
 
     def test_from_dict_defaults(self):
