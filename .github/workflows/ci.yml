@@ -26,6 +26,14 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # Ensure git is available (Gacils python:3.12-slim images may not have it)
+          if ! command -v git > /dev/null 2>&1; then
+            apt-get update && apt-get install -y --no-install-recommends git
+          fi
+          # Restore .git directory (Gacils excludes it from workspace copy)
+          if [ -d /tmp/gacils/.git ] && [ ! -d /github/workspace/.git ]; then
+            cp -r /tmp/gacils/.git /github/workspace/.git
+          fi
           pip install -e ".[dev,server]"
 
       - name: Install Playwright Chromium & dependencies
@@ -49,6 +57,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect Docker host
+        run: |
+          # Ensure curl is available (Gacils containers may not have it)
+          if ! command -v curl > /dev/null 2>&1; then
+            apt-get update -qq && apt-get install -y -qq curl > /dev/null 2>&1
+          fi
+          if [ ! -S /var/run/docker.sock ]; then
+            echo "DOCKER_HOST=tcp://host.docker.internal:2375" >> "$GITHUB_ENV"
+            echo "DOCKER_CHECK_HOST=host.docker.internal" >> "$GITHUB_ENV"
+            echo "Running under Gacils (local Docker simulator) — using Docker proxy"
+          else
+            echo "DOCKER_HOST=unix:///var/run/docker.sock" >> "$GITHUB_ENV"
+            echo "DOCKER_CHECK_HOST=localhost" >> "$GITHUB_ENV"
+          fi
+
       - name: Build Docker image
         run: |
           docker build -t agentcrawl:test .
@@ -60,7 +83,7 @@ jobs:
       - name: Health check
         run: |
           for i in {1..30}; do
-            if curl -s -f http://localhost:8000/health; then
+            if curl -s -f http://${DOCKER_CHECK_HOST:-localhost}:8000/health; then
               echo "Health check passed!"
               exit 0
             fi
