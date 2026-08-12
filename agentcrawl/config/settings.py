@@ -330,14 +330,20 @@ class Settings(BaseSettings):
         description="Compress cached values",
     )
 
-    # ── MCP ───────────────────────────────────────────────────
+    # ── MCP ────────────────────────────────────────────────────
     mcp_enabled: bool = Field(
         default=True,
         description="Enable MCP server endpoint",
     )
     mcp_transport: str = Field(
         default="both",
-        description="MCP transport: sse, websocket, both",
+        description="MCP transport: http, stdio, both",
+    )
+    mcp_max_concurrent: int = Field(
+        default=2,
+        ge=1,
+        le=64,
+        description="Max concurrent CrawlEngine operations served by the MCP server",
     )
 
     # ── Logging ───────────────────────────────────────────────
@@ -426,7 +432,7 @@ class Settings(BaseSettings):
     @classmethod
     def validate_mcp_transport(cls, v: str) -> str:
         v = v.lower().strip()
-        allowed = {"sse", "websocket", "both"}
+        allowed = {"http", "stdio", "both"}
         if v not in allowed:
             raise ValueError(
                 f"Invalid mcp_transport '{v}'. Must be one of: {', '.join(sorted(allowed))}"
@@ -919,6 +925,7 @@ class Settings(BaseSettings):
             "mcp": {
                 "enabled": self.mcp_enabled,
                 "transport": self.mcp_transport,
+                "max_concurrent": self.mcp_max_concurrent,
             },
             "logging": {
                 "level": self.log_level,
