@@ -560,6 +560,122 @@ class TestMCPClientConnect:
         # Should not raise
         await client.disconnect()
 
+    @pytest.mark.asyncio
+    async def test_connect_internal_cancellation_translated(self):
+        """A CancelledError from the MCP SDK's anyio task-group (e.g. when
+        the Streamable HTTP transport fails with a connection refused) must
+        be translated to MCPConnectionError, not propagated as
+        asyncio.CancelledError.
+        """
+        client = MCPClient(transport="http", url="http://localhost:8080/mcp")
+
+        mock_session, _fake_negotiate = _make_mock_session()
+
+        async def _fake_negotiate_auto(session):
+            # Simulate the anyio cancel-scope cancellation that the SDK
+            # raises when the transport fails.
+            raise asyncio.CancelledError("Cancelled via cancel scope 0xdeadbeef")
+
+        with (
+            patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
+            patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=_fake_negotiate_auto),
+        ):
+            mock_cm = MagicMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_shc.return_value = mock_cm
+
+            with pytest.raises(MCPConnectionError, match="Failed to connect"):
+                await client.connect()
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_connect_external_cancel_not_swallowed(self):
+        """External task cancellation must propagate as CancelledError,
+        not be converted to MCPConnectionError.
+
+        GIVEN connect() is blocked after mocks are patched
+        WHEN the caller invokes task.cancel() (empty reason)
+        THEN connect() must propagate CancelledError
+        AND must not convert it to MCPConnectionError.
+        AND cleanup must leave the client disconnected (is_connected=False,
+        _session=None).
+        """
+        client = MCPClient(transport="http", url="http://localhost:8080/mcp")
+        mock_session, _fake_negotiate = _make_mock_session()
+
+        async def _slow_negotiate(session):
+            await asyncio.sleep(10)
+
+        with (
+            patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
+            patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=_slow_negotiate),
+        ):
+            mock_cm = MagicMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_shc.return_value = mock_cm
+
+            task = asyncio.current_task()
+            assert task is not None
+            task.cancel()
+            try:
+                await client.connect()
+            except asyncio.CancelledError:
+                pass  # expected
+            else:
+                pytest.fail("Expected CancelledError from external cancellation")
+
+        # Cleanup must still leave the client in a clean, disconnected state.
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_connect_external_cancel_with_message_not_swallowed(self):
+        """External task cancellation WITH a reason must propagate as
+        CancelledError, not be converted to MCPConnectionError.
+
+        Python permits ``task.cancel("reason")`` which produces a
+        ``CancelledError`` carrying a non-empty message.  This is still
+        EXTERNAL cancellation and must reach the caller unmodified.
+
+        This guards against the previous ``not str(err)`` heuristic that
+        misclassified any non-empty-message CancelledError as internal.
+        """
+        client = MCPClient(transport="http", url="http://localhost:8080/mcp")
+        mock_session, _fake_negotiate = _make_mock_session()
+
+        async def _slow_negotiate(session):
+            await asyncio.sleep(10)
+
+        with (
+            patch("agentcrawl.agent.mcp_client.streamable_http_client") as mock_shc,
+            patch("agentcrawl.agent.mcp_client.ClientSession", return_value=mock_session),
+            patch("agentcrawl.agent.mcp_client.negotiate_auto", new=_slow_negotiate),
+        ):
+            mock_cm = MagicMock()
+            mock_cm.__aenter__ = AsyncMock(return_value=(MagicMock(), MagicMock()))
+            mock_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_shc.return_value = mock_cm
+
+            task = asyncio.current_task()
+            assert task is not None
+            task.cancel("connection torn down by caller")
+            try:
+                await client.connect()
+            except asyncio.CancelledError:
+                pass  # expected — external cancellation must propagate
+            else:
+                pytest.fail("Expected CancelledError from external cancellation with reason")
+
+        # Cleanup must still leave the client in a clean, disconnected state.
+        assert client.is_connected is False
+        assert client._session is None
+
 
 # ══════════════════════════════════════════════════════════════
 # Set H — Protocol negotiation & architecture tests
@@ -1566,4 +1682,347 @@ async def test_interop_disconnect_cleans_up(
     # After exiting the context manager, session should be None.
     assert client._session is None
     assert client._transport_cm is None
-    assert client.is_connected is False
+
+
+# ══════════════════════════════════════════════════════════════
+# Set L — Operation-level lifecycle & failure-path regression tests
+# ══════════════════════════════════════════════════════════════
+#
+# These tests cover the failure paths that were MISSING from the original
+# implementation:
+#
+#   * Internal AnyIO cancel-scope cancellation during an operation
+#     (transport failure mid-call) must be translated to MCPConnectionError.
+#   * External caller cancellation during an operation must propagate as
+#     CancelledError while still cleaning up resources.
+#   * Operation failures (SDK/runtime exceptions) must trigger cleanup so
+#     the client is not left in a corrupted _connected=True state.
+#   * list_tools / list_resources / read_resource / list_prompts / get_prompt
+#     now have the same lifecycle safety as call_tool.
+#   * Repeated cleanup (idempotency) after any failure path.
+
+
+_ANYIO_CANCEL_MSG = "Cancelled via cancel scope 0xdeadbeef"
+
+
+class TestSetLSessionOpFailurePaths:
+    """Set L — regression tests for operation-level failure paths (F4-F8)."""
+
+    def _connected_client(self) -> MCPClient:
+        """Build a client in the connected state with a mock session."""
+        client = MCPClient(transport="http", url="http://localhost:8080/mcp")
+        client._connected = True
+        session = MagicMock()
+        session.__aexit__ = AsyncMock(return_value=None)
+        client._session = session
+        transport_cm = MagicMock()
+        transport_cm.__aexit__ = AsyncMock(return_value=None)
+        client._transport_cm = transport_cm
+        return client
+
+    # ── F4: Transport failure during operation ──────────────────
+
+    @pytest.mark.asyncio
+    async def test_call_tool_sdk_exception_triggers_cleanup(self):
+        """An SDK/runtime exception during call_tool must clean up the session
+        and transport, leaving the client disconnected."""
+        client = self._connected_client()
+        client._session.call_tool = AsyncMock(side_effect=ConnectionError("connection reset"))
+
+        with pytest.raises(MCPConnectionError, match="connection reset"):
+            await client.call_tool("scrape_webpage", {"url": "https://example.com"})
+
+        assert client.is_connected is False
+        assert client._session is None
+        assert client._transport_cm is None
+
+    @pytest.mark.asyncio
+    async def test_list_tools_sdk_exception_triggers_cleanup(self):
+        """An exception during list_tools must clean up resources."""
+        client = self._connected_client()
+        client._session.list_tools = AsyncMock(side_effect=ConnectionError("transport closed"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.list_tools()
+
+        assert client.is_connected is False
+        assert client._session is None
+        assert client._tools_cache is None
+
+    @pytest.mark.asyncio
+    async def test_list_resources_sdk_exception_triggers_cleanup(self):
+        """An exception during list_resources must clean up resources."""
+        client = self._connected_client()
+        client._session.list_resources = AsyncMock(side_effect=ConnectionError("broken pipe"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.list_resources()
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_read_resource_sdk_exception_triggers_cleanup(self):
+        """An exception during read_resource must clean up resources."""
+        client = self._connected_client()
+        client._session.read_resource = AsyncMock(side_effect=ConnectionError("broken pipe"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.read_resource("file:///test.txt")
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_list_prompts_sdk_exception_triggers_cleanup(self):
+        """An exception during list_prompts must clean up resources."""
+        client = self._connected_client()
+        client._session.list_prompts = AsyncMock(side_effect=ConnectionError("broken pipe"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.list_prompts()
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_get_prompt_sdk_exception_triggers_cleanup(self):
+        """An exception during get_prompt must clean up resources."""
+        client = self._connected_client()
+        client._session.get_prompt = AsyncMock(side_effect=ConnectionError("broken pipe"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.get_prompt("test_prompt")
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    # ── F5: Cancellation during operation ───────────────────────
+
+    @pytest.mark.asyncio
+    async def test_call_tool_internal_cancel_translated(self):
+        """Internal AnyIO cancel-scope cancellation during call_tool must be
+        translated to MCPConnectionError (not propagated as CancelledError)."""
+        client = self._connected_client()
+        client._session.call_tool = AsyncMock(side_effect=asyncio.CancelledError(_ANYIO_CANCEL_MSG))
+
+        with pytest.raises(MCPConnectionError, match="Error in call_tool"):
+            await client.call_tool("scrape_webpage", {"url": "https://example.com"})
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_call_tool_external_cancel_propagates_with_cleanup(self):
+        """External task cancellation during call_tool must propagate as
+        CancelledError AND clean up resources (no leak)."""
+        client = self._connected_client()
+
+        async def _hanging_call(name, arguments):
+            await asyncio.sleep(100)
+
+        client._session.call_tool = _hanging_call
+
+        call_task = asyncio.create_task(client.call_tool("scrape_webpage", {"url": "x"}))
+        await asyncio.sleep(0.05)
+        call_task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await call_task
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_list_tools_external_cancel_propagates_with_cleanup(self):
+        """External cancellation during list_tools must propagate AND clean up."""
+        client = self._connected_client()
+
+        async def _hanging_list():
+            await asyncio.sleep(100)
+
+        client._session.list_tools = _hanging_list
+
+        call_task = asyncio.create_task(client.list_tools())
+        await asyncio.sleep(0.05)
+        call_task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await call_task
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_list_tools_internal_cancel_translated(self):
+        """Internal AnyIO cancel during list_tools → MCPConnectionError."""
+        client = self._connected_client()
+        client._session.list_tools = AsyncMock(
+            side_effect=asyncio.CancelledError(_ANYIO_CANCEL_MSG)
+        )
+
+        with pytest.raises(MCPConnectionError):
+            await client.list_tools()
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    # ── F3: Timeout during operation (no cleanup — session preserved) ─
+
+    @pytest.mark.asyncio
+    async def test_call_tool_timeout_preserves_connection(self):
+        """A tool-call timeout does NOT tear down the session (the transport
+        is still usable for subsequent calls)."""
+        client = self._connected_client()
+        client._session.call_tool = AsyncMock(return_value=MagicMock())
+
+        # Use the helper to make call_tool raise a timeout
+        with (
+            patch.object(
+                client,
+                "_execute_session_op",
+                side_effect=MCPTimeoutError("call_tool: timed out after 0.001s"),
+            ),
+            pytest.raises(MCPTimeoutError),
+        ):
+            await client.call_tool("scrape_webpage", {"url": "x"}, timeout=0.001)
+
+        # Session is preserved after timeout
+        assert client._session is not None
+        assert client._connected is True
+
+    # ── F6/F7/F8: Idempotency & cleanup after partial/failed states ─
+
+    @pytest.mark.asyncio
+    async def test_cleanup_idempotent_after_call_tool_failure(self):
+        """Calling disconnect() after a failed call_tool must be safe (AC-07:
+        repeated cleanup must not raise)."""
+        client = self._connected_client()
+        client._session.call_tool = AsyncMock(side_effect=ConnectionError("dead"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.call_tool("scrape_webpage", {"url": "x"})
+
+        # First cleanup (already happened during the failure)
+        assert client._session is None
+
+        # Second cleanup (explicit disconnect) must not raise
+        await client.disconnect()
+        await client.disconnect()  # triple — still safe
+
+    @pytest.mark.asyncio
+    async def test_cleanup_idempotent_when_never_connected(self):
+        """Cleanup on a never-connected client is a safe no-op."""
+        client = MCPClient()
+
+        await client._cleanup()
+        await client._cleanup()
+        await client._safe_cleanup()
+
+        assert client.is_connected is False
+        assert client._session is None
+        assert client._transport_cm is None
+        assert client._server_info is None
+
+    @pytest.mark.asyncio
+    async def test_cleanup_idempotent_after_connect_failure(self):
+        """Cleanup is safe after a connection failure."""
+        client = MCPClient(transport="http", url="http://127.0.0.1:1/mcp", timeout=2)
+
+        with pytest.raises((MCPConnectionError, MCPTimeoutError)):
+            await client.connect()
+
+        # Session and transport should already be None from connect()'s cleanup.
+        assert client._session is None
+        assert client._transport_cm is None
+
+        # Calling disconnect again must not raise (F7: repeated cleanup).
+        await client.disconnect()
+
+    @pytest.mark.asyncio
+    async def test_call_tool_then_disconnect_after_failure(self):
+        """After a failed tool call, the client can still be safely shut down."""
+        client = self._connected_client()
+        client._session.call_tool = AsyncMock(side_effect=RuntimeError("kaboom"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.call_tool("scrape_webpage", {"url": "x"})
+
+        # Client should be fully disconnected after the failure.
+        assert not client.is_connected
+
+        # disconnect() must be a no-op (already cleaned up, no double-exit).
+        await client.disconnect()
+        assert not client.is_connected
+
+    # ── F4: CancelledError not masked by MCPError re-raise ────────
+
+    @pytest.mark.asyncio
+    async def test_call_tool_does_not_swallow_cancelled_error_as_connection_error(self):
+        """External CancelledError (no AnyIO prefix) must NOT be converted to
+        MCPConnectionError — it must propagate as CancelledError."""
+        client = self._connected_client()
+
+        async def _hanging(name, arguments):
+            await asyncio.sleep(100)
+
+        client._session.call_tool = _hanging
+
+        call_task = asyncio.create_task(client.call_tool("scrape_webpage", {"url": "x"}))
+        await asyncio.sleep(0.05)
+        # External cancel with a non-AnyIO prefix message
+        call_task.cancel("external teardown reason")
+
+        with pytest.raises(asyncio.CancelledError):
+            await call_task
+
+        assert client.is_connected is False
+        assert client._session is None
+
+
+class TestSetLTransportCoverage:
+    """Set L — AC-08: verify lifecycle safety for both stdio and HTTP transports.
+
+    Uses the real local server fixture for HTTP and the mocked-session pattern
+    for stdio to avoid spawning subprocesses.
+    """
+
+    @pytest.mark.asyncio
+    async def test_http_transport_failure_cleans_up(self, _mcp_server):
+        """HTTP transport: when the server is killed mid-operation, the
+        client is cleaned up (session + transport torn down)."""
+        client = MCPClient(transport="http", url=_mcp_server, timeout=30)
+        await client.connect()
+        assert client.is_connected
+
+        # Simulate a transport failure during a tool call by making the
+        # session call raise a raw connection error.
+        client._session.call_tool = AsyncMock(
+            side_effect=ConnectionError("connection reset by peer")
+        )
+
+        with pytest.raises(MCPConnectionError, match="connection reset"):
+            await client.call_tool("scrape_webpage", {"url": "https://example.com"})
+
+        assert client.is_connected is False
+        assert client._session is None
+
+    @pytest.mark.asyncio
+    async def test_stdio_call_tool_failure_cleans_up(self):
+        """stdio transport: a tool call failure cleans up the client."""
+        client = MCPClient(transport="stdio", command="python", args=["-m", "server.mcp.server"])
+        client._connected = True
+        session_mock = MagicMock()
+        session_mock.__aexit__ = AsyncMock(return_value=None)
+        client._session = session_mock
+        transport_cm = MagicMock()
+        transport_cm.__aexit__ = AsyncMock(return_value=None)
+        client._transport_cm = transport_cm
+
+        client._session.call_tool = AsyncMock(side_effect=ConnectionError("stdio pipe broke"))
+
+        with pytest.raises(MCPConnectionError):
+            await client.call_tool("scrape_webpage", {"url": "x"})
+
+        assert client.is_connected is False
+        assert client._session is None

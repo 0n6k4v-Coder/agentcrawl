@@ -60,6 +60,43 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("agentcrawl.mcp")
 
+# AnyIO cancel-scope cancellation message prefix.  When the MCP SDK's anyio
+# task-group/cancel-scope tears down a failed Streamable HTTP transport it
+# surfaces an ``asyncio.CancelledError`` whose message begins with this exact
+# prefix (e.g. ``"Cancelled via cancel scope 0xabc123"``).  This is an INTERNAL
+# transport failure, not a caller-requested cancellation, and must be translated
+# to ``MCPConnectionError``.
+#
+# Python permits ``task.cancel()`` AND ``task.cancel("reason")`` — both are
+# EXTERNAL cancellations that must propagate as ``asyncio.CancelledError``.
+# Relying on message emptiness (``not str(err)``) wrongly classifies a
+# non-empty external reason string as internal.  Instead we positively identify
+# the internal AnyIO cancellation using the same prefix AnyIO exposes via its
+# own ``is_anyio_cancellation`` helper (anyio/_backends/_asyncio.py).  This
+# mirrors AnyIO's public logic without importing private backend modules.
+_ANYIO_CANCEL_SCOPE_PREFIX = "Cancelled via cancel scope "
+
+
+def _is_internal_cancellation(err: BaseException) -> bool:
+    """Return True if *err* is an internal AnyIO cancel-scope cancellation.
+
+    Internal cancellations originate from the MCP SDK's AnyIO task-group /
+    cancel-scope teardown (e.g. when a Streamable HTTP transport is refused or
+    torn down mid-operation).  AnyIO raises a ``CancelledError`` whose message
+    begins with ``_ANYIO_CANCEL_SCOPE_PREFIX``.
+
+    External cancellations — ``task.cancel()`` and ``task.cancel("reason")`` —
+    are NOT internal.  They carry an arbitrary user-supplied message (or an
+    empty one) and must propagate to the caller as ``CancelledError``.
+
+    This positively matches the prefix AnyIO exposes via its own
+    ``is_anyio_cancellation`` predicate, mirroring AnyIO's logic without
+    importing private backend modules.
+    """
+    return isinstance(err, asyncio.CancelledError) and str(err).startswith(
+        _ANYIO_CANCEL_SCOPE_PREFIX
+    )
+
 
 # ───────────────────────────────────────────────────────────
 # Canonical tool names — imported from the server's single
@@ -370,10 +407,8 @@ class MCPClient:
             # Use the MCP SDK's approved auto-negotiation: probes
             # server/discover at the modern era (2026-07-28) and falls back
             # to the legacy initialize handshake only for legacy-only servers.
-            await asyncio.wait_for(
-                negotiate_auto(self._session),
-                timeout=self._timeout,
-            )
+            async with asyncio.timeout(self._timeout):
+                await negotiate_auto(self._session)
 
             # Build server info from the negotiated session state.
             negotiated = self._session.protocol_version
@@ -407,6 +442,45 @@ class MCPClient:
         except asyncio.TimeoutError as err:
             await self._cleanup()
             raise MCPTimeoutError(f"Connection timed out after {self._timeout}s") from err
+        except asyncio.CancelledError as err:
+            # Distinguish EXTERNAL caller cancellation from INTERNAL AnyIO/MCP
+            # cancellation (transport teardown).  Python permits both
+            # ``task.cancel()`` and ``task.cancel("reason")`` — BOTH are
+            # external cancellations that MUST propagate as
+            # ``asyncio.CancelledError`` so the caller's cooperative-cancellation
+            # semantics are preserved.  Relying on message emptiness
+            # (``not str(err)``) is unsafe because ``task.cancel("reason")``
+            # carries a non-empty message yet is still external.
+            #
+            # Internal cancellation originates from the MCP SDK's AnyIO
+            # task-group / cancel-scope teardown (e.g. a refused Streamable HTTP
+            # connection).  AnyIO raises a ``CancelledError`` whose message
+            # begins with ``_ANYIO_CANCEL_SCOPE_PREFIX`` ("Cancelled via cancel
+            # scope <id>").  We positively identify that prefix — mirroring
+            # AnyIO's own public ``is_anyio_cancellation`` predicate — and only
+            # then translate it to ``MCPConnectionError``.
+            #
+            # Python 3.11+: ``asyncio.timeout()`` already converts a
+            # timeout-fired cancellation to ``TimeoutError`` (handled above), so
+            # any ``CancelledError`` reaching here is either an external caller
+            # cancellation or an internal transport-failure cancellation.
+            if _is_internal_cancellation(err):
+                # Internal AnyIO cancel-scope cancellation from transport
+                # failure → translate to an application-level connection error.
+                # Consume the cancel count so asyncio does not re-raise it
+                # after we translate the error.
+                task = asyncio.current_task()
+                if task is not None:
+                    _uncancel = getattr(task, "uncancel", None)
+                    if _uncancel is not None:
+                        _uncancel()
+                await self._cleanup()
+                raise MCPConnectionError(f"Failed to connect to MCP server: {err}") from err
+            # External cancellation (task.cancel() / task.cancel("reason")):
+            # re-raise so the caller observes CancelledError.  Cleanup runs but
+            # must NOT swallow the original exception.
+            await self._cleanup()
+            raise
         except MCPError:
             await self._cleanup()
             raise
@@ -424,19 +498,87 @@ class MCPClient:
 
         # Close the ClientSession (cancels its task group).
         if self._session is not None:
-            with contextlib.suppress(Exception):
+            # Suppress BaseException (not just Exception) because the MCP
+            # SDK's anyio TaskGroup.__aexit__ can raise CancelledError or
+            # ExceptionGroup during teardown — these must not mask the
+            # original connection error that triggered cleanup.
+            with contextlib.suppress(BaseException):
                 await self._session.__aexit__(None, None, None)
             self._session = None
 
         # Exit the transport context manager (closes streams / process).
         if self._transport_cm is not None:
-            with contextlib.suppress(Exception):
+            # Same rationale: the StreamableHTTPTransport's task-group exit
+            # can surface CancelledError/ExceptionGroup on a failed connection.
+            with contextlib.suppress(BaseException):
                 await self._transport_cm.__aexit__(None, None, None)
             self._transport_cm = None
 
         self._tools_cache = None
         self._server_info = None
         logger.info("Disconnected from MCP server")
+
+    async def _safe_cleanup(self) -> None:
+        """Call ``_cleanup()`` without masking an in-flight exception.
+
+        ``_cleanup()`` already suppresses ``BaseException`` from the SDK
+        teardowns, so this wrapper exists purely for readability at call
+        sites and to guarantee idempotency — calling it multiple times (or
+        after a partial failure) is always safe.
+        """
+        await self._cleanup()
+
+    async def _execute_session_op(
+        self,
+        op_name: str,
+        coro: Any,
+        timeout: float | None = None,
+    ) -> Any:
+        """Execute an MCP session operation with full lifecycle safety.
+
+        Wraps *coro* (a bound ``self._session.<method>`` call) with:
+
+        * timeout enforcement (via ``asyncio.timeout``) → ``MCPTimeoutError``
+          (session is preserved; only the operation was slow)
+        * internal AnyIO cancel-scope cancellation → ``MCPConnectionError``
+          + cleanup (transport failure mid-operation)
+        * external caller cancellation → clean up + re-raise (no resource leak)
+        * SDK/runtime exceptions → ``MCPConnectionError`` + cleanup (session
+          is broken)
+
+        On transport-level or external-cancellation failures the client is
+        cleaned up so that no stale session or transport remains in a
+        corrupted state (AC-04, AC-05, AC-06, AC-07).  A pure timeout does
+        NOT tear down the session — the connection may still be usable.
+
+        Args:
+            op_name: Human-readable operation name for error messages.
+            coro: The coroutine to execute (e.g. ``self._session.list_tools()``).
+            timeout: Optional per-call timeout override; defaults to
+                ``self._timeout``.
+        """
+        effective_timeout = timeout if timeout is not None else self._timeout
+        try:
+            async with asyncio.timeout(effective_timeout):
+                return await coro
+        except asyncio.TimeoutError as err:
+            # A timeout means the operation was slow, not that the transport
+            # is broken.  The session remains usable for subsequent calls.
+            raise MCPTimeoutError(f"{op_name} timed out after {effective_timeout}s") from err
+        except asyncio.CancelledError as err:
+            if _is_internal_cancellation(err):
+                task = asyncio.current_task()
+                if task is not None:
+                    _uncancel = getattr(task, "uncancel", None)
+                    if _uncancel is not None:
+                        _uncancel()
+                await self._safe_cleanup()
+                raise MCPConnectionError(f"Error in {op_name}: {err}") from err
+            await self._safe_cleanup()
+            raise
+        except Exception as err:
+            await self._safe_cleanup()
+            raise MCPConnectionError(f"Error in {op_name}: {err}") from err
 
     async def __aenter__(self) -> MCPClient:
         await self.connect()
@@ -479,7 +621,8 @@ class MCPClient:
             List of tool metadata (name, description, input schema).
 
         Raises:
-            MCPConnectionError: If not connected.
+            MCPConnectionError: If not connected or the session operation fails.
+            MCPTimeoutError: If the operation times out.
         """
         if not self._connected or self._session is None:
             raise MCPConnectionError("Not connected to MCP server")
@@ -487,7 +630,7 @@ class MCPClient:
         if self._tools_cache is not None:
             return self._tools_cache
 
-        result: Any = await self._session.list_tools()
+        result = await self._execute_session_op("list_tools", self._session.list_tools())
         self._tools_cache = [MCPToolInfo.from_mcp_tool(t) for t in result.tools]
         return self._tools_cache
 
@@ -515,21 +658,13 @@ class MCPClient:
         if not self._connected or self._session is None:
             raise MCPConnectionError("Not connected to MCP server")
 
-        effective_timeout = timeout or self._timeout
+        effective_timeout = timeout if timeout is not None else self._timeout
 
-        try:
-            result = await asyncio.wait_for(
-                self._session.call_tool(name, arguments or {}),
-                timeout=effective_timeout,
-            )
-        except asyncio.TimeoutError as err:
-            raise MCPTimeoutError(
-                f"Tool call '{name}' timed out after {effective_timeout}s"
-            ) from err
-        except MCPError:
-            raise
-        except Exception as err:
-            raise MCPConnectionError(f"Error calling tool '{name}': {err}") from err
+        result = await self._execute_session_op(
+            f"call_tool:{name}",
+            self._session.call_tool(name, arguments or {}),
+            timeout=effective_timeout,
+        )
 
         # The SDK returns a CallToolResult.  If the tool raised a server-side
         # error it is signalled via ``is_error`` + an ``ErrorData`` content
@@ -643,24 +778,39 @@ class MCPClient:
     # ─────────────────────────────────────────────────────────
 
     async def list_resources(self) -> list[dict[str, Any]]:
-        """List available resources on the MCP server."""
+        """List available resources on the MCP server.
+
+        Raises:
+            MCPConnectionError: If not connected or the session operation fails.
+            MCPTimeoutError: If the operation times out.
+        """
         if not self._connected or self._session is None:
             raise MCPConnectionError("Not connected to MCP server")
-        result = await self._session.list_resources()
+        result = await self._execute_session_op("list_resources", self._session.list_resources())
         return [r.model_dump() for r in result.resources]
 
     async def read_resource(self, uri: str) -> dict[str, Any]:
-        """Read a resource by URI."""
+        """Read a resource by URI.
+
+        Raises:
+            MCPConnectionError: If not connected or the session operation fails.
+            MCPTimeoutError: If the operation times out.
+        """
         if not self._connected or self._session is None:
             raise MCPConnectionError("Not connected to MCP server")
-        result = await self._session.read_resource(uri)
+        result = await self._execute_session_op("read_resource", self._session.read_resource(uri))
         return result.model_dump()
 
     async def list_prompts(self) -> list[dict[str, Any]]:
-        """List available prompts on the MCP server."""
+        """List available prompts on the MCP server.
+
+        Raises:
+            MCPConnectionError: If not connected or the session operation fails.
+            MCPTimeoutError: If the operation times out.
+        """
         if not self._connected or self._session is None:
             raise MCPConnectionError("Not connected to MCP server")
-        result = await self._session.list_prompts()
+        result = await self._execute_session_op("list_prompts", self._session.list_prompts())
         return [p.model_dump() for p in result.prompts]
 
     async def get_prompt(
@@ -668,10 +818,17 @@ class MCPClient:
         name: str,
         arguments: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Get a prompt by name."""
+        """Get a prompt by name.
+
+        Raises:
+            MCPConnectionError: If not connected or the session operation fails.
+            MCPTimeoutError: If the operation times out.
+        """
         if not self._connected or self._session is None:
             raise MCPConnectionError("Not connected to MCP server")
-        result = await self._session.get_prompt(name, arguments or {})
+        result = await self._execute_session_op(
+            "get_prompt", self._session.get_prompt(name, arguments or {})
+        )
         return result.model_dump()
 
     # ─────────────────────────────────────────────────────────
